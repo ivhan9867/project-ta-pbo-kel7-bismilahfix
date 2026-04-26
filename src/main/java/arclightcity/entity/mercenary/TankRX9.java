@@ -1,0 +1,140 @@
+package arclightcity.entity.mercenary;
+import arclightcity.combat.CombatAction;
+import arclightcity.entity.base.Entity;
+import arclightcity.entity.stats.DamageType;
+import arclightcity.entity.stats.StatType;
+import arclightcity.entity.status.StatusEffect;
+import arclightcity.entity.status.StatusEffectType;
+import java.util.List;
+
+
+
+/**
+ * TANK-RX9 — Combat Android
+ * Role: TANK
+ *
+ * Lore: Unit militer generasi ke-9 yang dipensiunkan paksa karena dianggap
+ * "terlalu mandiri". Dia sendiri tidak setuju dengan keputusan itu.
+ * Sekarang menawarkan layanan proteksi ke siapapun yang menghargai
+ * kesetiaan lebih dari kepatuhan buta.
+ *
+ * Playstyle:
+ *  - HP dan DEF tertinggi di semua merc
+ *  - TAUNT: memaksa semua musuh menyerang RX9
+ *  - BARRIER: pasang shield ke sekutu yang HP kritis
+ *  - COUNTER: tiap kena serangan fisik, ada chance counter attack
+ *  - Lemah: lambat, Cyber damage, HACK (android = rentan)
+ *
+ * Synergy: Magnus Forge (Heavy Gunner) → berbagi 10% DEF ke Magnus
+ */
+public class TankRX9 extends Mercenary {
+
+    private int    counterCount   = 0;
+    private double damageAbsorbed = 0; // tracking untuk passive counter
+
+    public TankRX9() {
+        super("Tank-RX9",
+              "Unit combat android yang didesain untuk menyerap damage. " +
+              "Motto internalnya: 'Mereka tidak akan menyentuh yang lain selama aku berdiri.'",
+              MercenaryType.TANK_RX9,
+              Role.TANK,
+              600);
+
+        initStats();
+        healThreshold  = 0.35;
+        aggressiveness = 0.50;
+        initVitals();
+    }
+
+    @Override
+    protected void initStats() {
+        stats.setBase(StatType.MAX_HP,       320);
+        stats.setBase(StatType.MAX_MP,       40);
+        stats.setBase(StatType.MAX_SHIELD,   150); // Tank punya shield paling besar
+        stats.setBase(StatType.SHIELD_REGEN, 12);  // regen shield kuat
+        stats.setBase(StatType.HP_REGEN,     8);
+        stats.setBase(StatType.PHYSICAL_ATK, 20);
+        stats.setBase(StatType.CYBER_ATK,    5);
+        stats.setBase(StatType.DAMAGE_MULT,  0.0);
+        stats.setBase(StatType.PHYSICAL_DEF, 45);
+        stats.setBase(StatType.CYBER_DEF,    5);
+        stats.setBase(StatType.ENERGY_DEF,   25);
+        stats.setBase(StatType.BLOCK_CHANCE, 0.25);
+        stats.setBase(StatType.TENACITY,     0.50);
+        stats.setBase(StatType.SPEED,        6);
+        stats.setBase(StatType.ACCURACY,     0.82);
+        stats.setBase(StatType.COMMAND_AURA, 15);
+    }
+
+    @Override
+    protected CombatAction combatAction(List<Entity> allies, List<Entity> enemies) {
+        // Prioritas 1: Pasang Taunt jika tidak aktif
+        if (!this.hasEffect(StatusEffectType.TAUNT)) {
+            this.applyEffect(new StatusEffect(StatusEffectType.TAUNT, 2, 0, this.id));
+            this.applyEffect(new StatusEffect(StatusEffectType.FORTIFY, 2, 0, this.id));
+        }
+
+        // Prioritas 2: Pasang Barrier ke sekutu HP kritis
+        Entity critAlly = findCriticalAlly(allies);
+        if (critAlly != null && critAlly != this) {
+            double barrierPower = stats.get(StatType.PHYSICAL_DEF) * 0.5;
+            critAlly.applyEffect(new StatusEffect(StatusEffectType.BARRIER, 2, barrierPower, this.id));
+            return CombatAction.useSkill("IRON_SHIELD", List.of(critAlly.getId()));
+        }
+
+        // Prioritas 3: Serang target yang menyerang sekutu (aggro control)
+        Entity target = getRandomEnemy(enemies);
+        if (target == null) return CombatAction.pass();
+        return CombatAction.basicAttack(List.of(target.getId()));
+    }
+
+    @Override
+    public Entity.DamageResult receiveDamage(double rawDamage,
+                                             DamageType type,
+                                             boolean ignoreArmor) {
+        Entity.DamageResult result = super.receiveDamage(rawDamage, type, ignoreArmor);
+        damageAbsorbed += result.damage;
+
+        // COUNTER PROTOCOL: tiap 50 damage yang diterima → counter attack ready
+        if (damageAbsorbed >= 50) {
+            damageAbsorbed -= 50;
+            counterCount++;
+            this.applyEffect(new StatusEffect(StatusEffectType.EMPOWERED, 1, 0, this.id));
+        }
+
+        return result;
+    }
+
+    @Override
+    protected boolean shouldHeal()  { return true; }
+    @Override
+    protected boolean canSelfHeal() { return true; }
+
+    @Override
+    protected CombatAction selfHealAction(List<Entity> allies, List<Entity> enemies) {
+        // Emergency Repair: pulihkan 30% max HP
+        return CombatAction.useSkill("EMERGENCY_REPAIR", List.of(this.id));
+    }
+
+    @Override
+    protected void applySynergyWith(Mercenary other) {
+        // Synergy dengan Magnus: share 10% DEF ke Magnus
+        if (other.getMercenaryType() == MercenaryType.MAGNUS_FORGE) {
+            double sharedDef = stats.get(StatType.PHYSICAL_DEF) * 0.10;
+            other.getStats().addBase(StatType.PHYSICAL_DEF, sharedDef);
+        }
+    }
+
+    @Override
+    protected void onLoyaltyLevelUp(int newLevel) {
+        stats.addBase(StatType.MAX_HP,       20);
+        stats.addBase(StatType.PHYSICAL_DEF, 3);
+        if (newLevel == 10) {
+            // Soul Sync: Counter Attack damage meningkat drastis + jadi AOE
+            stats.addBase(StatType.PHYSICAL_ATK, 25);
+            stats.addBase(StatType.BLOCK_CHANCE,  0.15);
+        }
+    }
+
+    public int getCounterCount() { return counterCount; }
+}
