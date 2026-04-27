@@ -1,9 +1,5 @@
 # ⚡ ARCLIGHT CITY
 
-<<<<<<< HEAD
-=======
-
->>>>>>> d9f641f0832b83ad3cbab833e0749add679a5d7e
 ![Version](https://img.shields.io/badge/version-v0.2.0-00E5FF?style=flat-square)
 ![Java](https://img.shields.io/badge/Java-25-orange?style=flat-square)
 ![JavaFX](https://img.shields.io/badge/JavaFX-25-blue?style=flat-square)
@@ -12,21 +8,9 @@
 
 > *"Bertahan hidup di kota yang tidak pernah tidur — dan tidak pernah memaafkan."*
 
-<<<<<<< HEAD
 **Arclight City** adalah game RPG roguelite turn-based dengan GUI JavaFX murni (tanpa FXML).
 Dibangun sebagai Tugas Akhir mata kuliah **Pemrograman Berorientasi Objek**,
 terinspirasi dari game mobile *Arclight City* oleh Dex App Studio.
-=======
-**Arclight City** adalah game RPG roguelite berbasis teks dengan GUI JavaFX.
-
-Dibangun sebagai Tugas Akhir mata kuliah **Pemrograman Berorientasi Objek**,
-terinspirasi dari game mobile *Arclight City* oleh Dex App Studio.
-=======
-> *"Bertahan hidup di kota yang tidak pernah tidur — dan tidak pernah memaafkan."*
-
-**Arclight City** adalah game RPG berbasis teks dengan elemen roguelite yang dibangun menggunakan **Java + JavaFX**. Proyek ini merupakan tugas akhir mata kuliah **Pemrograman Berorientasi Objek**, terinspirasi dari game mobile *Arclight City* oleh Dex App Studio.
-
->>>>>>> d9f641f0832b83ad3cbab833e0749add679a5d7e
 
 ---
 
@@ -64,7 +48,21 @@ Semua screen dibangun secara programmatic (view-as-code), bukan dengan file FXML
 
 ---
 
-## ✨ Sistem Combat
+## 📸 Screenshots (v0.2.0)
+
+| Screen | Preview |
+|--------|---------|
+| Main Menu | Animasi title glowing cyan + grid background perspektif |
+| Create Character | Card selector 6 background dengan bonus preview |
+| Dungeon Map | Room grid dengan icon type + next room navigation |
+| Combat | Enemy/ally cards dengan HP+Shield bars + combat log |
+| Loot Found | Popup item yang didapat dengan rarity tag |
+| Victory | Layar victory dengan reward EXP + Gold |
+| Mercenary | Card stats + HP/Shield/MP bars per merc |
+
+> *Screenshot aktual akan ditambahkan di update berikutnya*
+
+
 
 - **Turn-based** berbasis stat **SPEED** — entity lebih cepat giliran duluan
 - **2 bar vital**: HP (merah) + Shield (ungu) — Shield diserap terlebih dahulu sebelum HP
@@ -269,6 +267,40 @@ ArclightCity/
 Tugas Akhir — **Pemrograman Berorientasi Objek**, Semester 2
 
 Terinspirasi dari: *Arclight City* by Dex App Studio
+
+---
+
+## 🔧 Git Workflow (untuk kontributor)
+
+### Push pertama kali
+```bash
+git init
+git remote add origin https://github.com/USERNAME/ArclightCity.git
+git add .
+git commit -m "feat: initial commit v0.1.0"
+git push -u origin main
+```
+
+### Update versi baru
+```bash
+git add .
+git commit -m "feat: v0.2.0 - loot system, inventory fix, AI turn guard"
+git push origin main
+```
+
+### Kalau muncul merge conflict di README
+```bash
+# Jangan langsung push kalau ada conflict marker <<<<<<< HEAD
+git pull origin main --rebase
+# Buka file yang conflict, hapus semua marker:
+# <<<<<<< HEAD  → hapus
+# =======       → hapus
+# >>>>>>> hash  → hapus
+# Sisakan hanya versi yang benar
+git add README.md
+git rebase --continue
+git push origin main
+```
 
 ---
 
