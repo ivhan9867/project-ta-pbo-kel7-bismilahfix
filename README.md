@@ -1,5 +1,9 @@
 # ⚡ ARCLIGHT CITY
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> d9f641f0832b83ad3cbab833e0749add679a5d7e
 ![Version](https://img.shields.io/badge/version-v0.2.0-00E5FF?style=flat-square)
 ![Java](https://img.shields.io/badge/Java-25-orange?style=flat-square)
 ![JavaFX](https://img.shields.io/badge/JavaFX-25-blue?style=flat-square)
@@ -8,9 +12,21 @@
 
 > *"Bertahan hidup di kota yang tidak pernah tidur — dan tidak pernah memaafkan."*
 
+<<<<<<< HEAD
 **Arclight City** adalah game RPG roguelite turn-based dengan GUI JavaFX murni (tanpa FXML).
 Dibangun sebagai Tugas Akhir mata kuliah **Pemrograman Berorientasi Objek**,
 terinspirasi dari game mobile *Arclight City* oleh Dex App Studio.
+=======
+**Arclight City** adalah game RPG roguelite berbasis teks dengan GUI JavaFX.
+
+Dibangun sebagai Tugas Akhir mata kuliah **Pemrograman Berorientasi Objek**,
+terinspirasi dari game mobile *Arclight City* oleh Dex App Studio.
+=======
+> *"Bertahan hidup di kota yang tidak pernah tidur — dan tidak pernah memaafkan."*
+
+**Arclight City** adalah game RPG berbasis teks dengan elemen roguelite yang dibangun menggunakan **Java + JavaFX**. Proyek ini merupakan tugas akhir mata kuliah **Pemrograman Berorientasi Objek**, terinspirasi dari game mobile *Arclight City* oleh Dex App Studio.
+
+>>>>>>> d9f641f0832b83ad3cbab833e0749add679a5d7e
 
 ---
 
