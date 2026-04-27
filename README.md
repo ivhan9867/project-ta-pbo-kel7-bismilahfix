@@ -10,13 +10,14 @@
 > *"Bertahan hidup di kota yang tidak pernah tidur — dan tidak pernah memaafkan."*
 
 **Arclight City** adalah game RPG roguelite berbasis teks dengan GUI JavaFX.
+
 Dibangun sebagai Tugas Akhir mata kuliah **Pemrograman Berorientasi Objek**,
 terinspirasi dari game mobile *Arclight City* oleh Dex App Studio.
 =======
 > *"Bertahan hidup di kota yang tidak pernah tidur — dan tidak pernah memaafkan."*
 
 **Arclight City** adalah game RPG berbasis teks dengan elemen roguelite yang dibangun menggunakan **Java + JavaFX**. Proyek ini merupakan tugas akhir mata kuliah **Pemrograman Berorientasi Objek**, terinspirasi dari game mobile *Arclight City* oleh Dex App Studio.
->>>>>>> de9e6d8b52d65ef51f84370e7418b006c7d423d5
+
 
 ---
 
