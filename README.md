@@ -1,31 +1,27 @@
 # ⚡ ARCLIGHT CITY
 
-<<<<<<< HEAD
 ![Version](https://img.shields.io/badge/version-v0.2.0-00E5FF?style=flat-square)
-![Java](https://img.shields.io/badge/Java-17%2B-orange?style=flat-square)
+![Java](https://img.shields.io/badge/Java-25-orange?style=flat-square)
 ![JavaFX](https://img.shields.io/badge/JavaFX-25-blue?style=flat-square)
 ![Build](https://img.shields.io/badge/build-Maven-AA00FF?style=flat-square)
 ![Status](https://img.shields.io/badge/status-In%20Development-FFD600?style=flat-square)
 
 > *"Bertahan hidup di kota yang tidak pernah tidur — dan tidak pernah memaafkan."*
 
-**Arclight City** adalah game RPG roguelite berbasis teks dengan GUI JavaFX.
+**Arclight City** adalah game RPG roguelite turn-based dengan GUI JavaFX murni (tanpa FXML).
 Dibangun sebagai Tugas Akhir mata kuliah **Pemrograman Berorientasi Objek**,
 terinspirasi dari game mobile *Arclight City* oleh Dex App Studio.
-=======
-> *"Bertahan hidup di kota yang tidak pernah tidur — dan tidak pernah memaafkan."*
-
-**Arclight City** adalah game RPG berbasis teks dengan elemen roguelite yang dibangun menggunakan **Java + JavaFX**. Proyek ini merupakan tugas akhir mata kuliah **Pemrograman Berorientasi Objek**, terinspirasi dari game mobile *Arclight City* oleh Dex App Studio.
->>>>>>> de9e6d8b52d65ef51f84370e7418b006c7d423d5
 
 ---
 
 ## 🎮 Tentang Game
 
-<<<<<<< HEAD
 Kamu adalah seorang runner di **Arclight City** — kota cyberpunk yang dikuasai
 korporasi megabesar. Masuki dungeon bawah kota, lawan musuh yang makin kuat
-di setiap lantai, kumpulkan loot, upgrade equipment, dan manage mercenary-mu.
+di setiap lantai, kumpulkan loot, upgrade equipment, dan manage tim mercenary-mu.
+
+Game ini sepenuhnya dimainkan lewat UI JavaFX — tidak ada command line input.
+Semua screen dibangun secara programmatic (view-as-code), bukan dengan file FXML.
 
 ---
 
@@ -39,12 +35,12 @@ di setiap lantai, kumpulkan loot, upgrade equipment, dan manage mercenary-mu.
 | Dungeon Map + Navigasi Room | ✅ Jalan |
 | Combat Turn-Based | ✅ Jalan |
 | Loot Room → Item masuk Inventory | ✅ Fixed v0.2 |
-| Rest Room → HP/MP restore | ✅ Fixed v0.2 |
-| Inventory (EQUIP/UPGRADE/CALIBRATE/USE) | ✅ Fixed v0.2 |
+| Rest Room → HP/MP restore + notifikasi | ✅ Fixed v0.2 |
+| Inventory (EQUIP / UPGRADE / CALIBRATE / USE) | ✅ Fixed v0.2 |
 | Mercenary Management | ✅ Jalan |
 | Profile / Stat Sheet | ✅ Jalan |
 | Victory & Game Over Screen | ✅ Jalan |
-| Event Room (choices) | ✅ Jalan |
+| Event Room (pilihan + efek) | ✅ Jalan |
 | Shop Screen | 🚧 Placeholder |
 | Skill Selection UI | 🚧 Coming v0.3 |
 | Save / Load | 🚧 Coming v0.6 |
@@ -52,26 +48,28 @@ di setiap lantai, kumpulkan loot, upgrade equipment, dan manage mercenary-mu.
 
 ---
 
-## ✨ Fitur Combat
+## ✨ Sistem Combat
 
-- **Turn-based** berbasis SPEED stat — entity lebih cepat giliran duluan
-- **2 bar vital**: HP (merah) + Shield (ungu) — shield diserap sebelum HP
-- **3 tipe damage**: Physical / Cyber / Energy — masing-masing punya resistensi
-- **28 status effect**: DOT, CC, Buff, Debuff
-- **Damage Multiplier** sebagai stat tersendiri dari equipment
+- **Turn-based** berbasis stat **SPEED** — entity lebih cepat giliran duluan
+- **2 bar vital**: HP (merah) + Shield (ungu) — Shield diserap terlebih dahulu sebelum HP
+- **3 tipe damage**: Physical / Cyber / Energy — masing-masing punya resistensi berbeda
+- **27 status effect**: DOT, CC, Buff, Debuff (lihat `StatusEffectType.java`)
+- **28 stat unik** per entity melalui `StatSheet` (lihat `StatType.java`)
+- **Damage Multiplier** sebagai stat tersendiri yang dipengaruhi equipment
+- AI enemy punya 3 mode aksi: `normalAction()`, `specialAction()`, `desperateAction()`
 
 ---
 
 ## 👤 Background Origin (6 pilihan)
 
-| Background | Keunggulan |
+| Background | Keunggulan Stat Awal |
 |---|---|
-| 🥊 Street Brawler | Physical ATK, HP, Crit, DMG Mult |
-| 💻 Netrunner | Cyber ATK, MP, Skill Power, CDR |
+| 🥊 Street Brawler | Physical ATK, HP, Crit Chance, DMG Multiplier |
+| 💻 Netrunner | Cyber ATK, MP, Skill Power, Cooldown Reduction |
 | 🪖 Veteran Soldier | DEF, HP, Shield, Block Chance |
 | ⚡ Energy Adept | Energy ATK, Lifesteal, Skill Power |
-| 👻 Ghost Operative | Evasion, Speed, Crit, Armor Pierce |
-| 🔧 Techwright | Shield Regen, Sync Rate, Merc Buff |
+| 👻 Ghost Operative | Evasion, Speed, Crit Chance, Armor Pierce |
+| 🔧 Techwright | Shield Regen, Sync Rate, Mercenary Buff |
 
 ---
 
@@ -79,135 +77,59 @@ di setiap lantai, kumpulkan loot, upgrade equipment, dan manage mercenary-mu.
 
 | Merc | Role | Keunikan |
 |---|---|---|
-| Kira Voss | DPS | Stealth + guaranteed crit |
+| Kira Voss | DPS Sniper | Stealth + guaranteed crit shot |
 | Tank-RX9 | Tank | Shield tertinggi, Taunt, Counter |
-| Sera Mend | Support | Heal + Cleanse debuff |
-| Vector | DPS | Execute + Hack musuh |
-| Magnus Forge | DPS AoE | Charge shot, Incendiary |
-| Echo Null | CC | EMP, Frequency Lock, Signal Jam |
-| Lyra Bloom | Support | AoE Heal + Resonance buff |
-
----
-
-## 👾 Enemy yang Ada
-
-| Enemy | Race | Tier | Mechanic |
-|---|---|---|---|
-| Street Thug | Human | Standard | Stun |
-| Neon Serpent | Mutant | Standard | Bleed stack |
-| Glitch Drone | Android | Minion | MP Drain, Self Destruct |
-| Iron Clad | Cyborg | **Elite** | 3 armor phase |
-| Void Specter | Specter | **Elite** | Immune Physical, Phase Shift |
-| **Null King** | Android | **BOSS** | 3 fase, Null Field |
-
----
-
-## 🚀 Cara Run
-
-### Prerequisites
-- JDK 17 atau 21+
-- Maven 3.9+
-- JavaFX tidak perlu download terpisah — sudah dihandle Maven
-
-### Run langsung
-```bash
-git clone https://github.com/USERNAME/ArclightCity.git
-cd ArclightCity
-mvn javafx:run
-=======
-Kamu adalah seorang runner di **Arclight City** — kota cyberpunk yang dikuasai korporasi megabesar, penuh dengan gang jalanan, entitas digital yang bocor ke dunia nyata, dan teknologi neon yang lebih berbahaya dari senjata apapun.
-
-Tujuanmu: masuk ke **dungeon** bawah kota, bertarung melawan musuh yang makin kuat di setiap lantai, kumpulkan loot, upgrade equipment, dan buktikan bahwa kamu bisa bertahan lebih lama dari runner sebelumnya.
-
----
-
-## ✨ Fitur Utama
-
-### ⚔️ Combat System
-- **Turn-based** berbasis kecepatan (SPEED stat) — entity lebih cepat bisa dapat giliran 2x sebelum yang lambat
-- **3 tipe damage**: Physical, Cyber, Energy — masing-masing punya resistensi tersendiri
-- **2 bar vital terpisah**: HP dan Shield — Shield diserap lebih dulu sebelum HP kena
-- **28 status effect**: DOT (Burn, Bleed, Virus), CC (Stun, Freeze, Hack, Sleep), Buff/Debuff
-- **Damage Multiplier** sebagai stat tersendiri — makin tinggi tier item, makin besar multiplier
-
-### 🏰 Dungeon System
-- **Procedural generation** — setiap run, setiap lantai berbeda
-- **9 tipe room**: Enemy, Elite, Boss, Loot, Rest, Event, Shop, Trap, Empty
-- **Branching path** — pilih jalur mana yang mau diambil
-- **5 tema floor**: Neon Slum, Corporate HQ, Data Vault, Neon Wastes, Void Rift
-- Makin dalam → enemy makin kuat, loot makin langka
-
-### 👤 Character System
-- **Classless skill system** — bebas pilih skill dari pool manapun
-- **6 background origin** dengan bonus stat unik:
-  - 🥊 Street Brawler — fisik tinggi, damage multiplier
-  - 💻 Netrunner — cyber attack, skill power, CDR
-  - 🪖 Veteran Soldier — tank, shield tinggi, block
-  - ⚡ Energy Adept — energy attack, lifesteal, skill power
-  - 👻 Ghost Operative — evasion, crit, armor pierce
-  - 🔧 Techwright — shield regen, sync rate, mercenary buff
-
-### 🤝 Mercenary System
-- **7 mercenary** dengan role dan AI berbeda:
-  - 🎯 **Kira Voss** (Ghost Sniper) — stealth + guaranteed crit dari bayang-bayang
-  - 🤖 **Tank-RX9** (Combat Android) — tank terkuat, shield & taunt
-  - 💉 **Sera Mend** (Field Medic) — healer + cleanse debuff
-  - 🗡️ **Vector** (Cyber Assassin) — execute + hack musuh menyerang rekannya sendiri
-  - 💣 **Magnus Forge** (Heavy Gunner) — AoE damage tertinggi, charge shot
-  - 📡 **Echo Null** (Signal Jammer) — CC specialist, EMP, frequency lock
-  - 🌸 **Lyra Bloom** (Neon Shaman) — AoE heal + resonance buff seluruh party
-- **Loyalty system** — makin sering dipakai, makin kuat (hingga Soul Sync level 10)
-- **Synergy bonuses** antar mercenary tertentu
-
-### 🎒 Item & Progression
-- **5 rarity tier**: Common → Uncommon → Rare → Epic → Legendary
-- **Upgrade system** — naikan level item dengan material dungeon
-- **Calibration system** — re-roll bonus stat item, dengan chance sukses berbeda per rarity
-- **Procedural item generation** — weapon, armor, accessory di-generate secara acak dengan stat yang bervariasi
-
-### 🎲 Event System
-- **10+ jenis event** dengan pilihan yang berpengaruh:
-  - 🔧 Calibration Terminal — kalibrasi gratis
-  - 💜 Neon Fountain — pilih antara heal HP atau buff senjata
-  - 💾 Data Cache — pilih EXP atau Gold
-  - 📦 Mystery Box — risiko tinggi, reward tinggi
-  - ☣️ Corrupted Cache — loot tapi mungkin kena Virus
-  - ⚡ Electric Trap, ❄️ Cryo Trap, 🔥 Neon Burn, dan lainnya
+| Sera Mend | Support Healer | Heal + Cleanse debuff party |
+| Vector | DPS Assassin | Execute low-HP enemy + Hack |
+| Magnus Forge | DPS AoE | Charge shot, Incendiary rounds |
+| Echo Null | CC Specialist | EMP burst, Frequency Lock, Signal Jam |
+| Lyra Bloom | Support Buffer | AoE Heal + Resonance buff party |
 
 ---
 
 ## 👾 Daftar Enemy
 
-| Enemy | Race | Tier | Mechanic Khusus |
-|-------|------|------|-----------------|
-| Street Thug | Human | Standard | Power Strike + Stun |
-| Neon Serpent | Mutant | Standard | Stack Bleed, Coil Strike AoE |
-| Glitch Drone | Android | Minion | Drain MP, Virus Upload, Self Destruct |
-| Iron Clad | Cyborg | **Elite** | 3 armor phase, Shockwave AoE |
-| Void Specter | Specter | **Elite** | Immune Physical, Phase Shift, Corrupt balik buff jadi debuff |
-| **Null King** | Android | **BOSS** | 3 fase, Null Field (hapus semua buff party) |
+| Enemy | Race | Tier | Mechanic Unik |
+|---|---|---|---|
+| Street Thug | Human | Standard | Stun |
+| Neon Serpent | Mutant | Standard | Bleed stack |
+| Glitch Drone | Android | Minion | MP Drain, Self Destruct |
+| Iron Clad | Cyborg | **Elite** | 3-fase armor (Heavy → Damaged → Core) |
+| Void Specter | Specter | **Elite** | Kebal Physical, Phase Shift |
+| **Null King** | Android | **BOSS** | 3 fase bertahap, Null Field, sistem HP shield |
 
 ---
 
-## 🖥️ Screenshots
+## 🚀 Cara Run
 
-> *(Coming soon — project masih dalam pengembangan)*
+### Prasyarat
+- **JDK 25** (sesuai versi project)
+- **Maven 3.9+** — download di https://maven.apache.org/download.cgi
+  lalu tambahkan ke PATH, atau gunakan Maven bawaan NetBeans
+- JavaFX **tidak perlu diinstall manual** — diunduh otomatis oleh Maven
 
+### Menjalankan Game
+```bash
+cd ArclightCity
+mvn javafx:run
 ```
-╔══════════════════════════════╗
-║      A R C L I G H T        ║
-║      C  I  T  Y             ║
-║  ─── CYBERPUNK RPG ───       ║
-║                              ║
-║   [ ENTER ARCLIGHT CITY ]   ║
-║   [ CONTINUE ]              ║
-╚══════════════════════════════╝
->>>>>>> de9e6d8b52d65ef51f84370e7418b006c7d423d5
+
+### Membuka di NetBeans
+1. `File` → `Open Project` → pilih folder `ArclightCity` (yang ada `pom.xml`)
+2. NetBeans mendeteksi otomatis sebagai Maven project
+3. Klik kanan project → **Run** atau tekan **F6**
+
+### Build JAR
+```bash
+mvn package
+# Output: target/ArclightCity-1.0-SNAPSHOT.jar
 ```
+
+> **Catatan:** Pertama kali build akan mengunduh dependency JavaFX 25 dari
+> Maven Central (~beberapa menit tergantung koneksi). Build berikutnya lebih cepat.
 
 ---
 
-<<<<<<< HEAD
 ## 🏗️ Arsitektur OOP
 
 ```
@@ -218,22 +140,6 @@ Entity (abstract)
 │                      └── Boss (abstract) → NullKing
 └── Mercenary (abstract) → KiraVoss, TankRX9, SeraMend,
                             Vector, MagnusForge, EchoNull, LyraBloom
-=======
-## 🏗️ Arsitektur & Konsep OOP
-
-Project ini mengimplementasikan konsep OOP secara eksplisit:
-
-### Inheritance
-```
-Entity (abstract)
-├── Player
-├── Enemy (abstract)
-│   ├── StreetThug, NeonSerpent, GlitchDrone
-│   ├── IronClad, VoidSpecter
-│   └── Boss (abstract) → NullKing
-└── Mercenary (abstract)
-    └── KiraVoss, TankRX9, SeraMend, Vector, MagnusForge, EchoNull, LyraBloom
->>>>>>> de9e6d8b52d65ef51f84370e7418b006c7d423d5
 
 Item (abstract)
 ├── Equipment → Weapon, Armor, Accessory
@@ -241,183 +147,115 @@ Item (abstract)
 └── Material
 ```
 
-### Design Patterns
-<<<<<<< HEAD
+### Design Patterns yang Digunakan
 
-| Pattern | Implementasi |
+| Pattern | Lokasi Implementasi |
 |---|---|
-| Observer | `CombatManager.addEventListener()`, `DungeonManager.setStateListener()` |
-| Factory | `EntityFactory.createEnemy()`, `createMercenary()` |
-| Strategy | AI behavior per enemy: `normalAction()`, `specialAction()`, `desperateAction()` |
-| Template Method | `Enemy.decideAction()` template, subclass override |
-=======
-| Pattern | Implementasi |
-|---------|-------------|
-| **Observer** | `CombatManager.addEventListener()`, `DungeonManager.setStateListener()` |
-| **Factory** | `EntityFactory.createEnemy()`, `EntityFactory.createMercenary()` |
-| **Strategy** | AI behavior per enemy: `normalAction()`, `specialAction()`, `desperateAction()` |
-| **Template Method** | `Enemy.decideAction()` sebagai template, subclass override aksi spesifik |
-
----
-
-## 🛠️ Tech Stack
-
-| Komponen | Teknologi |
-|----------|-----------|
-| Language | Java 17+ |
-| UI Framework | JavaFX 17+ |
-| Build Tool | Apache Ant (NetBeans) |
-| IDE | NetBeans 17+ |
-
----
-
-## 🚀 Cara Run
-
-### Prerequisites
-- JDK 17 atau 21
-- JavaFX SDK 17+ ([download di sini](https://gluonhq.com/products/javafx/))
-- NetBeans 17+
-
-### Langkah Setup
-1. Clone atau download project ini
-2. Buka NetBeans → **File → Open Project** → pilih folder `ArclightCity_NetBeans`
-3. Tambah JavaFX library: klik kanan project → **Properties → Libraries → Add Library**
-4. Set VM Options di **Properties → Run**:
-```
---module-path "/path/to/javafx-sdk/lib"
---add-modules javafx.controls,javafx.fxml,javafx.graphics
---add-opens javafx.graphics/com.sun.javafx.application=ALL-UNNAMED
-```
-5. Tekan **F6** untuk run
-
-**Main class:** `arclightcity.ui.ArclightApp`
-
-> Lihat `SETUP_GUIDE.md` untuk panduan lebih lengkap.
->>>>>>> de9e6d8b52d65ef51f84370e7418b006c7d423d5
+| **Observer** | `CombatManager.addEventListener()`, `DungeonManager.setStateListener()` — event combat & dungeon disebarkan ke listener UI |
+| **Factory** | `EntityFactory.createEnemy()`, `createMercenary()`, `createPlayer()` — satu titik pembuatan entity |
+| **Strategy** | AI behavior per enemy: `normalAction()`, `specialAction()`, `desperateAction()` — polymorphism penuh |
+| **Template Method** | `Enemy.decideAction()` mendefinisikan alur, subclass override `normalAction()` dll |
+| **Builder** | `CombatEvent.Builder` dan `DungeonStateEvent.Builder` — konstruksi event yang kompleks secara fluent |
 
 ---
 
 ## 📁 Struktur Project
 
 ```
-<<<<<<< HEAD
-src/main/java/arclightcity/
-=======
-src/arclightcity/
->>>>>>> de9e6d8b52d65ef51f84370e7418b006c7d423d5
-├── engine/          # GameEngine — controller utama
-├── entity/
-│   ├── base/        # Entity, EntityType, CombatAction
-│   ├── stats/       # StatType (26 stat), StatSheet, DamageType
-<<<<<<< HEAD
-│   ├── status/      # 28 StatusEffectType + StatusEffect
-│   ├── player/      # Player + 6 PlayerBackground
-│   ├── enemy/       # 5 enemy + Boss system
-│   └── mercenary/   # 7 mercenary dengan AI unik
-├── combat/          # CombatManager, DamageCalculator, SkillExecutor, TurnQueue
-├── dungeon/         # DungeonManager, ProceduralGenerator, DungeonEvent
-├── item/            # Item, Equipment, Weapon, Armor, Accessory,
-│                    # Consumable, Material, Inventory,
-│                    # UpgradeSystem, CalibrationSystem, LootManager
-└── ui/
-    ├── ArclightApp.java        # Entry point JavaFX
-    ├── controller/SceneRouter  # Navigasi antar screen
-    ├── util/UIFactory          # Komponen UI reusable
-    └── view/                   # Semua screen
-src/main/resources/
-└── arclightcity/ui/style/arclight.css   # Cyberpunk dark theme
-=======
-│   ├── status/      # 28 StatusEffectType
-│   ├── player/      # Player + 6 PlayerBackground
-│   ├── enemy/       # 5 enemy type + Boss system
-│   └── mercenary/   # 7 mercenary dengan AI unik
-├── combat/          # CombatManager, DamageCalculator, SkillExecutor, TurnQueue
-├── dungeon/         # DungeonManager, ProceduralGenerator, DungeonEvent
-├── item/            # Item system, Inventory, UpgradeSystem, LootManager
-└── ui/
-    ├── ArclightApp.java      # Entry point JavaFX
-    ├── controller/           # SceneRouter
-    ├── util/                 # UIFactory (komponen reusable)
-    ├── view/                 # Semua screen (Hub, Combat, Dungeon, dll)
-    └── style/arclight.css    # Cyberpunk dark theme
->>>>>>> de9e6d8b52d65ef51f84370e7418b006c7d423d5
+ArclightCity/
+├── pom.xml                              ← konfigurasi Maven (JavaFX 25, JDK 25)
+├── CHANGELOG.md                         ← log perubahan fitur per versi
+├── CHANGELOG_FIXES.md                   ← log bug fixing teknis (migrasi Maven)
+├── README.md                            ← file ini
+└── src/
+    └── main/
+        ├── java/arclightcity/
+        │   ├── engine/
+        │   │   └── GameEngine.java       ← controller utama, state machine
+        │   ├── entity/
+        │   │   ├── base/                 ← Entity (abstract), EntityType
+        │   │   ├── stats/                ← StatType (28 stat), StatSheet, DamageType
+        │   │   ├── status/               ← StatusEffectType (27 efek), StatusEffect
+        │   │   ├── player/               ← Player + 6 PlayerBackground
+        │   │   ├── enemy/                ← Enemy, Boss, 5 implementasi enemy
+        │   │   └── mercenary/            ← Mercenary, MercenaryType, 7 implementasi
+        │   ├── combat/
+        │   │   ├── CombatAction.java     ← representasi aksi per turn
+        │   │   ├── CombatManager.java    ← engine pertarungan, turn queue
+        │   │   ├── CombatEvent.java      ← event system combat (Builder pattern)
+        │   │   ├── CombatResult.java     ← hasil akhir pertarungan
+        │   │   ├── DamageCalculator.java ← kalkulasi damage, resistensi, crit
+        │   │   ├── SkillExecutor.java    ← eksekusi skill & status effect
+        │   │   └── TurnQueue.java        ← antrian giliran berbasis SPEED
+        │   ├── dungeon/
+        │   │   ├── DungeonManager.java   ← alur dungeon, floor, room transitions
+        │   │   ├── ProceduralGenerator.java ← generasi floor & room secara prosedural
+        │   │   ├── Floor.java / Room.java   ← model data dungeon
+        │   │   ├── DungeonEvent.java     ← event room (pilihan & efek)
+        │   │   └── DungeonStateEvent.java ← event state mesin dungeon (Builder)
+        │   ├── item/
+        │   │   ├── Item.java             ← base class item (abstract)
+        │   │   ├── Equipment.java        ← base equipment + stat modifier
+        │   │   ├── Weapon / Armor / Accessory.java
+        │   │   ├── Consumable.java       ← potion, booster
+        │   │   ├── Material.java         ← bahan upgrade
+        │   │   ├── Inventory.java        ← bag + slot equipment player
+        │   │   ├── LootManager.java      ← generasi loot berdasarkan floor
+        │   │   ├── UpgradeSystem.java    ← sistem upgrade item
+        │   │   └── CalibrationSystem.java ← sistem kalibrasi equipment
+        │   └── ui/
+        │       ├── ArclightApp.java      ← entry point JavaFX (extends Application)
+        │       ├── controller/
+        │       │   └── SceneRouter.java  ← navigasi & transisi antar screen
+        │       ├── util/
+        │       │   └── UIFactory.java    ← komponen UI reusable (button, panel, dll)
+        │       └── view/                 ← semua screen game (pure JavaFX, tanpa FXML)
+        │           ├── MainMenuView.java
+        │           ├── CharacterCreateView.java
+        │           ├── HubView.java
+        │           ├── DungeonMapView.java
+        │           ├── CombatView.java
+        │           ├── ProfileView.java
+        │           ├── ViewsBundle.java  ← Inventory, Mercenary, Shop, Event, Victory, GameOver
+        │           ├── InventoryView.java / MercenaryView.java / ...
+        │           └── (dan lainnya)
+        └── resources/
+            └── ui/style/
+                └── arclight.css         ← cyberpunk dark theme
 ```
 
 ---
 
-<<<<<<< HEAD
 ## 🗺️ Roadmap
 
 | Versi | Fokus | Status |
 |---|---|---|
-| v0.1.0 | Foundation — game bisa jalan end-to-end | ✅ Done |
-| v0.2.0 | Bug fix krusial: loot, inventory, AI loop | ✅ Done |
-| v0.3.0 | Combat polish: skill UI, target select, damage anim | 🔜 Next |
-| v0.4.0 | Progression: level up UI, skill unlock screen | 📋 Planned |
+| v0.1.0 | Foundation — migrasi Maven, game bisa jalan end-to-end | ✅ Done |
+| v0.2.0 | Bug fix krusial: loot, inventory, AI loop, rest room | ✅ Done |
+| v0.3.0 | Combat polish: skill selection UI, target selection, damage animation | 🔜 Next |
+| v0.4.0 | Progression: level up UI, skill unlock screen, stat growth | 📋 Planned |
 | v0.5.0 | Content: enemy baru, boss kedua, shop fungsional | 📋 Planned |
-| v0.6.0 | QoL: save/load, tutorial, mercenary hire | 📋 Planned |
+| v0.6.0 | QoL: save/load system, tutorial, mercenary hire di hub | 📋 Planned |
 
 ---
 
-## 📝 Changelog
+## 📝 Dokumentasi
 
-Lihat [CHANGELOG.md](CHANGELOG.md) untuk detail perubahan tiap versi.
-=======
-## 🗺️ Game Flow
-
-```
-Main Menu
-    ↓
-Create Character (nama + pilih background)
-    ↓
-Hub (stat, mercenary, inventory)
-    ↓
-Enter Dungeon → Dungeon Map
-    ↓
-Navigate Rooms → Enemy/Event/Loot/Rest
-    ↓
-Combat → Victory/Defeat
-    ↓
-Boss Room → Floor Complete
-    ↓
-Descend → Next Floor (makin susah)
-    ↓
-Return to Hub → Upgrade & Calibrate
-```
-
----
-
-## 📋 Roadmap
-
-- [ ] Pisah `ItemSystem.java` ke file terpisah per class
-- [ ] Save/Load system (Java Serialization)
-- [ ] Skill registry yang proper (interface `Skill`)
-- [ ] More enemy types per zone
-- [ ] Sound effects
-- [ ] Lebih banyak boss dengan mechanic unik
-- [ ] Quest system
->>>>>>> de9e6d8b52d65ef51f84370e7418b006c7d423d5
+| File | Isi |
+|---|---|
+| [CHANGELOG.md](CHANGELOG.md) | Log perubahan fitur per versi game |
+| [CHANGELOG_FIXES.md](CHANGELOG_FIXES.md) | Log teknis: 17 bug yang diperbaiki selama migrasi NetBeans Ant → JavaFX Maven |
 
 ---
 
 ## 👨‍💻 Author
 
-<<<<<<< HEAD
-Tugas Akhir — **Pemrograman Berorientasi Objek**
+Tugas Akhir — **Pemrograman Berorientasi Objek**, Semester 2
 
 Terinspirasi dari: *Arclight City* by Dex App Studio
-=======
-Dibuat sebagai tugas akhir mata kuliah **Pemrograman Berorientasi Objek**.
-
-Terinspirasi dari: **Arclight City** by Dex App Studio
->>>>>>> de9e6d8b52d65ef51f84370e7418b006c7d423d5
 
 ---
 
 ## 📄 License
 
-<<<<<<< HEAD
 Dibuat untuk keperluan akademik.
-=======
-Project ini dibuat untuk keperluan akademik.
->>>>>>> de9e6d8b52d65ef51f84370e7418b006c7d423d5
