@@ -1,6 +1,6 @@
 # ⚡ ARCLIGHT CITY
 
-<<<<<<< HEAD
+
 ![Version](https://img.shields.io/badge/version-v0.2.0-00E5FF?style=flat-square)
 ![Java](https://img.shields.io/badge/Java-17%2B-orange?style=flat-square)
 ![JavaFX](https://img.shields.io/badge/JavaFX-25-blue?style=flat-square)
