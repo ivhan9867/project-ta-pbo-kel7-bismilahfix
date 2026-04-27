@@ -406,3 +406,69 @@ Tambahkan `import arclightcity.ui.ArclightApp;` ke `SceneRouter.java`.
 | 14 | Bug Kritis | Ganti akses `protected` field dengan `addDamageDealt()` | Fix compile error |
 | 15 | Bug Kritis | Fix referensi package tidak lengkap di `EchoNull.java` | Fix compile error |
 | 16 | Bug Kritis | Tambah `import ArclightApp` di `SceneRouter.java` | Fix compile error |
+
+---
+
+## [v0.2.0] — Bug Fixing Kompilasi Tambahan
+
+### Bug #14 — Unqualified Package Reference di `DungeonMapView.java` (KRITIS)
+
+**File:** `arclightcity/ui/view/DungeonMapView.java`
+
+### Masalah
+Fitur baru `showLootPopup()` yang ditambahkan di v0.2 menggunakan nama package
+**tanpa prefix `arclightcity`**:
+
+```java
+// SALAH — compiler tidak kenal package "dungeon" atau "item" tanpa prefix
+private void showLootPopup(dungeon.DungeonStateEvent event) {
+    java.util.List<item.Item> drops = item.LootManager.generateLoot(...);
+    for (item.Item it : drops) { ... }
+}
+```
+
+Java compiler mencari package `dungeon` dan `item` di root classpath —
+tidak ditemukan karena package aslinya adalah `arclightcity.dungeon`
+dan `arclightcity.item`.
+
+### Perbaikan
+1. Tambahkan import yang hilang di `DungeonMapView.java`:
+   ```java
+   import arclightcity.item.Item;
+   import arclightcity.item.LootManager;
+   ```
+2. Ganti semua referensi unqualified ke nama pendek yang sudah di-cover import:
+   ```java
+   // BENAR
+   private void showLootPopup(DungeonStateEvent event) {
+       java.util.List<Item> drops = LootManager.generateLoot(...);
+       for (Item it : drops) { ... }
+   }
+   ```
+
+### File Terdampak
+- `ui/view/DungeonMapView.java` — 4 referensi di-fix (line 402, 404, 404, 417)
+
+---
+
+## Ringkasan Semua Perubahan (diupdate v0.2)
+
+| No | Versi | Kategori | Perubahan | Dampak |
+|----|-------|----------|-----------|--------|
+| 1 | v0.1 | Build System | NetBeans Ant → JavaFX Maven | Portabilitas |
+| 2 | v0.1 | Versi | JavaFX 21 → JavaFX 25, JDK 17 → JDK 25 | Sesuai env lokal |
+| 3 | v0.1 | Bug Kritis | Hapus `entity/base/CombatAction.java` duplikat | Fix compile error |
+| 4 | v0.1 | Bug Kritis | Fix 20 import `entity.base.CombatAction` → `combat.CombatAction` | Fix compile error |
+| 5 | v0.1 | Bug Kritis | Fix 6 nama constructor di `ViewsBundle.java` | Fix runtime crash |
+| 6 | v0.1 | Code Quality | Hapus duplicate import di `CombatView.java` | Bersihkan warning |
+| 7 | v0.1 | Code Quality | Hapus duplicate import di `GameEngine.java` | Bersihkan warning |
+| 8 | v0.1 | Resources | Pindahkan CSS ke `src/main/resources/` | Classpath Maven |
+| 9 | v0.1 | Bug Kritis | Buat ulang `combat/CombatAction.java` yang hilang | Fix compile error |
+| 10 | v0.1 | Bug Kritis | Tambah import hilang di 7 file | Fix compile error |
+| 11 | v0.1 | Code Quality | Hapus 14 import `CombatAction` duplikat | Bersihkan warning |
+| 12 | v0.1 | Bug Kritis | Fix unclosed string literal di `ViewsBundle.java` | Fix compile error |
+| 13 | v0.1 | Bug Kritis | Tambah `DamageType` import di `CombatManager.java` | Fix compile error |
+| 14 | v0.1 | Bug Kritis | Ganti akses `protected` field dengan `addDamageDealt()` | Fix compile error |
+| 15 | v0.1 | Bug Kritis | Fix referensi package tidak lengkap di `EchoNull.java` | Fix compile error |
+| 16 | v0.1 | Bug Kritis | Tambah `import ArclightApp` di `SceneRouter.java` | Fix compile error |
+| 17 | v0.2 | Bug Kritis | Fix 4 unqualified package ref di `DungeonMapView.java` + tambah import `Item`, `LootManager` | Fix compile error |

@@ -201,42 +201,133 @@ public static class InventoryViewImpl {
         rarityBar.setStyle("-fx-background-color: " + UIFactory.rarityColor(item.getRarity()) + ";");
 
         // Item info
-        VBox info = new VBox(2);
+        VBox info = new VBox(3);
         HBox.setHgrow(info, Priority.ALWAYS);
 
+        // Name + rarity tag
+        HBox nameRow = new HBox(6);
+        nameRow.setAlignment(Pos.CENTER_LEFT);
         Label nameLabel = new Label(item.getFullName());
-        nameLabel.setStyle("-fx-text-fill: " + UIFactory.rarityColor(item.getRarity()) + "; -fx-font-family: 'Courier New'; -fx-font-size: 12px; -fx-font-weight: bold;");
+        nameLabel.setStyle("-fx-text-fill: " + UIFactory.rarityColor(item.getRarity()) +
+                "; -fx-font-family: 'Courier New'; -fx-font-size: 12px; -fx-font-weight: bold;");
+        Label rarityTag = new Label("[" + item.getRarity().displayName + "]");
+        rarityTag.setStyle("-fx-text-fill: " + UIFactory.rarityColor(item.getRarity()) +
+                "88; -fx-font-family: 'Courier New'; -fx-font-size: 9px;");
+        nameRow.getChildren().addAll(nameLabel, rarityTag);
 
-        String desc = item.getDisplaySummary().lines().skip(1).findFirst().orElse(item.getDescription());
-        Label descLabel = new Label(desc.trim());
+        // Stat summary (ambil 2 stat utama)
+        String statSummary = buildStatSummary(item);
+        Label descLabel = new Label(statSummary);
         descLabel.setStyle("-fx-text-fill: #8899AA; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+        descLabel.setWrapText(true);
 
-        info.getChildren().addAll(nameLabel, descLabel);
+        info.getChildren().addAll(nameRow, descLabel);
 
         // Action buttons
         VBox actions = new VBox(4);
         actions.setAlignment(Pos.CENTER_RIGHT);
+        actions.setMinWidth(80);
 
         if (item instanceof Equipment eq) {
-            Button upgradeBtn = new Button("+UPGRADE");
-            upgradeBtn.setStyle("-fx-background-color: transparent; -fx-border-color: #FFD60066; -fx-border-width: 1; -fx-text-fill: #FFD600; -fx-font-family: 'Courier New'; -fx-font-size: 9px; -fx-padding: 3 6; -fx-cursor: hand;");
+            // EQUIP button
+            Button equipBtn = new Button("EQUIP");
+            equipBtn.setStyle("-fx-background-color: #00E5FF15; -fx-border-color: #00E5FF55;" +
+                    " -fx-border-width: 1; -fx-text-fill: #00E5FF;" +
+                    " -fx-font-family: 'Courier New'; -fx-font-size: 9px;" +
+                    " -fx-padding: 3 6; -fx-cursor: hand;");
+            equipBtn.setOnAction(e -> {
+                var result = inv.equip(eq);
+                showAlert(result.success ? "✅ " + result.message : "❌ " + result.message);
+                refreshItemList(inv); // refresh setelah equip
+            });
+
+            // UPGRADE button
+            Button upgradeBtn = new Button("+UPG");
+            boolean canUpgrade = eq.canUpgrade();
+            upgradeBtn.setStyle("-fx-background-color: transparent;" +
+                    " -fx-border-color: " + (canUpgrade ? "#FFD60066" : "#5A6A8055") + ";" +
+                    " -fx-border-width: 1;" +
+                    " -fx-text-fill: " + (canUpgrade ? "#FFD600" : "#5A6A80") + ";" +
+                    " -fx-font-family: 'Courier New'; -fx-font-size: 9px;" +
+                    " -fx-padding: 3 6; -fx-cursor: " + (canUpgrade ? "hand" : "default") + ";");
+            upgradeBtn.setDisable(!canUpgrade);
             upgradeBtn.setOnAction(e -> {
                 var result = inv.upgradeItem(item.getId());
                 showAlert(result.message);
+                if (result.success) refreshItemList(inv);
             });
 
-            Button calibBtn = new Button("CALIBRATE");
-            calibBtn.setStyle("-fx-background-color: transparent; -fx-border-color: #AA00FF66; -fx-border-width: 1; -fx-text-fill: #AA00FF; -fx-font-family: 'Courier New'; -fx-font-size: 9px; -fx-padding: 3 6; -fx-cursor: hand;");
+            // CALIBRATE button
+            Button calibBtn = new Button("CAL");
+            boolean hasKit = inv.getCalibrationKits() > 0;
+            calibBtn.setStyle("-fx-background-color: transparent;" +
+                    " -fx-border-color: " + (hasKit ? "#AA00FF66" : "#5A6A8055") + ";" +
+                    " -fx-border-width: 1;" +
+                    " -fx-text-fill: " + (hasKit ? "#AA00FF" : "#5A6A80") + ";" +
+                    " -fx-font-family: 'Courier New'; -fx-font-size: 9px;" +
+                    " -fx-padding: 3 6; -fx-cursor: " + (hasKit ? "hand" : "default") + ";");
+            calibBtn.setDisable(!hasKit);
             calibBtn.setOnAction(e -> {
                 var result = inv.calibrateItem(item.getId(), 1);
                 showAlert(result.message);
+                if (result.success) refreshItemList(inv);
             });
 
-            actions.getChildren().addAll(upgradeBtn, calibBtn);
+            actions.getChildren().addAll(equipBtn, upgradeBtn, calibBtn);
+
+        } else if (item instanceof arclightcity.item.Consumable cons) {
+            Label stackLabel = new Label("x" + cons.getStackCount());
+            stackLabel.setStyle("-fx-text-fill: #00E676; -fx-font-family: 'Courier New';" +
+                    " -fx-font-size: 11px; -fx-font-weight: bold;");
+            Button useBtn = new Button("USE");
+            useBtn.setStyle("-fx-background-color: #00E67615; -fx-border-color: #00E67655;" +
+                    " -fx-border-width: 1; -fx-text-fill: #00E676;" +
+                    " -fx-font-family: 'Courier New'; -fx-font-size: 9px;" +
+                    " -fx-padding: 3 6; -fx-cursor: hand;");
+            useBtn.setOnAction(e -> {
+                boolean used = inv.useConsumable(item.getId(), engine.getPlayer());
+                if (used) {
+                    showAlert("✅ Used: " + item.getName());
+                    refreshItemList(inv);
+                }
+            });
+            actions.getChildren().addAll(stackLabel, useBtn);
         }
 
         row.getChildren().addAll(rarityBar, info, actions);
         return row;
+    }
+
+    /** Ambil ringkasan 2-3 stat utama dari item untuk ditampilkan di list */
+    private String buildStatSummary(Item item) {
+        if (item instanceof Equipment eq) {
+            StringBuilder sb = new StringBuilder();
+            eq.getStatBonuses().entrySet().stream()
+                .limit(3)
+                .forEach(entry -> {
+                    String name = entry.getKey().displayName;
+                    double val  = entry.getValue();
+                    // Format persentase untuk stat yang memang dalam bentuk 0.0-1.0
+                    boolean isPct = entry.getKey().name().contains("CHANCE") ||
+                                    entry.getKey().name().contains("EVASION") ||
+                                    entry.getKey().name().contains("PIERCE") ||
+                                    entry.getKey().name().contains("MULT")   ||
+                                    entry.getKey().name().contains("LIFESTEAL");
+                    sb.append(name).append(": +")
+                      .append(isPct ? String.format("%.0f%%", val * 100) : String.format("%.0f", val))
+                      .append("  ");
+                });
+            return sb.length() > 0 ? sb.toString().trim() : item.getDescription();
+        }
+        if (item instanceof arclightcity.item.Consumable cons) {
+            return cons.getConsumableType().name().replace("_", " ") +
+                   " • Effect: " + (int)cons.getEffectValue();
+        }
+        if (item instanceof arclightcity.item.Material mat) {
+            return mat.getMaterialType().name().replace("_", " ") +
+                   " x" + mat.getQuantity();
+        }
+        return item.getDescription();
     }
 
     private void showAlert(String message) {

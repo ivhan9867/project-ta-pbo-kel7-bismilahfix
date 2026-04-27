@@ -538,6 +538,8 @@ public class CombatView {
     // EVENT HANDLERS
     // ════════════════════════════════════════════════════
 
+    private boolean aiTurnPending = false; // guard agar Timeline tidak stack
+
     private void handleCombatEvent(CombatEvent event) {
         String color = switch (event.getType()) {
             case CRITICAL_HIT      -> UIFactory.YELLOW;
@@ -554,15 +556,24 @@ public class CombatView {
         addLog(event.getMessage(), color);
         refreshCombatants();
 
-        // Process next AI turn if not waiting for player
-        if (cm.isCombatActive() && !cm.isWaitingForPlayer()) {
-            Timeline delay = new Timeline(new KeyFrame(Duration.millis(400),
-                    e -> {
-                        cm.processTurn();
-                        refreshActionPanel();
-                    }));
+        // Process next AI turn — pakai guard untuk cegah timeline menumpuk
+        if (cm.isCombatActive() && !cm.isWaitingForPlayer() && !aiTurnPending) {
+            aiTurnPending = true;
+            Timeline delay = new Timeline(new KeyFrame(Duration.millis(500), e -> {
+                aiTurnPending = false;
+                if (cm.isCombatActive() && !cm.isWaitingForPlayer()) {
+                    boolean ongoing = cm.processTurn();
+                    refreshActionPanel();
+                    if (!ongoing && cm.isCombatActive()) {
+                        // Combat selesai tapi result belum dikirim — trigger manual
+                        addLog("Combat concluded.", "#5A6A80");
+                    }
+                } else {
+                    refreshActionPanel();
+                }
+            }));
             delay.play();
-        } else {
+        } else if (!aiTurnPending) {
             refreshActionPanel();
         }
     }
@@ -593,11 +604,18 @@ public class CombatView {
     public void startCombatLoop() {
         if (cm == null) return;
         addLog("⚔ Combat begins!", UIFactory.CYAN);
-        // Kick off first turn
-        boolean ongoing = cm.processTurn();
-        if (!ongoing) return;
-        refreshCombatants();
-        refreshActionPanel();
+        aiTurnPending = false;
+
+        // Kick off first turn dengan sedikit delay agar UI ter-render dulu
+        Timeline firstTurn = new Timeline(new KeyFrame(Duration.millis(300), e -> {
+            boolean ongoing = cm.processTurn();
+            refreshCombatants();
+            refreshActionPanel();
+            if (!ongoing) {
+                addLog("Combat ended immediately.", "#5A6A80");
+            }
+        }));
+        firstTurn.play();
     }
 
     // ════════════════════════════════════════════════════

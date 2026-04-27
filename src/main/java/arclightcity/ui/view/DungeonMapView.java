@@ -2,6 +2,8 @@ package arclightcity.ui.view;
 import arclightcity.entity.stats.StatType;
 
 import arclightcity.dungeon.*;
+import arclightcity.item.Item;
+import arclightcity.item.LootManager;
 import arclightcity.engine.GameEngine;
 import arclightcity.entity.enemy.Enemy;
 import javafx.animation.*;
@@ -40,6 +42,8 @@ public class DungeonMapView {
     private final GameEngine  engine;
     private final SceneRouter router;
     private VBox              roomListContainer;
+    private VBox              currentRoomPanel;  // ref untuk refresh
+    private ScrollPane        mapGridScrollPane; // ref untuk refresh map
 
     public DungeonMapView(GameEngine engine, SceneRouter router) {
         this.engine = engine;
@@ -51,11 +55,18 @@ public class DungeonMapView {
         engine.setOnDungeonEvent(event -> {
             javafx.application.Platform.runLater(() -> {
                 switch (event.type) {
-                    case COMBAT_STARTED -> router.showCombat();
-                    case EVENT_ENCOUNTERED -> router.showEvent(event.dungeonEvent);
-                    case SHOP_OPENED -> router.showShop();
-                    case GAME_OVER -> router.showGameOver();
+                    case COMBAT_STARTED       -> router.showCombat();
+                    case EVENT_ENCOUNTERED    -> router.showEvent(event.dungeonEvent);
+                    case SHOP_OPENED          -> router.showShop();
+                    case GAME_OVER            -> router.showGameOver();
                     case READY_FOR_NEXT_FLOOR -> showDescentPrompt(event.intValue);
+                    case LOOT_FOUND           -> showLootPopup(event);
+                    case REST                 -> showRestNotification(event.message);
+                    case ROOM_CLEARED, ROOM_ENTERED, FLOOR_ENTERED -> {
+                        refreshMapGrid();
+                        refreshCurrentRoomInfo();
+                        refreshNextRoomsPanel();
+                    }
                     default -> refreshCurrentRoomInfo();
                 }
             });
@@ -83,10 +94,12 @@ public class DungeonMapView {
         UIFactory.divider();
 
         // Map grid
-        root.getChildren().add(buildMapGrid(floor));
+        mapGridScrollPane = buildMapGrid(floor);
+        root.getChildren().add(mapGridScrollPane);
 
         // Current room info
-        root.getChildren().add(buildCurrentRoomPanel(dm));
+        currentRoomPanel = buildCurrentRoomPanel(dm);
+        root.getChildren().add(currentRoomPanel);
 
         // Next rooms
         roomListContainer = new VBox(8);
@@ -348,7 +361,93 @@ public class DungeonMapView {
     }
 
     private void refreshCurrentRoomInfo() {
-        // Rebuild room info section — UI refresh
+        if (currentRoomPanel == null) return;
+        DungeonManager dm = engine.getDungeonManager();
+        VBox newPanel = buildCurrentRoomPanel(dm);
+        // Cari parent dan replace
+        if (currentRoomPanel.getParent() instanceof VBox parent) {
+            int idx = parent.getChildren().indexOf(currentRoomPanel);
+            if (idx >= 0) {
+                parent.getChildren().set(idx, newPanel);
+                currentRoomPanel = newPanel;
+            }
+        }
+    }
+
+    private void refreshMapGrid() {
+        if (mapGridScrollPane == null) return;
+        DungeonManager dm = engine.getDungeonManager();
+        ScrollPane newGrid = buildMapGrid(dm.getCurrentFloor());
+        if (mapGridScrollPane.getParent() instanceof VBox parent) {
+            int idx = parent.getChildren().indexOf(mapGridScrollPane);
+            if (idx >= 0) {
+                parent.getChildren().set(idx, newGrid);
+                mapGridScrollPane = newGrid;
+            }
+        }
+    }
+
+    private void refreshNextRoomsPanel() {
+        if (roomListContainer == null) return;
+        refreshNextRooms(engine.getDungeonManager());
+    }
+
+    // ── Loot Popup ────────────────────────────────────────
+
+    /**
+     * Tampilkan popup sederhana berisi item yang didapat dari loot room.
+     * Item langsung masuk inventory, popup hanya untuk feedback visual.
+     *
+     * 💡 Ide: Popup ini bisa dikembangkan jadi full "Loot Screen" di v0.3
+     *    dengan animasi item muncul satu per satu dan pilihan auto-equip.
+     */
+    private void showLootPopup(DungeonStateEvent event) {
+        // Generate actual loot dan masukkan ke inventory
+        java.util.List<Item> drops = LootManager.generateLoot(
+                "LOOT_FLOOR_" + engine.getDungeonManager().getCurrentFloorNumber(),
+                engine.getDungeonManager().getCurrentFloorNumber());
+        drops.forEach(engine.getInventory()::addItem);
+
+        if (drops.isEmpty()) {
+            showInfoAlert("📦 LOOT ROOM", "The cache is empty. Someone got here first.");
+            return;
+        }
+
+        // Build item list untuk popup
+        StringBuilder sb = new StringBuilder();
+        sb.append("Items added to inventory:\n\n");
+        for (Item it : drops) {
+            String rarityTag = "[" + it.getRarity().displayName + "]";
+            sb.append(rarityTag).append(" ").append(it.getFullName()).append("\n");
+        }
+
+        showInfoAlert("📦 LOOT FOUND — " + drops.size() + " item(s)!", sb.toString());
+        refreshCurrentRoomInfo();
+        refreshNextRoomsPanel();
+    }
+
+    private void showRestNotification(String message) {
+        showInfoAlert("🛌 SAFE ZONE", message != null ? message :
+                "HP and MP partially restored. The calm before the storm.");
+        refreshCurrentRoomInfo();
+        refreshNextRoomsPanel();
+    }
+
+    private void showInfoAlert(String title, String content) {
+        javafx.scene.control.Alert alert =
+                new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.INFORMATION);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(content);
+        alert.getDialogPane().setStyle(
+                "-fx-background-color: #0C1220;" +
+                "-fx-font-family: 'Courier New', monospace;" +
+                "-fx-font-size: 11px;");
+        // Style button OK
+        alert.getDialogPane().lookupButton(javafx.scene.control.ButtonType.OK)
+             .setStyle("-fx-background-color: #00E5FF22; -fx-text-fill: #00E5FF;" +
+                       "-fx-border-color: #00E5FF; -fx-cursor: hand;");
+        alert.showAndWait();
     }
 
     // ── Icon / Color helpers ──────────────────────────────

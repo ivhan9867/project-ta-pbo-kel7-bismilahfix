@@ -145,6 +145,9 @@ public class GameEngine {
 
     public void startDungeonRun() {
         if (player == null) return;
+        // Buat DungeonManager baru setiap run untuk reset state penuh
+        dungeonManager = new DungeonManager();
+        wireDungeonListeners();
         transitionTo(GameState.DUNGEON);
         dungeonManager.startDungeon(player, activeMercs);
     }
