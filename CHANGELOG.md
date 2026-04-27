@@ -1,6 +1,7 @@
 # ARCLIGHT CITY — CHANGELOG
 
-Format: [Versi] - Tanggal
+Format: 0.2 - 27/04/2026
+
 Kategori: Added | Fixed | Changed | Known Issues
 
 ---
