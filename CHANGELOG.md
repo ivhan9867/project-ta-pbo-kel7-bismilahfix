@@ -1,7 +1,6 @@
 # ARCLIGHT CITY — CHANGELOG
 
-Format: 0.2 - 27/04/2026
-
+Format: [Versi] - Tanggal
 Kategori: Added | Fixed | Changed | Known Issues
 
 ---
@@ -113,3 +112,119 @@ untuk detail lengkap 16 bug yang diperbaiki selama migrasi).
 cd ArclightCity
 mvn javafx:run
 ```
+
+---
+
+## [v0.2.1] - 2026-04-27
+
+### Fixed
+
+**[BUG] Mercenary duplicate — muncul 2x TANK-RX9 di roster (GameEngine.java)**
+- Root cause: `createCharacter()` tidak clear `ownedMercs` dan `activeMercs` sebelum
+  menambah starter merc. Jika game over lalu retry, merc lama masih ada + merc baru
+  ditambahkan lagi sehingga muncul duplikat
+- Fix: tambah `ownedMercs.clear()` dan `activeMercs.clear()` di awal `createCharacter()`
+- Bonus fix: starter TankRX9 sekarang otomatis masuk `activeMercs` sehingga langsung
+  siap dibawa ke dungeon tanpa perlu ADD TO CREW manual
+
+**[UI] Background putih di list item dan ScrollPane (ViewsBundle.java, CSS)**
+- Item list sebelumnya tidak punya `background-color` eksplisit di state normal,
+  menyebabkan JavaFX fallback ke background default (putih/abu)
+- Fix item row: tambah `background-color: #050810` di style normal
+- Fix ScrollPane: tambah `-fx-background: #050810` (JavaFX butuh property ini
+  terpisah dari `-fx-background-color` untuk benar-benar remove white viewport)
+- Fix global CSS: tambah `.scroll-pane .viewport { -fx-background-color: transparent }`
+
+**[UI] Warna border equipment slot selalu hijau, tidak mengikuti rarity (ViewsBundle.java)**
+- Sebelumnya semua slot yang terisi memiliki border hijau (`#00E67644`) terlepas
+  dari rarity item yang diequip
+- Fix: ambil `Equipment` object langsung (bukan hanya nama), lalu gunakan
+  `UIFactory.rarityColor()` untuk menentukan warna border
+- Common = abu, Uncommon = hijau, Rare = biru, Epic = ungu, Legendary = orange
+- Tambahan: tampilkan upgrade level `+N` di bawah nama item jika level > 0
+- Border left lebih tebal (3px) sebagai rarity indicator visual yang jelas
+
+**[UI] Teks ARCLIGHT, VICTORY, SYSTEM FAILURE terlalu blur — tidak terbaca (ViewsBundle, MainMenuView, UIFactory)**
+- DropShadow radius 20 dengan spread 0.7 menyebabkan glow sangat besar yang
+  mengaburkan teks terutama di background gelap
+- Fix: kurangi radius dari 20 → 6, spread dari 0.7 → 0.3 untuk semua title besar
+- `glowPulse()` animation max radius dari 15 → 6, durasi 800ms → 1000ms
+  agar animasi lebih smooth dan tidak jitterish
+
+**[UI] Alert/Dialog popup masih style JavaFX default (putih) (arclight.css)**
+- Tambah CSS global untuk `.dialog-pane` dan semua child-nya:
+  background gelap, border cyan, button style cyberpunk
+- Cancel button di confirmation dialog pakai warna merah
+
+### Changed
+
+**Item row hover — lebih konsisten (ViewsBundle.java)**
+- State normal: `#050810` (dark) → hover: `#0C1220` (slightly lighter)
+- Sebelumnya state normal tidak punya background eksplisit
+
+### Known Issues
+
+- Dungeon map masih linear scroll, belum grid 2D yang bisa dinavigasi (target v0.3)
+- Skill selection masih auto-pick skill pertama ready (target v0.3)
+- Target selection masih auto-target enemy pertama hidup (target v0.3)
+- Shop masih placeholder (target v0.5)
+
+---
+
+## [v0.2.2] - 2026-04-28
+
+### Fixed
+
+**[CRITICAL] ConcurrentModificationException di Entity.tickEffects() (Entity.java)**
+- Exception terjadi saat DOT effect (Burn, Bleed, Virus, dll) diterapkan dalam combat
+- Root cause: `receiveDamage()` dipanggil di dalam loop `for (StatusEffect : activeEffects)`.
+  Jika entity mati kena DOT dan `onDeath()` memodifikasi `activeEffects`, iterator
+  menjadi invalid → ConcurrentModificationException
+- Fix:
+  1. Buat snapshot `List<StatusEffect> snapshot = new ArrayList<>(activeEffects)`
+     dan iterate over snapshot, bukan list asli
+  2. Tambah guard `if (!activeEffects.contains(effect)) continue` untuk skip
+     effect yang dihapus di tengah iterasi
+  3. Tambah `if (!alive) break` untuk stop DOT processing saat entity sudah mati
+
+**[WARNING] JavaFX native access warning di console (pom.xml)**
+- Warning: "A restricted method in java.lang.System has been called"
+- Fix: tambah `--enable-native-access=javafx.graphics` ke javafx-maven-plugin options
+
+### Added
+
+**[FEATURE] Dungeon Grid Map — navigasi 2D interaktif (DungeonGridMap.java)**
+- File baru: `DungeonGridMap.java` — Canvas-based 2D grid dungeon map
+- Menggantikan tampilan linear scroll sebelumnya
+- Fitur grid map:
+  - Grid COLS×N (5 kolom) yang di-generate otomatis dari Floor rooms
+  - Player icon (◈) bergerak smooth antar tile dengan animasi ease in-out 250ms
+  - **Fog of war** — tile belum dikunjungi tampil gelap dengan icon "?"
+  - **Highlight reachable** — tile yang bisa dituju memiliki glow sesuai room type
+  - Icon per room type: ◆=enemy, ☠=boss, ☆=loot, ♥=rest, ?=event, $=shop, !=trap
+  - Connection lines antar tile yang terhubung (reachable = cyan glow)
+  - Cleared rooms ditampilkan redup + checkmark ✓ di pojok kanan
+  - Room index ditampilkan kecil di pojok kiri atas tile
+  - Upgrade badge dan warna border tile mengikuti room type color
+  - Klik tile → player bergerak → engine.moveToRoom() dipanggil → event trigger
+
+**[FEATURE] Dungeon map navigasi via klik tile (DungeonMapView.java)**
+- Integrasi DungeonGridMap ke DungeonMapView
+- Panel bawah berubah: tidak lagi berisi tombol room, tapi
+  legend badge room type yang reachable + hint "Click tile to move"
+- Floor complete: tombol DESCEND muncul otomatis saat semua room cleared
+
+### Changed
+
+**DungeonMapView — refactor (DungeonMapView.java)**
+- Hapus `buildMapGrid()` dan `buildRoomNode()` (diganti DungeonGridMap)
+- Hapus `buildRoomButton()` (navigasi sekarang via klik tile)
+- `refreshMapGrid()` sekarang hanya panggil `dungeonGridMap.refresh()`
+- Field `mapGridScrollPane` diganti `dungeonGridMap: DungeonGridMap`
+
+### Known Issues
+- Dungeon grid belum support branching path yang kompleks —
+  saat ini koneksi antar room mengikuti `getNextRoomIndexes()` dari Room
+- Animasi player masih linear (ease in-out sudah ada, tapi path hanya garis lurus)
+- Skill selection masih auto-pick (target v0.3)
+- Shop masih placeholder (target v0.5)

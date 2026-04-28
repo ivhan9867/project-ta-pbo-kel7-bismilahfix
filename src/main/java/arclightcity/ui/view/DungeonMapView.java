@@ -5,7 +5,6 @@ import arclightcity.dungeon.*;
 import arclightcity.item.Item;
 import arclightcity.item.LootManager;
 import arclightcity.engine.GameEngine;
-import arclightcity.entity.enemy.Enemy;
 import javafx.animation.*;
 import javafx.geometry.*;
 import javafx.scene.Parent;
@@ -42,8 +41,9 @@ public class DungeonMapView {
     private final GameEngine  engine;
     private final SceneRouter router;
     private VBox              roomListContainer;
-    private VBox              currentRoomPanel;  // ref untuk refresh
-    private ScrollPane        mapGridScrollPane; // ref untuk refresh map
+    private VBox              currentRoomPanel;
+    private DungeonGridMap    dungeonGridMap;  // Grid map interaktif
+    private VBox              gridMapContainer;
 
     public DungeonMapView(GameEngine engine, SceneRouter router) {
         this.engine = engine;
@@ -93,9 +93,29 @@ public class DungeonMapView {
 
         UIFactory.divider();
 
-        // Map grid
-        mapGridScrollPane = buildMapGrid(floor);
-        root.getChildren().add(mapGridScrollPane);
+        // ── Grid Map Interaktif ───────────────────────────────
+        dungeonGridMap = new DungeonGridMap(engine, () -> {
+            // Callback saat player klik tile — refresh info panel
+            javafx.application.Platform.runLater(() -> {
+                refreshCurrentRoomInfo();
+                refreshNextRoomsPanel();
+            });
+        });
+
+        // Wrap dalam ScrollPane agar grid bisa discroll kalau panjang
+        ScrollPane gridScroll = new ScrollPane(dungeonGridMap);
+        gridScroll.setFitToWidth(true);
+        gridScroll.setPrefHeight(230);
+        gridScroll.setMaxHeight(230);
+        gridScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        gridScroll.setStyle(
+            "-fx-background-color: #050810;" +
+            "-fx-background: #050810;" +
+            "-fx-border-color: #1C2E44;" +
+            "-fx-border-width: 0 0 1 0;"
+        );
+        gridMapContainer = new VBox(gridScroll);
+        root.getChildren().add(gridMapContainer);
 
         // Current room info
         currentRoomPanel = buildCurrentRoomPanel(dm);
@@ -155,96 +175,6 @@ public class DungeonMapView {
         return box;
     }
 
-    // ── Map grid ──────────────────────────────────────────
-
-    private ScrollPane buildMapGrid(Floor floor) {
-        ScrollPane scroll = new ScrollPane();
-        scroll.setFitToWidth(true);
-        scroll.setPrefHeight(220);
-        scroll.setMaxHeight(220);
-        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-        scroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scroll.setStyle("-fx-background-color: #050810; -fx-border-color: #1C2E44; -fx-border-width: 0 0 1 0;");
-
-        if (floor == null) {
-            Label none = new Label("No dungeon active");
-            none.setStyle("-fx-text-fill: #5A6A80; -fx-padding: 20;");
-            scroll.setContent(none);
-            return scroll;
-        }
-
-        // Build linear path display
-        HBox mapRow = new HBox(4);
-        mapRow.setPadding(new Insets(16));
-        mapRow.setAlignment(Pos.CENTER_LEFT);
-
-        List<Room> rooms = floor.getRooms();
-        int currentIdx = floor.getCurrentRoomIndex();
-
-        for (int i = 0; i < rooms.size(); i++) {
-            Room room = rooms.get(i);
-            boolean isCurrent = (i == currentIdx);
-            boolean isAvailable = room.isVisited() || isCurrent;
-
-            VBox roomNode = buildRoomNode(room, isCurrent, isAvailable, i);
-            mapRow.getChildren().add(roomNode);
-
-            // Connector line
-            if (i < rooms.size() - 1) {
-                Label connector = new Label("—");
-                connector.setStyle("-fx-text-fill: #1C2E44; -fx-font-size: 12px;");
-                mapRow.getChildren().add(connector);
-            }
-        }
-
-        scroll.setContent(mapRow);
-        return scroll;
-    }
-
-    private VBox buildRoomNode(Room room, boolean isCurrent, boolean isVisited, int index) {
-        VBox node = new VBox(2);
-        node.setAlignment(Pos.CENTER);
-        node.setPrefSize(36, 44);
-
-        String icon = getRoomIcon(room.getType());
-        String color = getRoomColor(room.getType());
-
-        Label iconLabel = new Label(icon);
-        String iconStyle = "-fx-font-size: 16px; -fx-text-fill: ";
-        if (!isVisited)      iconStyle += "#1C2E44;";
-        else if (room.isCleared()) iconStyle += "#2A3A50;";
-        else                 iconStyle += color + ";";
-
-        iconLabel.setStyle(iconStyle);
-
-        Label numLabel = new Label(String.valueOf(index));
-        numLabel.setStyle("-fx-font-size: 8px; -fx-font-family: 'Courier New'; -fx-text-fill: #5A6A80;");
-
-        String borderStyle;
-        if (isCurrent) {
-            borderStyle =
-                "-fx-border-color: #00E5FF;" +
-                "-fx-border-width: 2;" +
-                "-fx-background-color: #00E5FF11;" +
-                "-fx-effect: dropshadow(gaussian, #00E5FF, 8, 0.5, 0, 0);";
-        } else if (room.isCleared()) {
-            borderStyle = "-fx-border-color: #2A3A50; -fx-border-width: 1;";
-        } else if (isVisited) {
-            borderStyle = "-fx-border-color: " + color + "55; -fx-border-width: 1;";
-        } else {
-            borderStyle = "-fx-border-color: #1C2E44; -fx-border-width: 1;";
-        }
-
-        node.setStyle("-fx-padding: 4; " + borderStyle);
-        node.getChildren().addAll(iconLabel, numLabel);
-
-        Tooltip tip = new Tooltip(room.getType().name() + (room.isCleared() ? " (CLEARED)" : ""));
-        tip.setStyle("-fx-background-color: #0C1220; -fx-text-fill: #E0E8F0; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
-        Tooltip.install(node, tip);
-
-        return node;
-    }
-
     // ── Current room info ─────────────────────────────────
 
     private VBox buildCurrentRoomPanel(DungeonManager dm) {
@@ -288,58 +218,51 @@ public class DungeonMapView {
 
     // ── Next rooms ────────────────────────────────────────
 
+    /**
+     * Panel bawah — sekarang hanya tampilkan info rooms yang reachable sebagai legend.
+     * Navigasi utama sudah via DungeonGridMap (klik tile).
+     */
     private void refreshNextRooms(DungeonManager dm) {
         roomListContainer.getChildren().clear();
-
-        Label title = UIFactory.sectionTitle("▼ CHOOSE NEXT ROOM");
-        roomListContainer.getChildren().add(title);
 
         List<Room> available = engine.getDungeonManager().getAvailableNextRooms();
 
         if (available.isEmpty()) {
-            Label none = new Label("No rooms available — floor complete!");
-            none.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
-            roomListContainer.getChildren().add(none);
+            // Floor complete — tampilkan DESCEND button
+            Label done = new Label("✓ All rooms cleared — ready to descend");
+            done.setStyle("-fx-text-fill: #00E676; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
+            roomListContainer.getChildren().add(done);
 
-            Button descend = UIFactory.btnGold("▼ DESCEND TO NEXT FLOOR");
+            Button descend = UIFactory.btnGold("▼  DESCEND TO NEXT FLOOR");
             descend.setOnAction(e -> engine.descend());
             roomListContainer.getChildren().add(descend);
             return;
         }
 
+        // Tampilkan hint "klik pada tile di peta"
+        Label hint = new Label("▲ Click a highlighted tile on the map above to move");
+        hint.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+        roomListContainer.getChildren().add(hint);
+
+        // Legend rooms yang bisa dituju
+        HBox legend = new HBox(8);
+        legend.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
         for (Room room : available) {
-            Button roomBtn = buildRoomButton(room);
-            roomListContainer.getChildren().add(roomBtn);
+            String color = getRoomColor(room.getType());
+            String icon  = getRoomIcon(room.getType());
+            Label badge  = new Label(icon + " " + room.getType().name());
+            badge.setStyle(
+                "-fx-text-fill: " + color + ";" +
+                "-fx-background-color: " + color + "15;" +
+                "-fx-border-color: " + color + "55;" +
+                "-fx-border-width: 1;" +
+                "-fx-font-family: 'Courier New';" +
+                "-fx-font-size: 10px;" +
+                "-fx-padding: 3 8;"
+            );
+            legend.getChildren().add(badge);
         }
-    }
-
-    private Button buildRoomButton(Room room) {
-        String color = getRoomColor(room.getType());
-        String icon  = getRoomIcon(room.getType());
-
-        Button btn = new Button();
-        btn.setMaxWidth(Double.MAX_VALUE);
-        btn.setText(icon + "  " + room.getType().name() + "  [" + room.getRoomIndex() + "]");
-        btn.setStyle(
-            "-fx-background-color: " + color + "11;" +
-            "-fx-border-color: " + color + "55;" +
-            "-fx-border-width: 1 1 1 3;" +
-            "-fx-text-fill: " + color + ";" +
-            "-fx-font-family: 'Courier New', monospace;" +
-            "-fx-font-size: 12px;" +
-            "-fx-padding: 10 12;" +
-            "-fx-cursor: hand;" +
-            "-fx-alignment: center-left;"
-        );
-        btn.setOnMouseEntered(e -> btn.setStyle(btn.getStyle()
-                .replace(color + "11", color + "22")
-                .replace(color + "55", color)));
-        btn.setOnMouseExited(e -> btn.setStyle(btn.getStyle()
-                .replace(color + "22", color + "11")
-                .replace(color + ";-fx-border-width", color + "55;-fx-border-width")));
-
-        btn.setOnAction(e -> engine.moveToRoom(room.getRoomIndex()));
-        return btn;
+        roomListContainer.getChildren().add(legend);
     }
 
     // ── Descent prompt ─────────────────────────────────────
@@ -375,15 +298,8 @@ public class DungeonMapView {
     }
 
     private void refreshMapGrid() {
-        if (mapGridScrollPane == null) return;
-        DungeonManager dm = engine.getDungeonManager();
-        ScrollPane newGrid = buildMapGrid(dm.getCurrentFloor());
-        if (mapGridScrollPane.getParent() instanceof VBox parent) {
-            int idx = parent.getChildren().indexOf(mapGridScrollPane);
-            if (idx >= 0) {
-                parent.getChildren().set(idx, newGrid);
-                mapGridScrollPane = newGrid;
-            }
+        if (dungeonGridMap != null) {
+            dungeonGridMap.refresh();
         }
     }
 

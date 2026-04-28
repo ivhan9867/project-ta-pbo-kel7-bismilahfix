@@ -79,9 +79,10 @@ public class MainMenuView {
         arc.setStyle(
             "-fx-text-fill: #00E5FF;" +
             "-fx-font-family: 'Courier New', monospace;" +
-            "-fx-font-size: 48px;" +
+            "-fx-font-size: 44px;" +
             "-fx-font-weight: bold;" +
-            "-fx-effect: dropshadow(gaussian, #00E5FF, 20, 0.7, 0, 0);"
+            // Reduced glow: radius 8 spread 0.4 — readable but still glows
+            "-fx-effect: dropshadow(gaussian, #00E5FF, 8, 0.4, 0, 0);"
         );
 
         Label city = new Label("C I T Y");

@@ -210,21 +210,32 @@ public abstract class Entity {
         List<DotTickResult> results = new ArrayList<>();
         List<StatusEffect> toRemove = new ArrayList<>();
 
-        for (StatusEffect effect : activeEffects) {
+        // Iterate over COPY untuk cegah ConcurrentModificationException
+        // receiveDamage() bisa memodifikasi activeEffects (via onDeath/applyEffect)
+        List<StatusEffect> snapshot = new ArrayList<>(activeEffects);
+
+        for (StatusEffect effect : snapshot) {
+            // Skip jika effect sudah dihapus di tengah iterasi
+            if (!activeEffects.contains(effect)) continue;
+
             // Process DOT
             if (effect.getType().category == StatusEffectType.Category.DOT) {
                 double dot = effect.calculateDotDamage();
                 DamageType dmgType = getDotDamageType(effect.getType());
-                DamageResult result = receiveDamage(dot, dmgType, true); // DOT ignore armor? tergantung type
+                DamageResult result = receiveDamage(dot, dmgType, true);
                 results.add(new DotTickResult(effect.getType(), result.damage));
             }
 
-            // Tick durasi
-            if (!effect.tick()) {
+            // Tick durasi — hanya jika entity masih hidup
+            if (alive && !effect.tick()) {
                 toRemove.add(effect);
             }
+
+            // Stop jika entity mati kena DOT
+            if (!alive) break;
         }
 
+        // Remove expired effects (safe karena tidak dalam loop activeEffects)
         toRemove.forEach(e -> {
             activeEffects.remove(e);
             onEffectRemoved(e.getType());

@@ -22,6 +22,7 @@ arclightcity\item\Weapon.class
 arclightcity\combat\DamageCalculator$1.class
 arclightcity\item\CalibrationSystem$1.class
 arclightcity\item\Inventory$1.class
+arclightcity\ui\view\DungeonGridMap.class
 arclightcity\dungeon\DungeonEvent$EventResult$ResultType.class
 arclightcity\item\Material$MaterialType.class
 arclightcity\ui\view\InventoryView.class
@@ -66,6 +67,7 @@ arclightcity\ui\util\UIFactory.class
 arclightcity\engine\GameEngine$GameState.class
 arclightcity\entity\base\Entity.class
 arclightcity\item\Item$ItemType.class
+arclightcity\ui\view\DungeonGridMap$1.class
 arclightcity\combat\CombatEvent$Builder.class
 arclightcity\combat\TurnQueue$TurnSlot.class
 arclightcity\dungeon\DungeonStateEvent$Type.class

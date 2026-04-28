@@ -58,7 +58,7 @@ public static class InventoryViewImpl {
         ScrollPane scroll = new ScrollPane();
         scroll.setFitToWidth(true);
         scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scroll.setStyle("-fx-background-color: #050810; -fx-border-color: transparent;");
+        scroll.setStyle("-fx-background-color: #050810; -fx-background: #050810; -fx-border-color: transparent;");
         VBox.setVgrow(scroll, Priority.ALWAYS);
 
         itemListContainer = new VBox(0);
@@ -75,29 +75,68 @@ public static class InventoryViewImpl {
         bar.setPadding(new Insets(10, 16, 10, 16));
         bar.setStyle("-fx-background-color: #0C1220; -fx-border-color: #1C2E44; -fx-border-width: 0 0 1 0;");
 
-        String[][] slots = {
-            {"WPN", inv.getEquippedWeapon()    != null ? inv.getEquippedWeapon().getName()    : "—"},
-            {"ARM", inv.getEquippedArmor()     != null ? inv.getEquippedArmor().getName()     : "—"},
-            {"ACC", inv.getEquippedAccessory1()!= null ? inv.getEquippedAccessory1().getName(): "—"},
-            {"ACC", inv.getEquippedAccessory2()!= null ? inv.getEquippedAccessory2().getName(): "—"},
+        // Ambil equipment object langsung agar bisa cek rarity warna
+        Equipment[] equips = {
+            inv.getEquippedWeapon(),
+            inv.getEquippedArmor(),
+            inv.getEquippedAccessory1(),
+            inv.getEquippedAccessory2()
         };
+        String[] slotLabels = { "WPN", "ARM", "ACC", "ACC" };
 
-        for (String[] slot : slots) {
+        for (int i = 0; i < equips.length; i++) {
+            Equipment eq = equips[i];
+            String label = slotLabels[i];
+
             VBox slotBox = new VBox(2);
             slotBox.setAlignment(Pos.CENTER);
             slotBox.setPrefWidth(80);
-            slotBox.setStyle(
-                slot[1].equals("—") ?
-                "-fx-background-color: #080D18; -fx-border-color: #1C2E44; -fx-border-width: 1; -fx-padding: 6;" :
-                "-fx-background-color: #0C1A0C; -fx-border-color: #00E67644; -fx-border-width: 1; -fx-padding: 6;"
-            );
 
-            Label slotType = new Label(slot[0]);
-            slotType.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 9px;");
-            Label itemName = new Label(slot[1].length() > 10 ? slot[1].substring(0, 9) + "…" : slot[1]);
-            itemName.setStyle("-fx-text-fill: " + (slot[1].equals("—") ? "#2A3A50" : UIFactory.TEXT) +
-                    "; -fx-font-family: 'Courier New'; -fx-font-size: 9px;");
-            slotBox.getChildren().addAll(slotType, itemName);
+            if (eq == null) {
+                // Slot kosong — style gelap polos
+                slotBox.setStyle(
+                    "-fx-background-color: #080D18;" +
+                    "-fx-border-color: #1C2E4466;" +
+                    "-fx-border-width: 1;" +
+                    "-fx-padding: 6;"
+                );
+                Label slotType = new Label(label);
+                slotType.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 9px;");
+                Label empty = new Label("—");
+                empty.setStyle("-fx-text-fill: #2A3A50; -fx-font-family: 'Courier New'; -fx-font-size: 9px;");
+                slotBox.getChildren().addAll(slotType, empty);
+            } else {
+                // Slot terisi — border warna sesuai rarity
+                String rarityColor = UIFactory.rarityColor(eq.getRarity());
+                slotBox.setStyle(
+                    "-fx-background-color: " + rarityColor + "11;" +
+                    "-fx-border-color: " + rarityColor + ";" +
+                    "-fx-border-width: 1 1 1 3;" + // thick left border = rarity indicator
+                    "-fx-padding: 6;"
+                );
+                Label slotType = new Label(label);
+                slotType.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 9px;");
+                String displayName = eq.getName().length() > 9
+                        ? eq.getName().substring(0, 8) + "…"
+                        : eq.getName();
+                Label itemName = new Label(displayName);
+                itemName.setStyle(
+                    "-fx-text-fill: " + rarityColor + ";" +
+                    "-fx-font-family: 'Courier New'; -fx-font-size: 9px; -fx-font-weight: bold;"
+                );
+                // Upgrade level badge
+                if (eq.getUpgradeLevel() > 0) {
+                    Label upgLabel = new Label("+" + eq.getUpgradeLevel());
+                    upgLabel.setStyle(
+                        "-fx-text-fill: " + UIFactory.YELLOW + ";" +
+                        "-fx-font-family: 'Courier New'; -fx-font-size: 8px;"
+                    );
+                    slotBox.getChildren().addAll(slotType, itemName, upgLabel);
+                } else {
+                    slotBox.getChildren().addAll(slotType, itemName);
+                }
+            }
+
             bar.getChildren().add(slotBox);
         }
 
@@ -189,10 +228,17 @@ public static class InventoryViewImpl {
         row.setPadding(new Insets(10, 16, 10, 16));
         row.setAlignment(Pos.CENTER_LEFT);
         row.setCursor(javafx.scene.Cursor.HAND);
-        row.setStyle("-fx-border-color: transparent transparent #0C1220 transparent; -fx-border-width: 0 0 1 0;");
 
-        row.setOnMouseEntered(e -> row.setStyle("-fx-background-color: #0C1220; -fx-border-color: transparent transparent #1C2E44 transparent; -fx-border-width: 0 0 1 0;"));
-        row.setOnMouseExited(e -> row.setStyle("-fx-border-color: transparent transparent #0C1220 transparent; -fx-border-width: 0 0 1 0;"));
+        // Default: gelap dengan separator bawah
+        String styleNormal = "-fx-background-color: #050810;" +
+                             "-fx-border-color: transparent transparent #0C1220 transparent;" +
+                             "-fx-border-width: 0 0 1 0;";
+        String styleHover  = "-fx-background-color: #0C1220;" +
+                             "-fx-border-color: transparent transparent #1C2E44 transparent;" +
+                             "-fx-border-width: 0 0 1 0;";
+        row.setStyle(styleNormal);
+        row.setOnMouseEntered(e -> row.setStyle(styleHover));
+        row.setOnMouseExited(e -> row.setStyle(styleNormal));
 
         // Rarity indicator
         VBox rarityBar = new VBox();
@@ -374,7 +420,7 @@ public static class MercenaryViewImpl {
         ScrollPane scroll = new ScrollPane();
         scroll.setFitToWidth(true);
         scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scroll.setStyle("-fx-background-color: #050810; -fx-border-color: transparent;");
+        scroll.setStyle("-fx-background-color: #050810; -fx-background: #050810; -fx-border-color: transparent;");
         VBox.setVgrow(scroll, Priority.ALWAYS);
 
         VBox mercList = new VBox(8);
@@ -624,7 +670,8 @@ public static class VictoryViewImpl {
             "-fx-font-family: 'Courier New', monospace;" +
             "-fx-font-size: 42px;" +
             "-fx-font-weight: bold;" +
-            "-fx-effect: dropshadow(gaussian, #FFD600, 20, 0.7, 0, 0);"
+            // Reduced: radius 6 spread 0.3 — readable gold glow
+            "-fx-effect: dropshadow(gaussian, #FFD600, 6, 0.3, 0, 0);"
         );
 
         Label turns = new Label("Completed in " + result.getTurnsElapsed() + " turns");
@@ -679,7 +726,8 @@ public static class GameOverViewImpl {
             "-fx-font-family: 'Courier New', monospace;" +
             "-fx-font-size: 32px;" +
             "-fx-font-weight: bold;" +
-            "-fx-effect: dropshadow(gaussian, #FF1744, 20, 0.7, 0, 0);"
+            // Reduced: radius 6 — readable red glow
+            "-fx-effect: dropshadow(gaussian, #FF1744, 6, 0.3, 0, 0);"
         );
 
         Label sub = new Label("CONNECTION LOST");
@@ -713,4 +761,5 @@ public static class GameOverViewImpl {
         return root;
     }
 }
-}
+
+} // end ViewsBundle

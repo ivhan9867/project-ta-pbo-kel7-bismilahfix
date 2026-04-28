@@ -25,14 +25,14 @@ Semua screen dibangun secara programmatic (view-as-code), bukan dengan file FXML
 
 ---
 
-## ✅ Status Fitur (v0.2.0)
+## ✅ Status Fitur (v0.2.2)
 
 | Fitur | Status |
 |-------|--------|
 | Main Menu | ✅ Jalan |
 | Create Character (6 background) | ✅ Jalan |
 | Hub Screen | ✅ Jalan |
-| Dungeon Map + Navigasi Room | ✅ Jalan |
+| Dungeon Map Grid 2D (klik tile) | ✅ Fixed v0.2.2 |
 | Combat Turn-Based | ✅ Jalan |
 | Loot Room → Item masuk Inventory | ✅ Fixed v0.2 |
 | Rest Room → HP/MP restore + notifikasi | ✅ Fixed v0.2 |
@@ -48,21 +48,7 @@ Semua screen dibangun secara programmatic (view-as-code), bukan dengan file FXML
 
 ---
 
-## 📸 Screenshots (v0.2.0)
-
-| Screen | Preview |
-|--------|---------|
-| Main Menu | Animasi title glowing cyan + grid background perspektif |
-| Create Character | Card selector 6 background dengan bonus preview |
-| Dungeon Map | Room grid dengan icon type + next room navigation |
-| Combat | Enemy/ally cards dengan HP+Shield bars + combat log |
-| Loot Found | Popup item yang didapat dengan rarity tag |
-| Victory | Layar victory dengan reward EXP + Gold |
-| Mercenary | Card stats + HP/Shield/MP bars per merc |
-
-> *Screenshot aktual akan ditambahkan di update berikutnya*
-
-
+## ✨ Sistem Combat
 
 - **Turn-based** berbasis stat **SPEED** — entity lebih cepat giliran duluan
 - **2 bar vital**: HP (merah) + Shield (ungu) — Shield diserap terlebih dahulu sebelum HP
@@ -267,40 +253,6 @@ ArclightCity/
 Tugas Akhir — **Pemrograman Berorientasi Objek**, Semester 2
 
 Terinspirasi dari: *Arclight City* by Dex App Studio
-
----
-
-## 🔧 Git Workflow (untuk kontributor)
-
-### Push pertama kali
-```bash
-git init
-git remote add origin https://github.com/USERNAME/ArclightCity.git
-git add .
-git commit -m "feat: initial commit v0.1.0"
-git push -u origin main
-```
-
-### Update versi baru
-```bash
-git add .
-git commit -m "feat: v0.2.0 - loot system, inventory fix, AI turn guard"
-git push origin main
-```
-
-### Kalau muncul merge conflict di README
-```bash
-# Jangan langsung push kalau ada conflict marker <<<<<<< HEAD
-git pull origin main --rebase
-# Buka file yang conflict, hapus semua marker:
-# <<<<<<< HEAD  → hapus
-# =======       → hapus
-# >>>>>>> hash  → hapus
-# Sisakan hanya versi yang benar
-git add README.md
-git rebase --continue
-git push origin main
-```
 
 ---
 

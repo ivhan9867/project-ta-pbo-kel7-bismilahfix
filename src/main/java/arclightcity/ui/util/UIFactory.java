@@ -401,9 +401,10 @@ public class UIFactory {
         Timeline tl = new Timeline(
             new KeyFrame(Duration.ZERO,
                 new KeyValue(shadow.radiusProperty(), 0)),
-            new KeyFrame(Duration.millis(800),
-                new KeyValue(shadow.radiusProperty(), 15)),
-            new KeyFrame(Duration.millis(1600),
+            new KeyFrame(Duration.millis(1000),
+                // Max radius 6 — cukup terlihat, tidak blur teks
+                new KeyValue(shadow.radiusProperty(), 6)),
+            new KeyFrame(Duration.millis(2000),
                 new KeyValue(shadow.radiusProperty(), 0))
         );
         tl.setCycleCount(Timeline.INDEFINITE);

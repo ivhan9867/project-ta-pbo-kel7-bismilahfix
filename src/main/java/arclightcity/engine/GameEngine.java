@@ -66,6 +66,10 @@ public class GameEngine {
         this.player    = new Player(name, background);
         this.inventory = new Inventory(player);
 
+        // Reset semua list agar tidak ada sisa dari run sebelumnya
+        ownedMercs.clear();
+        activeMercs.clear();
+
         // Setup DungeonManager
         dungeonManager = new DungeonManager();
         wireDungeonListeners();
@@ -73,9 +77,11 @@ public class GameEngine {
         // Beri starter items
         giveStarterItems();
 
-        // Default: player punya 1 starter merc gratis
+        // Default: player punya 1 starter merc gratis (TANK-RX9)
         Mercenary starterMerc = EntityFactory.createMercenary(MercenaryType.TANK_RX9);
         ownedMercs.add(starterMerc);
+        // Auto-add ke active party
+        activeMercs.add(starterMerc);
 
         transitionTo(GameState.HUB);
     }
