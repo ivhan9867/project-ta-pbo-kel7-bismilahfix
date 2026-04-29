@@ -41,9 +41,16 @@ public class Floor {
      * @return true jika berhasil, false jika invalid
      */
     public boolean moveToRoom(int roomIndex) {
+        if (roomIndex < 0 || roomIndex >= rooms.size()) return false;
         Room current = getCurrentRoom();
         if (current == null) return false;
-        if (!current.getNextRoomIndexes().contains(roomIndex)) return false;
+
+        // Izinkan gerakan ke room manapun yang ada di nextRoomIndexes current room
+        // ATAU yang nextRoomIndexes-nya berisi current room (backtrack symmetric)
+        boolean isNextRoom   = current.getNextRoomIndexes().contains(roomIndex);
+        boolean isBacktrack  = rooms.get(roomIndex).getNextRoomIndexes().contains(currentRoomIndex);
+
+        if (!isNextRoom && !isBacktrack) return false;
 
         currentRoomIndex = roomIndex;
         rooms.get(roomIndex).setVisited(true);
@@ -77,6 +84,13 @@ public class Floor {
     public int        getCurrentRoomIndex()  { return currentRoomIndex; }
     public boolean    isCompleted()          { return completed; }
     public FloorTheme getTheme()             { return theme; }
+
+    /** Cek apakah boss room sudah di-clear (prerequisite untuk DESCEND) */
+    public boolean isBossDefeated() {
+        return rooms.stream()
+                .filter(r -> r.getType() == Room.RoomType.BOSS)
+                .anyMatch(Room::isCleared);
+    }
 
     // ── Floor Theme ──────────────────────────────────────────
 

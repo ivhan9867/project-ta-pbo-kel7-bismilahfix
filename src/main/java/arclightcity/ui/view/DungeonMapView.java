@@ -62,6 +62,12 @@ public class DungeonMapView {
                     case READY_FOR_NEXT_FLOOR -> showDescentPrompt(event.intValue);
                     case LOOT_FOUND           -> showLootPopup(event);
                     case REST                 -> showRestNotification(event.message);
+                    case ROOM_ALREADY_CLEARED -> {
+                        // Backtrack ke tile yang sudah cleared — hanya refresh UI
+                        refreshMapGrid();
+                        refreshCurrentRoomInfo();
+                        refreshNextRoomsPanel();
+                    }
                     case ROOM_CLEARED, ROOM_ENTERED, FLOOR_ENTERED -> {
                         refreshMapGrid();
                         refreshCurrentRoomInfo();
@@ -175,6 +181,33 @@ public class DungeonMapView {
         return box;
     }
 
+    /** Build legend bar untuk icon room type */
+    private HBox buildLegend() {
+        HBox legend = new HBox(6);
+        legend.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        legend.setPadding(new Insets(4, 0, 0, 0));
+        legend.setStyle("-fx-border-color: #1C2E4444; -fx-border-width: 1 0 0 0;");
+
+        Object[][] items = {
+            {"◆", "ENEMY",  "#FF1744"},
+            {"☆", "LOOT",   "#FFD600"},
+            {"♥", "REST",   "#00E676"},
+            {"?", "EVENT",  "#00E5FF"},
+            {"$", "SHOP",   "#FF6B00"},
+            {"!", "TRAP",   "#FF6B00"},
+            {"☠", "BOSS",   "#FF0000"},
+        };
+        for (Object[] it : items) {
+            Label l = new Label(it[0] + " " + it[1]);
+            l.setStyle(
+                "-fx-text-fill: " + it[2] + ";" +
+                "-fx-font-family: 'Courier New'; -fx-font-size: 9px;"
+            );
+            legend.getChildren().add(l);
+        }
+        return legend;
+    }
+
     // ── Current room info ─────────────────────────────────
 
     private VBox buildCurrentRoomPanel(DungeonManager dm) {
@@ -189,28 +222,74 @@ public class DungeonMapView {
         }
 
         String color = getRoomColor(current.getType());
+        boolean isCleared = current.isCleared();
+
+        // Room type label + cleared badge
+        HBox typeRow = new HBox(8);
+        typeRow.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+
         Label typeLabel = new Label(getRoomIcon(current.getType()) + "  " + current.getType().name());
         typeLabel.setStyle(
-            "-fx-text-fill: " + color + ";" +
+            "-fx-text-fill: " + (isCleared ? "#5A6A80" : color) + ";" +
             "-fx-font-family: 'Courier New', monospace;" +
             "-fx-font-size: 13px;" +
             "-fx-font-weight: bold;"
         );
+        typeRow.getChildren().add(typeLabel);
 
-        Label desc = new Label(getRoomDescription(current));
+        if (isCleared) {
+            Label clearedBadge = new Label("✓ CLEARED");
+            clearedBadge.setStyle(
+                "-fx-text-fill: #00E676;" +
+                "-fx-font-family: 'Courier New';" +
+                "-fx-font-size: 9px;" +
+                "-fx-background-color: #00E67622;" +
+                "-fx-border-color: #00E67655;" +
+                "-fx-border-width: 1;" +
+                "-fx-padding: 2 6;"
+            );
+            typeRow.getChildren().add(clearedBadge);
+        }
+
+        // Description
+        String descText = isCleared
+                ? "You've been here before. Nothing left to find."
+                : getRoomDescription(current);
+        Label desc = new Label(descText);
         desc.setWrapText(true);
-        desc.setStyle("-fx-text-fill: #8899AA; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+        desc.setStyle("-fx-text-fill: " + (isCleared ? "#3A4A60" : "#8899AA") +
+                "; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
 
-        // Floor progress
+        // Floor progress bar
         Floor floor = dm.getCurrentFloor();
         if (floor != null) {
             int cleared = floor.getClearedRooms();
             int total   = floor.getTotalRooms();
-            Label progress = new Label("PROGRESS: " + cleared + "/" + total + " rooms cleared");
-            progress.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
-            box.getChildren().addAll(typeLabel, desc, progress);
+            boolean bossDown = floor.isBossDefeated();
+
+            HBox progressRow = new HBox(8);
+            progressRow.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+
+            Label progressLabel = new Label("EXPLORED: " + cleared + "/" + total);
+            progressLabel.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+
+            javafx.scene.control.ProgressBar progressBar = new javafx.scene.control.ProgressBar(
+                    total > 0 ? (double) cleared / total : 0);
+            progressBar.setPrefWidth(100);
+            progressBar.setStyle("-fx-accent: #00E5FF55; -fx-min-height: 4px; -fx-max-height: 4px;" +
+                    "-fx-background-color: #1C2E4444;");
+
+            progressRow.getChildren().addAll(progressLabel, progressBar);
+
+            if (bossDown) {
+                Label bossLabel = new Label("☠ BOSS DEFEATED");
+                bossLabel.setStyle("-fx-text-fill: #FF174488; -fx-font-family: 'Courier New'; -fx-font-size: 9px;");
+                box.getChildren().addAll(typeRow, desc, progressRow, bossLabel);
+            } else {
+                box.getChildren().addAll(typeRow, desc, progressRow);
+            }
         } else {
-            box.getChildren().addAll(typeLabel, desc);
+            box.getChildren().addAll(typeRow, desc);
         }
 
         return box;
@@ -218,18 +297,16 @@ public class DungeonMapView {
 
     // ── Next rooms ────────────────────────────────────────
 
-    /**
-     * Panel bawah — sekarang hanya tampilkan info rooms yang reachable sebagai legend.
-     * Navigasi utama sudah via DungeonGridMap (klik tile).
-     */
     private void refreshNextRooms(DungeonManager dm) {
         roomListContainer.getChildren().clear();
 
-        List<Room> available = engine.getDungeonManager().getAvailableNextRooms();
+        // Cek apakah boss sudah dikalahkan
+        boolean bossCleared = dm.getCurrentFloor() != null
+                && dm.getCurrentFloor().isBossDefeated();
 
-        if (available.isEmpty()) {
-            // Floor complete — tampilkan DESCEND button
-            Label done = new Label("✓ All rooms cleared — ready to descend");
+        if (bossCleared) {
+            // Boss sudah mati — tampilkan DESCEND
+            Label done = new Label("✓ Boss defeated — floor cleared!");
             done.setStyle("-fx-text-fill: #00E676; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
             roomListContainer.getChildren().add(done);
 
@@ -239,29 +316,18 @@ public class DungeonMapView {
             return;
         }
 
-        // Tampilkan hint "klik pada tile di peta"
-        Label hint = new Label("▲ Click a highlighted tile on the map above to move");
+        // Hint navigasi via grid
+        Label hint = new Label("▲ Click adjacent tile on the map to explore");
         hint.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
-        roomListContainer.getChildren().add(hint);
 
-        // Legend rooms yang bisa dituju
-        HBox legend = new HBox(8);
-        legend.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
-        for (Room room : available) {
-            String color = getRoomColor(room.getType());
-            String icon  = getRoomIcon(room.getType());
-            Label badge  = new Label(icon + " " + room.getType().name());
-            badge.setStyle(
-                "-fx-text-fill: " + color + ";" +
-                "-fx-background-color: " + color + "15;" +
-                "-fx-border-color: " + color + "55;" +
-                "-fx-border-width: 1;" +
-                "-fx-font-family: 'Courier New';" +
-                "-fx-font-size: 10px;" +
-                "-fx-padding: 3 8;"
-            );
-            legend.getChildren().add(badge);
-        }
+        // Boss belum dikalahkan — tampilkan reminder
+        Label bossHint = new Label("☠ Defeat the BOSS to unlock next floor");
+        bossHint.setStyle("-fx-text-fill: #FF174488; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+
+        roomListContainer.getChildren().addAll(hint, bossHint);
+
+        // Legend icon
+        HBox legend = buildLegend();
         roomListContainer.getChildren().add(legend);
     }
 

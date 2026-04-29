@@ -107,6 +107,15 @@ public class DungeonManager {
         room.setVisited(true);
         emit(DungeonStateEvent.roomEntered(room));
 
+        // ── Backtrack guard ───────────────────────────────────
+        // Jika room sudah cleared, tidak perlu trigger event lagi.
+        // Player hanya melewati / istirahat sebentar.
+        if (room.isCleared()) {
+            emit(DungeonStateEvent.roomAlreadyCleared(room));
+            return;
+        }
+
+        // Room belum cleared — trigger event sesuai tipe
         switch (room.getType()) {
             case EMPTY  -> handleEmptyRoom(room);
             case REST   -> handleRestRoom(room);

@@ -8,59 +8,59 @@ import java.util.*;
 /**
  * ProceduralGenerator — membuat floor dungeon secara acak setiap run.
  *
- * Algoritma:
- *   1. Tentukan jumlah room berdasarkan floor (makin dalam makin banyak)
- *   2. Assign tipe ke tiap room (ENEMY, LOOT, EVENT, dll)
- *   3. Buat koneksi antar room (branching path)
- *   4. Populate konten tiap room (enemy, event, loot)
+ * v0.2.3 — Grid Map Overhaul:
+ *   - Floor direpresentasikan sebagai grid COLS x ROWS penuh
+ *   - Semua tile berisi event (tidak ada empty kecuali start)
+ *   - Koneksi cardinal (atas/bawah/kiri/kanan)
+ *   - Player bebas bergerak ke arah manapun yang terhubung
+ *   - Boss selalu di posisi tertentu (tengah baris terakhir)
+ *   - Tile yang sudah dikunjungi bisa dikunjungi lagi (backtrack)
  *
- * Constraint:
- *   - Room pertama selalu EMPTY (aman untuk orientasi)
- *   - Room terakhir selalu BOSS
- *   - Ada minimal 1 LOOT room dan 1 REST room per floor
- *   - ELITE room mulai muncul dari floor 5+
+ * Layout grid (COLS=5, contoh ROWS=4, total 20 tile):
+ *   [START][  ?  ][  ?  ][  ?  ][  ?  ]
+ *   [  ?  ][  ?  ][  ?  ][  ?  ][  ?  ]
+ *   [  ?  ][  ?  ][  ?  ][  ?  ][  ?  ]
+ *   [  ?  ][  ?  ][ BOSS][  ?  ][  ?  ]
  */
 public class ProceduralGenerator {
 
-    private static final Random RNG = new Random();
+    private static final Random RNG  = new Random();
+    public  static final int    COLS = 5;  // lebar grid
 
     // ── Floor Size Config ─────────────────────────────────────
 
-    private static int getRoomCount(int floor) {
-        // Floor 1-5: 6-8 rooms | Floor 6-15: 8-12 rooms | Floor 16+: 12-16 rooms
-        if (floor <= 5)  return 6  + RNG.nextInt(3);
-        if (floor <= 15) return 8  + RNG.nextInt(5);
-        return              12 + RNG.nextInt(5);
+    /** Jumlah baris grid berdasarkan floor */
+    private static int getGridRows(int floor) {
+        if (floor <= 3)  return 3;  // 15 tile
+        if (floor <= 8)  return 4;  // 20 tile
+        if (floor <= 15) return 5;  // 25 tile
+        return 6;                   // 30 tile (floor 16+)
     }
 
     // ── Main Generate ────────────────────────────────────────
 
-    /**
-     * Generate satu floor dungeon secara prosedural.
-     * @param floorNumber nomor floor (mulai 1)
-     * @return Floor yang siap dipakai
-     */
     public static Floor generateFloor(int floorNumber) {
-        int totalRooms = getRoomCount(floorNumber);
+        int rows      = getGridRows(floorNumber);
+        int totalTile = rows * COLS;
 
-        // Step 1: Tentukan tipe tiap room
-        List<Room.RoomType> roomTypes = buildRoomTypeList(floorNumber, totalRooms);
+        // Step 1: Assign tipe ke tiap tile
+        List<Room.RoomType> tileTypes = buildTileTypeGrid(floorNumber, rows);
 
-        // Step 2: Buat koneksi antar room (branching path graph)
-        Map<Integer, List<Integer>> connections = buildConnections(totalRooms);
+        // Step 2: Buat koneksi cardinal (atas/bawah/kiri/kanan)
+        Map<Integer, List<Integer>> connections = buildCardinalConnections(rows, COLS);
 
         // Step 3: Buat Room objects
         List<Room> rooms = new ArrayList<>();
-        for (int i = 0; i < totalRooms; i++) {
-            List<Integer> nextRooms = connections.getOrDefault(i, List.of());
-            Room room = new Room(i, roomTypes.get(i), nextRooms);
+        for (int i = 0; i < totalTile; i++) {
+            List<Integer> nexts = connections.getOrDefault(i, List.of());
+            Room room = new Room(i, tileTypes.get(i), nexts);
             rooms.add(room);
         }
 
-        // Step 4: Populate konten room
+        // Step 4: Populate konten tiap room
         populateRooms(rooms, floorNumber);
 
-        // Step 5: Mark room pertama sebagai visited
+        // Step 5: Room pertama (0,0) = EMPTY, langsung visited
         rooms.get(0).setVisited(true);
 
         // Step 6: Pilih tema floor
@@ -69,104 +69,102 @@ public class ProceduralGenerator {
         return new Floor(floorNumber, rooms, theme);
     }
 
-    // ── Room Type Assignment ──────────────────────────────────
+    // ── Tile Type Grid ────────────────────────────────────────
 
-    private static List<Room.RoomType> buildRoomTypeList(int floor, int total) {
-        List<Room.RoomType> types = new ArrayList<>();
+    /**
+     * Assign tipe tile untuk grid rows×COLS.
+     * - Tile 0 = EMPTY (start)
+     * - Tile terakhir baris tengah-bawah = BOSS
+     * - Sisanya: random weighted
+     */
+    private static List<Room.RoomType> buildTileTypeGrid(int floor, int rows) {
+        int total    = rows * COLS;
+        int bossIdx  = getBossIndex(rows, COLS);
 
-        // Room 0: selalu EMPTY
-        types.add(Room.RoomType.EMPTY);
+        // Hitung distribusi yang diinginkan
+        List<Room.RoomType> types = new ArrayList<>(Collections.nCopies(total, null));
 
-        // Room terakhir: selalu BOSS
-        // Sisa rooms: diisi dengan tipe acak berdasarkan weight
+        // Fixed positions
+        types.set(0, Room.RoomType.EMPTY);          // start
+        types.set(bossIdx, Room.RoomType.BOSS);      // boss
 
-        List<Room.RoomType> pool = buildWeightedPool(floor, total - 2);
+        // Hitung slot yang tersisa
+        int remaining = total - 2;
+
+        // Build pool dengan distribusi seimbang
+        List<Room.RoomType> pool = buildWeightedPool(floor, remaining);
         Collections.shuffle(pool, RNG);
-        types.addAll(pool);
 
-        // Room terakhir: BOSS
-        types.add(Room.RoomType.BOSS);
+        // Isi slot yang masih null
+        int poolIdx = 0;
+        for (int i = 0; i < total; i++) {
+            if (types.get(i) == null) {
+                types.set(i, pool.get(poolIdx++));
+            }
+        }
 
         return types;
     }
 
-    /**
-     * Buat pool tipe room dengan distribusi yang seimbang.
-     * Pool berisi (total-2) tipe untuk room 1 s.d. total-2.
-     */
+    /** Boss selalu ada di tengah baris terakhir (atau mendekati tengah) */
+    static int getBossIndex(int rows, int cols) {
+        int lastRowStart = (rows - 1) * cols;
+        return lastRowStart + (cols / 2); // tengah baris terakhir
+    }
+
     private static List<Room.RoomType> buildWeightedPool(int floor, int count) {
         List<Room.RoomType> pool = new ArrayList<>();
 
-        // Baseline weights
-        int enemyWeight  = 40;
-        int lootWeight   = 15;
-        int eventWeight  = 12;
-        int shopWeight   = 10;
-        int trapWeight   = 10;
-        int restWeight   = 8;
-        int eliteWeight  = floor >= 5 ? 5 : 0; // mulai floor 5
+        // Pastikan ada minimal distribusi yang baik
+        int guaranteedLoot  = Math.max(2, count / 6);
+        int guaranteedRest  = Math.max(1, count / 8);
+        int guaranteedEvent = Math.max(2, count / 6);
+        int guaranteedShop  = 1;
+        int guaranteedTrap  = Math.max(1, count / 8);
+        int guaranteedElite = floor >= 5 ? Math.max(1, count / 8) : 0;
 
-        int totalWeight = enemyWeight + lootWeight + eventWeight + shopWeight
-                        + trapWeight + restWeight + eliteWeight;
+        for (int i = 0; i < guaranteedLoot;  i++) pool.add(Room.RoomType.LOOT);
+        for (int i = 0; i < guaranteedRest;  i++) pool.add(Room.RoomType.REST);
+        for (int i = 0; i < guaranteedEvent; i++) pool.add(Room.RoomType.EVENT);
+        for (int i = 0; i < guaranteedShop;  i++) pool.add(Room.RoomType.SHOP);
+        for (int i = 0; i < guaranteedTrap;  i++) pool.add(Room.RoomType.TRAP);
+        for (int i = 0; i < guaranteedElite; i++) pool.add(Room.RoomType.ELITE);
 
-        // Pastikan ada minimal 1 LOOT dan 1 REST
-        pool.add(Room.RoomType.LOOT);
-        pool.add(Room.RoomType.REST);
-        int remaining = count - 2;
-
-        for (int i = 0; i < remaining; i++) {
-            int roll = RNG.nextInt(totalWeight);
-            if      (roll < enemyWeight)                               pool.add(Room.RoomType.ENEMY);
-            else if (roll < enemyWeight + eliteWeight)                 pool.add(Room.RoomType.ELITE);
-            else if (roll < enemyWeight + eliteWeight + lootWeight)    pool.add(Room.RoomType.LOOT);
-            else if (roll < enemyWeight + eliteWeight + lootWeight + eventWeight) pool.add(Room.RoomType.EVENT);
-            else if (roll < enemyWeight + eliteWeight + lootWeight + eventWeight + shopWeight) pool.add(Room.RoomType.SHOP);
-            else if (roll < enemyWeight + eliteWeight + lootWeight + eventWeight + shopWeight + trapWeight) pool.add(Room.RoomType.TRAP);
-            else                                                        pool.add(Room.RoomType.REST);
-        }
+        // Sisa diisi ENEMY
+        int filled = pool.size();
+        for (int i = filled; i < count; i++) pool.add(Room.RoomType.ENEMY);
 
         return pool;
     }
 
-    // ── Connection / Path Builder ─────────────────────────────
+    // ── Cardinal Connection Builder ───────────────────────────
 
     /**
-     * Buat graf koneksi antar room.
-     * Struktur: linear dengan percabangan.
-     * Setiap room punya 1-2 "next room" pilihan.
+     * Buat koneksi cardinal: setiap tile terhubung ke
+     * kanan, kiri, bawah, atas (jika masih dalam batas grid).
      *
-     * Contoh (8 rooms):
-     *   0 → [1, 2]
-     *   1 → [3]
-     *   2 → [3]
-     *   3 → [4, 5]
-     *   4 → [6]
-     *   5 → [6]
-     *   6 → [7]
-     *   7 → [] (boss, end)
+     * Grid:
+     *   0  1  2  3  4
+     *   5  6  7  8  9
+     *   10 11 12 13 14
+     *
+     * Tile 6 terhubung ke: 1 (atas), 11 (bawah), 5 (kiri), 7 (kanan)
      */
-    private static Map<Integer, List<Integer>> buildConnections(int total) {
+    static Map<Integer, List<Integer>> buildCardinalConnections(int rows, int cols) {
         Map<Integer, List<Integer>> conn = new HashMap<>();
-        int last = total - 1;
 
-        // Bangun jalur dengan beberapa percabangan
-        List<Integer> mainPath = new ArrayList<>();
-        for (int i = 0; i < total; i++) mainPath.add(i);
+        for (int i = 0; i < rows * cols; i++) {
+            List<Integer> neighbors = new ArrayList<>();
+            int row = i / cols;
+            int col = i % cols;
 
-        for (int i = 0; i < last; i++) {
-            List<Integer> nexts = new ArrayList<>();
-            nexts.add(i + 1); // selalu ada jalur lurus
+            if (row > 0)        neighbors.add(i - cols); // atas
+            if (row < rows - 1) neighbors.add(i + cols); // bawah
+            if (col > 0)        neighbors.add(i - 1);    // kiri
+            if (col < cols - 1) neighbors.add(i + 1);    // kanan
 
-            // Percabangan: 35% chance ada pilihan alternatif (jika masih ada room)
-            if (i + 2 < last && RNG.nextDouble() < 0.35) {
-                nexts.add(i + 2); // skip satu room (bypass)
-            }
-
-            conn.put(i, nexts);
+            conn.put(i, neighbors);
         }
-
-        // Boss room tidak punya next
-        conn.put(last, List.of());
 
         return conn;
     }
@@ -176,45 +174,31 @@ public class ProceduralGenerator {
     private static void populateRooms(List<Room> rooms, int floor) {
         for (Room room : rooms) {
             switch (room.getType()) {
-
                 case ENEMY -> {
-                    int difficulty = getDifficulty(floor);
-                    List<Enemy> enemies = EntityFactory.generateEncounter(floor, difficulty);
-                    room.setEnemies(enemies);
+                    int diff = getDifficulty(floor);
+                    room.setEnemies(EntityFactory.generateEncounter(floor, diff));
                 }
-
                 case ELITE -> {
-                    List<Enemy> elites = EntityFactory.generateEncounter(floor, 4); // hardest
-                    room.setEnemies(elites);
+                    room.setEnemies(EntityFactory.generateEncounter(floor, 4));
                 }
-
                 case BOSS -> {
                     Enemy boss = EntityFactory.generateBoss(floor);
                     room.setEnemies(List.of(boss));
                 }
-
                 case LOOT -> {
-                    // Loot items di-resolve oleh LootManager saat room dibuka
                     room.setLootItemIds(List.of("LOOT_FLOOR_" + floor));
                 }
-
                 case EVENT -> {
-                    String eventId = selectRandomEvent(floor);
-                    room.setEventId(eventId);
+                    room.setEventId(selectRandomEvent(floor));
                 }
-
                 case SHOP -> {
                     room.setShopId("SHOP_FLOOR_" + floor);
                 }
-
                 case TRAP -> {
-                    // Trap damage ditangani oleh DungeonManager
                     room.setEventId("TRAP_" + selectTrapType());
                 }
-
-                case REST, EMPTY -> {
-                    // Tidak butuh konten khusus
-                }
+                case EMPTY -> { /* start room, no content */ }
+                default    -> { }
             }
         }
     }
@@ -222,22 +206,21 @@ public class ProceduralGenerator {
     // ── Helpers ──────────────────────────────────────────────
 
     private static int getDifficulty(int floor) {
-        // Floor 1-3: easy | 4-7: normal | 8-12: hard | 13+: random hard/normal
         if (floor <= 3)  return 1;
-        if (floor <= 7)  return 1 + RNG.nextInt(2); // 1-2
-        if (floor <= 12) return 2 + RNG.nextInt(2); // 2-3
-        return                1 + RNG.nextInt(3);   // 1-3 random
+        if (floor <= 7)  return 1 + RNG.nextInt(2);
+        if (floor <= 12) return 2 + RNG.nextInt(2);
+        return                1 + RNG.nextInt(3);
     }
 
     private static String selectRandomEvent(int floor) {
         String[] events = {
-            "EVENT_CALIBRATION",    // kalibrasi gratis
-            "EVENT_MERCHANT",       // merchant muncul
-            "EVENT_MYSTERY_BOX",    // kotak misterius
-            "EVENT_AMBUSH",         // musuh menyerang tiba-tiba
-            "EVENT_DATA_CACHE",     // temukan data cache = EXP bonus
-            "EVENT_NEON_FOUNTAIN",  // fountain yang menyembuhkan
-            "EVENT_CORRUPTED_LOOT", // loot tapi ada risiko
+            "EVENT_CALIBRATION",
+            "EVENT_MERCHANT",
+            "EVENT_MYSTERY_BOX",
+            "EVENT_AMBUSH",
+            "EVENT_DATA_CACHE",
+            "EVENT_NEON_FOUNTAIN",
+            "EVENT_CORRUPTED_LOOT",
         };
         return events[RNG.nextInt(events.length)];
     }
@@ -249,11 +232,13 @@ public class ProceduralGenerator {
 
     private static Floor.FloorTheme selectTheme(int floor) {
         Floor.FloorTheme[] themes = Floor.FloorTheme.values();
-        // Tema berubah tiap 5 floor, dengan sedikit variasi
         int themeIndex = ((floor - 1) / 5) % themes.length;
-        if (RNG.nextDouble() < 0.20) { // 20% chance tema acak
-            themeIndex = RNG.nextInt(themes.length);
-        }
+        if (RNG.nextDouble() < 0.20) themeIndex = RNG.nextInt(themes.length);
         return themes[themeIndex];
+    }
+
+    /** Util: total tile untuk floor number */
+    public static int getTotalTiles(int floorNumber) {
+        return getGridRows(floorNumber) * COLS;
     }
 }

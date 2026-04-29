@@ -228,3 +228,122 @@ mvn javafx:run
 - Animasi player masih linear (ease in-out sudah ada, tapi path hanya garis lurus)
 - Skill selection masih auto-pick (target v0.3)
 - Shop masih placeholder (target v0.5)
+
+---
+
+## [v0.2.3] - 2026-04-29
+
+### Added
+
+**[FEATURE] Dungeon Full Grid Exploration — ProceduralGenerator overhaul (ProceduralGenerator.java)**
+- Floor sekarang di-generate sebagai grid COLS×ROWS yang **penuh** — tidak ada tile kosong
+- Jumlah tile per floor: F1-3 = 15 tile (3×5), F4-8 = 20 tile (4×5),
+  F9-15 = 25 tile (5×5), F16+ = 30 tile (6×5)
+- Semua tile berisi event random (ENEMY, LOOT, REST, EVENT, SHOP, TRAP, ELITE)
+- Boss selalu ada 1 di tengah baris terakhir — harus dikalahkan untuk DESCEND
+- Distribusi tile terjamin: minimal N LOOT, REST, EVENT, SHOP, TRAP per floor
+- Koneksi cardinal: setiap tile terhubung ke tile atas/bawah/kiri/kanan
+- Tile yang sudah dikunjungi bisa dikunjungi lagi (backtrack bebas)
+
+**[FEATURE] Fog of War 3 State (DungeonGridMap.java)**
+- HIDDEN  → tile tidak terlihat, hanya dot gelap kecil
+- VISIBLE → tile adjacent ke visited: icon kelihatan tapi redup (belum dikunjungi)
+- VISITED → tile sudah dikunjungi: icon sangat redup + tanda ✓ jika cleared
+- CURRENT → tile player sekarang: glow cyan
+
+**[FEATURE] Koneksi Garis Cardinal H/V (DungeonGridMap.java)**
+- Garis penghubung antar tile hanya horizontal dan vertikal (tidak diagonal)
+- Garis solid untuk koneksi antar visited tiles
+- Garis putus-putus untuk koneksi ke visible (belum dikunjungi)
+- Garis cyan highlight untuk koneksi dari/ke tile current player
+
+**[FEATURE] Boss sebagai Objective — DESCEND terkunci (Floor.java, DungeonMapView.java)**
+- Method baru `Floor.isBossDefeated()` — cek apakah boss room sudah di-clear
+- DESCEND button hanya muncul setelah boss dikalahkan
+- Sebelum boss mati: panel bawah tampilkan reminder "☠ Defeat the BOSS to unlock"
+
+**[FEATURE] Map Legend (DungeonMapView.java)**
+- Legend row di bawah map: icon dan nama setiap room type dengan warna
+
+### Changed
+
+**ProceduralGenerator — complete rewrite**
+- Sebelum: linear path dengan percabangan (6-16 rooms total)
+- Sekarang: full grid dengan koneksi cardinal (15-30 tiles)
+- `buildConnections()` → `buildCardinalConnections()` yang generate 4-arah
+- `getRoomCount()` → `getGridRows()` untuk kontrol ukuran grid
+- `getBossIndex()` dan `getTotalTiles()` ditambah sebagai public utility
+
+**DungeonGridMap — full rewrite (v1 → v2)**
+- Navigation: klik tile adjacent (cardinal only)
+- Backtrack: bisa kembali ke tile yang sudah dikunjungi
+- Visual: fog of war, garis H/V, reachable dot indicator
+
+**DungeonMapView — refreshNextRooms redesign**
+- Panel bawah sekarang tidak lagi daftar tombol room
+- Menampilkan: hint navigasi + boss reminder + legend
+- DESCEND button muncul kondisional (setelah boss defeated)
+
+### Known Issues
+- Backtrack ke tile visited re-trigger event (akan difix: cek `room.isCleared()` sebelum trigger)
+- Animasi player masih garis lurus (path-finding A* untuk v0.3)
+
+---
+
+## [v0.2.3.1] - 2026-04-29
+
+### Fixed
+
+**[CRITICAL] ProceduralGenerator.java — konten file duplikat setelah class closing brace**
+- Root cause: `str_replace` sebelumnya hanya mengganti bagian awal file (javadoc + class header)
+  tapi tidak menghapus konten lama di bawahnya, sehingga file berisi dua versi kode:
+  versi baru (baris 1-244) + sisa versi lama (baris 245-479)
+- Error: `class, interface, enum, or record expected` di baris 479 karena ada kode
+  di luar class block (setelah `}` closing)
+- Error kedua: `compact source file should not have package declaration` — Java 25
+  mendeteksi file tidak valid sebagai class file biasa
+- Fix: potong file di baris 244 (tepat setelah `}` class closing), buang semua
+  konten setelahnya
+- Verifikasi: brace balance sekarang 30:30 (seimbang)
+
+---
+
+## [v0.2.4] - 2026-04-29
+
+### Fixed
+
+**[CRITICAL] Backtrack ke tile visited re-trigger event (DungeonManager.java)**
+- Root cause 1: `enterRoom()` tidak punya guard untuk room yang sudah cleared —
+  setiap kali player masuk room manapun, handler dipanggil ulang
+- Root cause 2: `Floor.moveToRoom()` hanya izinkan gerakan ke `nextRoomIndexes`
+  dari current room, tidak mengizinkan backtrack ke tile sebelumnya yang sudah
+  dikunjungi (karena koneksi cardinal bersifat symmetric tapi tidak bidirectional
+  di getNextRoomIndexes)
+- Fix 1: tambah early-return guard di `enterRoom()` — jika `room.isCleared()`,
+  langsung emit `ROOM_ALREADY_CLEARED` dan return tanpa trigger event apapun
+- Fix 2: `Floor.moveToRoom()` sekarang izinkan backtrack — cek BAIK apakah
+  roomIndex ada di `current.getNextRoomIndexes()` MAUPUN apakah current ada
+  di `targetRoom.getNextRoomIndexes()` (symmetric check)
+
+**[BUG] handleRestRoom dan handleEmptyRoom tidak punya isCleared guard (DungeonManager.java)**
+- Sebelumnya: REST room masuk lagi → HP/MP dipulihkan lagi (exploit/bug)
+- Fix tidak diperlukan lagi karena sudah ditangani oleh guard di `enterRoom()` —
+  jika room cleared, tidak akan sampai ke handler manapun
+
+**[UI] ROOM_ALREADY_CLEARED tidak dihandle di wireEngineListeners (DungeonMapView.java)**
+- Event ini sebelumnya jatuh ke `default` yang memanggil `refreshCurrentRoomInfo()`
+- Sekarang: punya handler eksplisit yang refresh map + room info + next rooms panel
+
+### Changed
+
+**buildCurrentRoomPanel — lebih informatif (DungeonMapView.java)**
+- Cleared room tampil berbeda: judul menjadi abu, ada badge ✓ CLEARED di samping
+- Deskripsi berubah menjadi "You've been here before. Nothing left to find."
+- Progress bar visual (tidak hanya teks) untuk jumlah room yang sudah dikunjungi
+- Boss defeated indicator muncul di panel jika boss sudah dikalahkan
+
+### Known Issues
+- REST room tidak bisa digunakan lagi setelah cleared (by design — anti-exploit)
+  Akan dipertimbangkan untuk dikembalikan sebagai "partial heal" di v0.3
+- Skill selection masih auto-pick (target v0.3)
+- Shop masih placeholder (target v0.5)

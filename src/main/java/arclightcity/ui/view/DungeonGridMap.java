@@ -1,11 +1,10 @@
 package arclightcity.ui.view;
 
-import arclightcity.dungeon.DungeonManager;
 import arclightcity.dungeon.Floor;
+import arclightcity.dungeon.ProceduralGenerator;
 import arclightcity.dungeon.Room;
 import arclightcity.engine.GameEngine;
 import javafx.animation.*;
-import javafx.geometry.Pos;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.input.MouseEvent;
@@ -18,273 +17,243 @@ import javafx.util.Duration;
 import java.util.*;
 
 /**
- * DungeonGridMap — tampilan dungeon sebagai grid 2D.
+ * DungeonGridMap v2 — full grid dungeon map dengan fog of war.
  *
- * ✨ Fitur:
- *  - Grid NxM tile yang di-generate dari Floor rooms
- *  - Player icon bergerak antar tile dengan klik
- *  - Fog of war — tile belum dikunjungi tampil gelap
- *  - Icon per room type (♦=enemy, ☆=loot, ♥=rest, ?=event, $=shop, !=trap, ☠=boss)
- *  - Highlight tile yang bisa dituju (adjacent & accessible)
- *  - Animasi slide player bergerak ke tile baru
- *
- * Layout grid:
- *   Rooms di-arrange dalam grid dengan koneksi sebagai jalan antar tile.
- *   Room index 0 = pojok kiri atas, index terakhir = boss (pojok kanan bawah)
+ * Perubahan dari v1:
+ * - Grid penuh COLS×ROWS (semua tile berisi event)
+ * - Fog of War 3 state: HIDDEN / VISIBLE / VISITED
+ * - Koneksi cardinal H/V (garis horizontal dan vertikal saja)
+ * - Player bebas backtrack ke tile yang sudah VISITED
+ * - Boss tile = objective untuk DESCEND
  */
 public class DungeonGridMap extends StackPane {
 
-    // ── Tile config ───────────────────────────────────────────
-    private static final int TILE_SIZE   = 44;
-    private static final int TILE_GAP    = 4;
-    private static final int COLS        = 5;   // grid width
+    private static final int TILE_SIZE = 42;
+    private static final int TILE_GAP  = 6;
+    private static final int COLS      = ProceduralGenerator.COLS;
 
-    // ── State ─────────────────────────────────────────────────
-    private final GameEngine    engine;
-    private final Runnable      onRoomSelected;  // callback saat tile diklik
-    private       Floor         floor;
-    private       int           playerCol, playerRow;
-    private       double        playerVisualX, playerVisualY; // untuk animasi smooth
+    private static final Color BG     = Color.web("#050810");
+    private static final Color CYAN   = Color.web("#00E5FF");
+    private static final Color YELLOW = Color.web("#FFD600");
+    private static final Color RED    = Color.web("#FF1744");
+    private static final Color GREEN  = Color.web("#00E676");
+    private static final Color PURPLE = Color.web("#AA00FF");
+    private static final Color ORANGE = Color.web("#FF6B00");
 
-    // ── Grid data ─────────────────────────────────────────────
-    private int[][] grid;       // grid[row][col] = room index, -1 = empty
-    private int     gridRows;
+    private final GameEngine engine;
+    private final Runnable   onRoomSelected;
+    private       Floor      floor;
+    private       int        rows;
 
-    // ── Canvas ────────────────────────────────────────────────
-    private final Canvas canvas;
+    private double  playerVisualX, playerVisualY;
+    private int     playerTileIdx;
+
+    private final Set<Integer> visitedTiles = new HashSet<>();
+    private final Set<Integer> visibleTiles = new HashSet<>();
+
+    private final Canvas          canvas;
     private final GraphicsContext gc;
-
-    // ── Animation ─────────────────────────────────────────────
-    private Timeline moveAnimation;
-    private Set<Integer> reachableRoomIds = new HashSet<>();
-
-    // ── Colors ────────────────────────────────────────────────
-    private static final Color BG          = Color.web("#050810");
-    private static final Color TILE_DARK   = Color.web("#0C1220");
-    private static final Color TILE_FOG    = Color.web("#080D18");
-    private static final Color BORDER_DIM  = Color.web("#1C2E44");
-    private static final Color CYAN        = Color.web("#00E5FF");
-    private static final Color YELLOW      = Color.web("#FFD600");
-    private static final Color RED         = Color.web("#FF1744");
-    private static final Color GREEN       = Color.web("#00E676");
-    private static final Color PURPLE      = Color.web("#AA00FF");
-    private static final Color ORANGE      = Color.web("#FF6B00");
-    private static final Color PLAYER_CLR  = Color.web("#00E5FF");
-
-    // ── Constructor ──────────────────────────────────────────
+    private       Timeline        moveAnim;
 
     public DungeonGridMap(GameEngine engine, Runnable onRoomSelected) {
         this.engine         = engine;
         this.onRoomSelected = onRoomSelected;
+        this.floor = engine.getDungeonManager() != null
+                ? engine.getDungeonManager().getCurrentFloor() : null;
+        this.rows = floor != null ? (floor.getTotalRooms() + COLS - 1) / COLS : 3;
 
-        // Ambil floor dari DungeonManager
-        DungeonManager dm = engine.getDungeonManager();
-        this.floor = dm != null ? dm.getCurrentFloor() : null;
-
-        // Hitung ukuran canvas
-        int canvasW = COLS * (TILE_SIZE + TILE_GAP) + TILE_GAP;
-        int maxRows  = floor != null ? (floor.getTotalRooms() + COLS - 1) / COLS : 3;
-        gridRows     = maxRows;
-        int canvasH  = gridRows * (TILE_SIZE + TILE_GAP) + TILE_GAP;
-
-        canvas = new Canvas(canvasW, canvasH);
+        int w = COLS * (TILE_SIZE + TILE_GAP) + TILE_GAP;
+        int h = rows * (TILE_SIZE + TILE_GAP) + TILE_GAP;
+        canvas = new Canvas(w, h);
         gc     = canvas.getGraphicsContext2D();
-
         getChildren().add(canvas);
         setStyle("-fx-background-color: #050810;");
-        setAlignment(Pos.CENTER);
 
-        // Build grid dari rooms
-        buildGrid();
-
-        // Set posisi awal player
-        updatePlayerPosition();
-
-        // Hitung reachable rooms
-        updateReachable();
-
-        // Draw
+        initFog();
+        syncPlayer();
         draw();
-
-        // Click handler
         canvas.setOnMouseClicked(this::handleClick);
     }
 
-    // ── Grid Builder ──────────────────────────────────────────
+    // ── Init ─────────────────────────────────────────────────
 
-    /**
-     * Arrange rooms dalam grid COLS x N.
-     * Room 0 = top-left, rooms berikutnya kiri ke kanan, atas ke bawah.
-     * Boss room selalu di tengah baris terakhir.
-     */
-    private void buildGrid() {
+    private void initFog() {
+        visitedTiles.clear();
+        visibleTiles.clear();
         if (floor == null) return;
-        List<Room> rooms = floor.getRooms();
-        int total = rooms.size();
-        gridRows = (total + COLS - 1) / COLS;
-
-        grid = new int[gridRows][COLS];
-        for (int[] row : grid) Arrays.fill(row, -1);
-
-        for (int i = 0; i < total; i++) {
-            int row = i / COLS;
-            int col = i % COLS;
-            grid[row][col] = i;
-        }
-    }
-
-    /** Update posisi player berdasarkan currentRoomIndex di Floor */
-    private void updatePlayerPosition() {
-        if (floor == null) return;
-        int currentIdx = floor.getCurrentRoomIndex();
-        playerRow = currentIdx / COLS;
-        playerCol = currentIdx % COLS;
-        playerVisualX = tileX(playerCol);
-        playerVisualY = tileY(playerRow);
-    }
-
-    /** Hitung room index yang bisa dijangkau dari posisi saat ini */
-    private void updateReachable() {
-        reachableRoomIds.clear();
-        if (floor == null) return;
-        Room current = floor.getCurrentRoom();
-        if (current == null) return;
-        // Tambahkan semua next rooms yang accessible
-        reachableRoomIds.addAll(current.getNextRoomIndexes());
-    }
-
-    // ── Drawing ───────────────────────────────────────────────
-
-    public void draw() {
-        if (floor == null) {
-            drawEmpty();
-            return;
-        }
-
-        List<Room> rooms = floor.getRooms();
-        int currentIdx = floor.getCurrentRoomIndex();
-
-        // Clear
-        gc.setFill(BG);
-        gc.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
-
-        // Draw connections dulu (di belakang tiles)
-        drawConnections(rooms);
-
-        // Draw tiles
-        for (int row = 0; row < gridRows; row++) {
-            for (int col = 0; col < COLS; col++) {
-                int roomIdx = grid[row][col];
-                if (roomIdx < 0 || roomIdx >= rooms.size()) continue;
-
-                Room room = rooms.get(roomIdx);
-                drawTile(room, roomIdx, col, row, currentIdx);
+        for (Room r : floor.getRooms()) {
+            if (r.isVisited()) {
+                visitedTiles.add(r.getRoomIndex());
+                revealAround(r.getRoomIndex());
             }
         }
+        visibleTiles.add(0); // start selalu visible
+    }
 
-        // Draw player icon (di atas semua tiles)
+    private void revealAround(int idx) {
+        int r = idx / COLS, c = idx % COLS;
+        int[][] dirs = {{-1,0},{1,0},{0,-1},{0,1}};
+        for (int[] d : dirs) {
+            int nr = r + d[0], nc = c + d[1];
+            if (nr >= 0 && nr < rows && nc >= 0 && nc < COLS) {
+                int ni = nr * COLS + nc;
+                if (ni < floor.getTotalRooms() && !visitedTiles.contains(ni))
+                    visibleTiles.add(ni);
+            }
+        }
+    }
+
+    private void syncPlayer() {
+        if (floor == null) return;
+        playerTileIdx = floor.getCurrentRoomIndex();
+        playerVisualX = tileX(playerTileIdx % COLS);
+        playerVisualY = tileY(playerTileIdx / COLS);
+    }
+
+    // ── Draw ─────────────────────────────────────────────────
+
+    public void draw() {
+        gc.setFill(BG);
+        gc.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
+        if (floor == null) return;
+
+        drawConnections();
+        List<Room> rooms = floor.getRooms();
+        for (int i = 0; i < rooms.size(); i++) drawTile(rooms.get(i), i);
         drawPlayer();
     }
 
-    private void drawConnections(List<Room> rooms) {
-        gc.setStroke(BORDER_DIM);
-        gc.setLineWidth(1.5);
+    private void drawConnections() {
+        List<Room> rooms = floor.getRooms();
+        gc.setLineDashes(0);
 
         for (int i = 0; i < rooms.size(); i++) {
-            Room room = rooms.get(i);
-            int fromRow = i / COLS;
-            int fromCol = i % COLS;
-            double fx = tileX(fromCol) + TILE_SIZE / 2.0;
-            double fy = tileY(fromRow) + TILE_SIZE / 2.0;
-
-            for (int nextIdx : room.getNextRoomIndexes()) {
-                if (nextIdx >= rooms.size()) continue;
-                int toRow = nextIdx / COLS;
-                int toCol = nextIdx % COLS;
-                double tx = tileX(toCol) + TILE_SIZE / 2.0;
-                double ty = tileY(toRow) + TILE_SIZE / 2.0;
-
-                // Warna connection berdasarkan apakah reachable
-                boolean isReachablePath = reachableRoomIds.contains(nextIdx)
-                        && i == floor.getCurrentRoomIndex();
-                gc.setStroke(isReachablePath
-                        ? Color.web("#00E5FF55")
-                        : Color.web("#1C2E4488"));
-                gc.setLineWidth(isReachablePath ? 2 : 1);
-                gc.strokeLine(fx, fy, tx, ty);
-            }
+            int r = i / COLS, c = i % COLS;
+            // Gambar ke kanan
+            if (c + 1 < COLS && i + 1 < rooms.size()) drawLine(i, i + 1, r, c, r, c + 1);
+            // Gambar ke bawah
+            if (r + 1 < rows && i + COLS < rooms.size()) drawLine(i, i + COLS, r, c, r + 1, c);
         }
     }
 
-    private void drawTile(Room room, int roomIdx, int col, int row, int currentIdx) {
-        double x = tileX(col);
-        double y = tileY(row);
+    private void drawLine(int a, int b, int ar, int ac, int br, int bc) {
+        boolean aVis = visitedTiles.contains(a) || visibleTiles.contains(a);
+        boolean bVis = visitedTiles.contains(b) || visibleTiles.contains(b);
+        if (!aVis && !bVis) return;
 
-        boolean isCurrent   = (roomIdx == currentIdx);
-        boolean isVisited   = room.isVisited();
-        boolean isCleared   = room.isCleared();
-        boolean isReachable = reachableRoomIds.contains(roomIdx);
-        boolean isFog       = !isVisited && !isCurrent;
+        boolean aVisit = visitedTiles.contains(a);
+        boolean bVisit = visitedTiles.contains(b);
+        boolean curAdj = (a == playerTileIdx || b == playerTileIdx);
 
-        // Background tile
-        Color bgColor;
-        if (isCurrent)        bgColor = Color.web("#00E5FF15");
-        else if (isCleared)   bgColor = Color.web("#0C1220");
-        else if (isReachable) bgColor = getRoomColor(room.getType()).deriveColor(0, 1, 1, 0.12);
-        else if (isFog)       bgColor = TILE_FOG;
-        else                  bgColor = TILE_DARK;
+        // Titik pusat tile, lalu potong ke tepi
+        double ax = tileX(ac) + TILE_SIZE / 2.0;
+        double ay = tileY(ar) + TILE_SIZE / 2.0;
+        double bx = tileX(bc) + TILE_SIZE / 2.0;
+        double by = tileY(br) + TILE_SIZE / 2.0;
+        double half = TILE_SIZE / 2.0 + 2;
 
-        gc.setFill(bgColor);
-        gc.fillRoundRect(x, y, TILE_SIZE, TILE_SIZE, 4, 4);
+        if (ac == bc) { ay += half; by -= half; } // vertikal
+        else           { ax += half; bx -= half; } // horizontal
 
-        // Border
-        Color borderColor;
-        if (isCurrent)        borderColor = CYAN;
-        else if (isReachable) borderColor = getRoomColor(room.getType()).deriveColor(0, 1, 1, 0.7);
-        else if (isCleared)   borderColor = Color.web("#1C2E4455");
-        else if (isFog)       borderColor = Color.web("#1C2E4422");
-        else                  borderColor = BORDER_DIM;
+        Color col;
+        double lw;
+        if (curAdj && aVis && bVis) {
+            col = Color.web("#00E5FF66"); lw = 2;
+            gc.setLineDashes(0);
+        } else if (aVisit && bVisit) {
+            col = Color.web("#1C2E4455"); lw = 1;
+            gc.setLineDashes(0);
+        } else {
+            col = Color.web("#1C2E4488"); lw = 1;
+            gc.setLineDashes(3, 4);
+        }
 
-        gc.setStroke(borderColor);
-        gc.setLineWidth(isCurrent ? 2 : 1);
-        gc.strokeRoundRect(x + 0.5, y + 0.5, TILE_SIZE - 1, TILE_SIZE - 1, 4, 4);
+        gc.setStroke(col);
+        gc.setLineWidth(lw);
+        gc.strokeLine(ax, ay, bx, by);
+        gc.setLineDashes(0);
+    }
 
-        // Fog: tidak tampilkan icon
-        if (isFog) {
-            gc.setFill(Color.web("#5A6A8044"));
-            gc.setFont(Font.font("Courier New", 12));
-            gc.setTextAlign(TextAlignment.CENTER);
-            gc.fillText("?", x + TILE_SIZE / 2.0, y + TILE_SIZE / 2.0 + 5);
+    private void drawTile(Room room, int idx) {
+        int col = idx % COLS, row = idx / COLS;
+        double x = tileX(col), y = tileY(row);
+
+        boolean isCur     = (idx == playerTileIdx);
+        boolean isVisited = visitedTiles.contains(idx);
+        boolean isVisible = visibleTiles.contains(idx);
+        boolean isHidden  = !isCur && !isVisited && !isVisible;
+        boolean isBoss    = room.getType() == Room.RoomType.BOSS;
+        boolean isAdjReach= isAdjacent(idx) && !isVisited;
+
+        // Hidden tile — hanya kotak gelap + dot kecil
+        if (isHidden) {
+            gc.setFill(Color.web("#0C1220"));
+            gc.fillRoundRect(x, y, TILE_SIZE, TILE_SIZE, 4, 4);
+            gc.setFill(Color.web("#1C2E4444"));
+            gc.fillOval(x + TILE_SIZE/2.0 - 2, y + TILE_SIZE/2.0 - 2, 4, 4);
             return;
         }
 
-        // Room icon
-        String icon = getRoomIcon(room.getType());
-        Color iconColor = isCleared
-                ? Color.web("#2A3A5088")
-                : getRoomColor(room.getType());
-        gc.setFill(iconColor);
-        gc.setFont(Font.font("Courier New", 16));
+        // Background
+        Color bg = isCur      ? Color.web(isBoss ? "#FF000022" : "#00E5FF15")
+                 : isVisited  ? Color.web(isBoss ? "#FF000018" : "#080D18")
+                 : isBoss     ? Color.web("#FF174412")
+                              : roomColor(room.getType()).deriveColor(0,1,1,0.08);
+        gc.setFill(bg);
+        gc.fillRoundRect(x, y, TILE_SIZE, TILE_SIZE, 4, 4);
+
+        // Border
+        Color border = isCur    ? CYAN
+                     : isBoss   ? Color.web("#FF1744AA")
+                     : isVisited? Color.web("#1C2E4466")
+                                : roomColor(room.getType()).deriveColor(0,1,1,0.5);
+        gc.setStroke(border);
+        gc.setLineWidth(isCur ? 2 : 1);
+        gc.strokeRoundRect(x+.5, y+.5, TILE_SIZE-1, TILE_SIZE-1, 4, 4);
+
+        // Boss outer glow
+        if (isBoss && !isVisited) {
+            gc.setStroke(Color.web("#FF174433"));
+            gc.setLineWidth(4);
+            gc.strokeRoundRect(x-2, y-2, TILE_SIZE+4, TILE_SIZE+4, 6, 6);
+        }
+
+        // Icon
+        Color icColor = isCur                          ? roomColor(room.getType())
+                      : isVisited && room.isCleared()  ? Color.web("#2A3A5066")
+                      : isVisited                      ? roomColor(room.getType()).deriveColor(0,.5,.8,.7)
+                                                       : roomColor(room.getType()).deriveColor(0,.8,.9,.65);
+        gc.setFill(icColor);
+        gc.setFont(Font.font("Courier New", 15));
         gc.setTextAlign(TextAlignment.CENTER);
-        gc.fillText(icon, x + TILE_SIZE / 2.0, y + TILE_SIZE / 2.0 + 6);
+        gc.fillText(roomIcon(room.getType()), x + TILE_SIZE/2.0, y + TILE_SIZE/2.0 + 6);
 
-        // Room index (kecil, di pojok kiri atas)
-        gc.setFill(Color.web("#5A6A8077"));
-        gc.setFont(Font.font("Courier New", 8));
-        gc.fillText(String.valueOf(roomIdx), x + 7, y + 10);
-
-        // Cleared checkmark (pojok kanan atas)
-        if (isCleared && !isCurrent) {
-            gc.setFill(Color.web("#00E67666"));
-            gc.setFont(Font.font("Courier New", 9));
+        // Cleared mark
+        if (room.isCleared() && !isCur) {
+            gc.setFill(Color.web("#00E67288"));
+            gc.setFont(Font.font("Courier New", 8));
             gc.setTextAlign(TextAlignment.RIGHT);
             gc.fillText("✓", x + TILE_SIZE - 3, y + 10);
         }
 
-        // Reachable pulse indicator (bawah tile)
-        if (isReachable) {
-            gc.setFill(getRoomColor(room.getType()).deriveColor(0, 1, 1, 0.6));
-            gc.fillOval(x + TILE_SIZE / 2.0 - 3, y + TILE_SIZE - 7, 6, 4);
+        // Index label
+        gc.setFill(Color.web("#5A6A8055"));
+        gc.setFont(Font.font("Courier New", 7));
+        gc.setTextAlign(TextAlignment.LEFT);
+        gc.fillText(String.valueOf(idx), x + 3, y + 9);
+
+        // BOSS label
+        if (isBoss) {
+            gc.setFill(Color.web("#FF174488"));
+            gc.setFont(Font.font("Courier New", 7));
+            gc.setTextAlign(TextAlignment.CENTER);
+            gc.fillText("BOSS", x + TILE_SIZE/2.0, y + TILE_SIZE - 5);
+        }
+
+        // Reachable dot
+        if (isAdjReach) {
+            gc.setFill(roomColor(room.getType()).deriveColor(0,1,1,0.8));
+            gc.fillOval(x + TILE_SIZE/2.0 - 3, y + TILE_SIZE - 9, 6, 5);
         }
 
         gc.setTextAlign(TextAlignment.CENTER);
@@ -293,120 +262,77 @@ public class DungeonGridMap extends StackPane {
     private void drawPlayer() {
         double px = playerVisualX + TILE_SIZE / 2.0;
         double py = playerVisualY + TILE_SIZE / 2.0;
-
-        // Outer glow
-        gc.setFill(Color.web("#00E5FF22"));
-        gc.fillOval(px - 14, py - 14, 28, 28);
-
-        // Inner circle
-        gc.setFill(Color.web("#00E5FF44"));
-        gc.fillOval(px - 9, py - 9, 18, 18);
-
-        // Player icon
-        gc.setFill(PLAYER_CLR);
+        gc.setFill(Color.web("#00E5FF18")); gc.fillOval(px-15, py-15, 30, 30);
+        gc.setFill(Color.web("#00E5FF33")); gc.fillOval(px-9,  py-9,  18, 18);
+        gc.setFill(CYAN);
         gc.setFont(Font.font("Courier New", 14));
         gc.setTextAlign(TextAlignment.CENTER);
         gc.fillText("◈", px, py + 5);
-
-        // Player outline
-        gc.setStroke(CYAN);
-        gc.setLineWidth(1.5);
-        gc.strokeOval(px - 10, py - 10, 20, 20);
+        gc.setStroke(CYAN); gc.setLineWidth(1.5);
+        gc.strokeOval(px-10, py-10, 20, 20);
     }
 
-    private void drawEmpty() {
-        gc.setFill(BG);
-        gc.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
-        gc.setFill(Color.web("#5A6A80"));
-        gc.setFont(Font.font("Courier New", 12));
-        gc.setTextAlign(TextAlignment.CENTER);
-        gc.fillText("No dungeon active", canvas.getWidth() / 2, canvas.getHeight() / 2);
-    }
+    // ── Click ─────────────────────────────────────────────────
 
-    // ── Click Handler ─────────────────────────────────────────
-
-    private void handleClick(MouseEvent event) {
+    private void handleClick(MouseEvent e) {
         if (floor == null) return;
+        int col = (int)((e.getX() - TILE_GAP) / (TILE_SIZE + TILE_GAP));
+        int row = (int)((e.getY() - TILE_GAP) / (TILE_SIZE + TILE_GAP));
+        if (row < 0 || row >= rows || col < 0 || col >= COLS) return;
+        int idx = row * COLS + col;
+        if (idx >= floor.getTotalRooms()) return;
+        if (!isAdjacent(idx)) return;
+        if (!visibleTiles.contains(idx) && !visitedTiles.contains(idx)) return;
 
-        double mouseX = event.getX();
-        double mouseY = event.getY();
+        double sx = playerVisualX, sy = playerVisualY;
+        double ex = tileX(col),    ey = tileY(row);
+        if (moveAnim != null) moveAnim.stop();
 
-        // Hitung tile yang diklik
-        int col = (int)((mouseX - TILE_GAP) / (TILE_SIZE + TILE_GAP));
-        int row = (int)((mouseY - TILE_GAP) / (TILE_SIZE + TILE_GAP));
-
-        if (row < 0 || row >= gridRows || col < 0 || col >= COLS) return;
-        if (grid[row][col] < 0) return;
-
-        int clickedRoomIdx = grid[row][col];
-
-        // Hanya bisa pindah ke reachable room
-        if (!reachableRoomIds.contains(clickedRoomIdx)) return;
-
-        // Animasi player bergerak
-        animateMoveTo(col, row, () -> {
-            // Setelah animasi, pindah ke room
-            boolean moved = engine.moveToRoom(clickedRoomIdx);
-            if (moved) {
-                playerCol = col;
-                playerRow = row;
-                updateReachable();
-                draw();
-                if (onRoomSelected != null) onRoomSelected.run();
-            }
-        });
-    }
-
-    private void animateMoveTo(int targetCol, int targetRow, Runnable onFinish) {
-        if (moveAnimation != null) moveAnimation.stop();
-
-        double startX = playerVisualX;
-        double startY = playerVisualY;
-        double endX   = tileX(targetCol);
-        double endY   = tileY(targetRow);
-
-        moveAnimation = new Timeline(
-            new KeyFrame(Duration.ZERO, e -> {
-                playerVisualX = startX;
-                playerVisualY = startY;
-                draw();
-            }),
-            new KeyFrame(Duration.millis(250), e -> {
-                playerVisualX = endX;
-                playerVisualY = endY;
-                draw();
-            })
+        moveAnim = new Timeline(
+            new KeyFrame(Duration.ZERO),
+            new KeyFrame(Duration.millis(240))
         );
-
-        // Interpolasi smooth
-        moveAnimation.currentTimeProperty().addListener((obs, old, now) -> {
-            double t = now.toMillis() / 250.0;
-            t = Math.min(1, t);
-            // Ease in-out
-            t = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
-            playerVisualX = startX + (endX - startX) * t;
-            playerVisualY = startY + (endY - startY) * t;
+        moveAnim.currentTimeProperty().addListener((obs, o, n) -> {
+            double t = Math.min(1.0, n.toMillis() / 240.0);
+            t = t < .5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2;
+            playerVisualX = sx + (ex-sx)*t;
+            playerVisualY = sy + (ey-sy)*t;
             draw();
         });
-
-        moveAnimation.setOnFinished(e -> {
-            playerVisualX = endX;
-            playerVisualY = endY;
+        moveAnim.setOnFinished(ev -> {
+            playerVisualX = ex; playerVisualY = ey;
+            playerTileIdx = idx;
+            visitedTiles.add(idx);
+            visibleTiles.remove(idx);
+            revealAround(idx);
             draw();
-            if (onFinish != null) onFinish.run();
+            engine.moveToRoom(idx);
+            if (onRoomSelected != null) onRoomSelected.run();
         });
-        moveAnimation.play();
+        moveAnim.play();
     }
 
-    // ── Public Refresh ────────────────────────────────────────
+    private boolean isAdjacent(int idx) {
+        int pr = playerTileIdx / COLS, pc = playerTileIdx % COLS;
+        int tr = idx / COLS,           tc = idx % COLS;
+        return (Math.abs(pr-tr) == 1 && pc == tc) || (pr == tr && Math.abs(pc-tc) == 1);
+    }
 
-    /** Dipanggil dari DungeonMapView saat floor berubah atau room di-clear */
+    // ── Refresh ───────────────────────────────────────────────
+
     public void refresh() {
-        DungeonManager dm = engine.getDungeonManager();
-        this.floor = dm != null ? dm.getCurrentFloor() : null;
-        buildGrid();
-        updatePlayerPosition();
-        updateReachable();
+        floor = engine.getDungeonManager() != null
+                ? engine.getDungeonManager().getCurrentFloor() : null;
+        if (floor == null) { draw(); return; }
+        rows = (floor.getTotalRooms() + COLS - 1) / COLS;
+        for (Room r : floor.getRooms()) {
+            if (r.isVisited()) {
+                visitedTiles.add(r.getRoomIndex());
+                visibleTiles.remove(r.getRoomIndex());
+                revealAround(r.getRoomIndex());
+            }
+        }
+        syncPlayer();
         draw();
     }
 
@@ -415,35 +341,23 @@ public class DungeonGridMap extends StackPane {
     private double tileX(int col) { return TILE_GAP + col * (TILE_SIZE + TILE_GAP); }
     private double tileY(int row) { return TILE_GAP + row * (TILE_SIZE + TILE_GAP); }
 
-    private String getRoomIcon(Room.RoomType type) {
-        return switch (type) {
-            case EMPTY   -> "○";
-            case ENEMY   -> "◆";
-            case ELITE   -> "◈";
-            case BOSS    -> "☠";
-            case LOOT    -> "☆";
-            case REST    -> "♥";
-            case EVENT   -> "?";
-            case SHOP    -> "$";
-            case TRAP    -> "!";
+    public double getPreferredHeight() { return rows * (TILE_SIZE + TILE_GAP) + TILE_GAP; }
+
+    private String roomIcon(Room.RoomType t) {
+        return switch (t) {
+            case EMPTY -> "○"; case ENEMY -> "◆"; case ELITE -> "◈";
+            case BOSS  -> "☠"; case LOOT  -> "☆"; case REST  -> "♥";
+            case EVENT -> "?"; case SHOP  -> "$"; case TRAP  -> "!";
         };
     }
 
-    private Color getRoomColor(Room.RoomType type) {
-        return switch (type) {
-            case EMPTY   -> Color.web("#5A6A80");
-            case ENEMY   -> Color.web("#FF1744");
-            case ELITE   -> Color.web("#AA00FF");
-            case BOSS    -> Color.web("#FF0000");
-            case LOOT    -> Color.web("#FFD600");
-            case REST    -> Color.web("#00E676");
-            case EVENT   -> Color.web("#00E5FF");
-            case SHOP    -> Color.web("#FF6B00");
-            case TRAP    -> Color.web("#FF6B00");
+    private Color roomColor(Room.RoomType t) {
+        return switch (t) {
+            case EMPTY -> Color.web("#5A6A80"); case ENEMY -> RED;
+            case ELITE -> PURPLE;               case BOSS  -> Color.web("#FF0000");
+            case LOOT  -> YELLOW;               case REST  -> GREEN;
+            case EVENT -> CYAN;                 case SHOP  -> ORANGE;
+            case TRAP  -> ORANGE;
         };
-    }
-
-    public double getPreferredHeight() {
-        return gridRows * (TILE_SIZE + TILE_GAP) + TILE_GAP;
     }
 }
