@@ -366,3 +366,65 @@ Semua screen:
 - Fix 1: hapus UIFactory.spacer() sebelum action panel
 - Fix 2: hapus VBox.setVgrow(logScroll, ALWAYS) — combat log sekarang fixed
   130px, tidak bisa grow tak terbatas
+
+---
+
+## [v0.2.8] — 2026-04-30
+
+### Changed
+
+**[UI] Dungeon Grid Map — Comprehensive Visual Overhaul (DungeonGridMap v3)**
+
+Tile:
+- Ukuran tile 42×42px → 52×52px (memanfaatkan game area 560px)
+- Tile gap 6px → 8px (lebih lega antar tile)
+- Corner radius lebih besar (4 → 6px)
+- Background gradient per state (current/visible/visited/cleared) — tidak flat lagi
+- Icon font 15px → 18–20px (lebih terbaca)
+
+Background canvas:
+- Subtle dot grid di background seluruh canvas (16px spacing)
+  Memberi feel holographic terminal/cyberpunk tanpa mengganggu readability
+
+Player icon:
+- Breathing pulse animation — 3 ring concentric yang bernapas (0.4→1.0 opacity, sinusoidal)
+- Double stroke ring (inner + outer) untuk depth
+- Core glow lebih tebal
+
+Reachable tiles:
+- Marching ants border — dashed border yang bergerak seperti selection tool
+  (march speed 80ms per step)
+- Pulsing dot indicator di bawah tile (ikut breathe animation player)
+- Hover effect: tile lebih terang + tooltip nama room muncul di atas tile
+- Arrow indicator (→) di tengah tile saat di-hover
+
+Connection lines:
+- Current player adjacency: solid cyan lebih tebal (2.5px)
+- Visited-visited: solid 1.5px
+- Visible belum visited: dashed 1px
+- Hidden: sangat redup dashed
+
+Cleared tiles:
+- Diagonal stroke overlay (bukan sekadar redup)
+- Desaturated color yang lebih distinct
+- Checkmark lebih besar (8px → 10px)
+
+Boss tile:
+- Double outer ring (5px + 9px) dengan transparency berlapis
+- Label "BOSS" atau "SLAIN" (setelah dikalahkan) di bawah icon
+
+Hidden tiles:
+- Cross-hatch pattern subtle (bukan flat hitam)
+- Tiny dot di tengah
+
+Tooltip:
+- Hover tile adjacent menampilkan nama room (mis. "Supply Cache", "Enemy Encounter")
+  dalam tooltip kecil di atas tile
+
+Animation cleanup:
+- Pulse dan march animation di-pause saat player bergerak, di-resume setelah selesai
+- `stopAnimations()` method untuk cleanup saat view tidak aktif
+
+**[UI] DungeonMapView — map area lebih lega**
+- gridScroll.setPrefHeight 230px → 290px
+- gridScroll.setMaxHeight 230px → 310px

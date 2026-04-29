@@ -123,8 +123,8 @@ public class DungeonMapView {
         // Wrap dalam ScrollPane agar grid bisa discroll kalau panjang
         ScrollPane gridScroll = new ScrollPane(dungeonGridMap);
         gridScroll.setFitToWidth(true);
-        gridScroll.setPrefHeight(230);
-        gridScroll.setMaxHeight(230);
+        gridScroll.setPrefHeight(290);
+        gridScroll.setMaxHeight(310);
         gridScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         gridScroll.setStyle(
             "-fx-background-color: #050810;" +
