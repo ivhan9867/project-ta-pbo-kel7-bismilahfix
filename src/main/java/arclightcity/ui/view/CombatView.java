@@ -94,9 +94,10 @@ public class CombatView {
         // ── Status effects ────────────────────────────────
         root.getChildren().add(buildStatusPanel());
 
-        root.getChildren().add(UIFactory.spacer());
+        // Tidak ada spacer — biarkan action panel langsung di bawah status
+        // spacer dihapus karena menyebabkan action panel terpotong di layar kecil
 
-        // ── Action panel ─────────────────────────────────
+        // ── Action panel (selalu di bawah, tidak terpotong) ─
         actionPanel = new VBox(8);
         actionPanel.setPadding(new Insets(10, 12, 12, 12));
         actionPanel.setStyle("-fx-background-color: #0C1220; -fx-border-color: #1C2E44; -fx-border-width: 1 0 0 0;");
@@ -157,19 +158,18 @@ public class CombatView {
 
     private VBox buildCombatLog() {
         VBox wrapper = new VBox();
-        wrapper.setPrefHeight(110);
-        wrapper.setMaxHeight(110);
+        wrapper.setPrefHeight(130);
+        wrapper.setMaxHeight(130);
         wrapper.setStyle("-fx-background-color: #050810; -fx-border-color: #1C2E44; -fx-border-width: 0 0 1 0;");
 
-        logContainer = new VBox(1);
+        logContainer = new VBox(2);
         logContainer.setPadding(new Insets(6, 10, 6, 10));
 
         logScroll = new ScrollPane(logContainer);
         logScroll.setFitToWidth(true);
-        logScroll.setPrefHeight(110);
+        logScroll.setPrefHeight(130);
         logScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        logScroll.setStyle("-fx-background-color: #050810; -fx-border-color: transparent;");
-        VBox.setVgrow(logScroll, Priority.ALWAYS);
+        logScroll.setStyle("-fx-background-color: #050810; -fx-background: #050810; -fx-border-color: transparent;");
 
         wrapper.getChildren().add(logScroll);
         return wrapper;
@@ -181,7 +181,7 @@ public class CombatView {
         entry.setStyle(
             "-fx-text-fill: " + color + ";" +
             "-fx-font-family: 'Courier New', monospace;" +
-            "-fx-font-size: 10px;"
+            "-fx-font-size: 12px;"   // naik dari 10px
         );
         logContainer.getChildren().add(entry);
 
@@ -248,36 +248,39 @@ public class CombatView {
     }
 
     private VBox buildEnemyCard(Entity enemy) {
-        VBox card = new VBox(5);
-        card.setPadding(new Insets(8));
+        VBox card = new VBox(6);
+        card.setPadding(new Insets(10, 12, 10, 12));
         card.setCursor(javafx.scene.Cursor.HAND);
 
         boolean isCurrentActor = cm.getCurrentActor() != null
                 && cm.getCurrentActor().getId().equals(enemy.getId());
 
-        String borderColor = isCurrentActor ? UIFactory.RED : "#1C2E44";
+        String borderColor = isCurrentActor ? UIFactory.RED : "#2A3A50";
         card.setStyle(
-            "-fx-background-color: #150808;" +
+            "-fx-background-color: " + (isCurrentActor ? "#1C0808" : "#100808") + ";" +
             "-fx-border-color: " + borderColor + ";" +
-            "-fx-border-width: " + (isCurrentActor ? "2" : "1") + ";" +
+            "-fx-border-width: " + (isCurrentActor ? "2" : "1") + " " +
+                                   (isCurrentActor ? "2" : "1") + " " +
+                                   (isCurrentActor ? "2" : "1") + " 3;" +
             (isCurrentActor ? "-fx-effect: dropshadow(gaussian, #FF1744, 10, 0.4, 0, 0);" : "")
         );
 
-        // Name + level
-        HBox nameRow = new HBox(6);
+        // Name + badges row
+        HBox nameRow = new HBox(8);
         nameRow.setAlignment(Pos.CENTER_LEFT);
 
         String nameColor = enemy.isAlive() ? UIFactory.RED : "#5A6A80";
         Label nameLabel = new Label(enemy.getName());
-        nameLabel.setStyle("-fx-text-fill: " + nameColor + "; -fx-font-family: 'Courier New'; -fx-font-size: 11px; -fx-font-weight: bold;");
+        nameLabel.setStyle("-fx-text-fill: " + nameColor +
+                "; -fx-font-family: 'Courier New'; -fx-font-size: 14px; -fx-font-weight: bold;");
 
         if (enemy instanceof Enemy e) {
             Label levelBadge = new Label("Lv." + e.getFloorLevel());
-            levelBadge.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 9px;");
+            levelBadge.setStyle("-fx-text-fill: #8899AA; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
             Label typeBadge = new Label(e.getRace().displayName);
             typeBadge.setStyle(
                 "-fx-background-color: #1C2E4488; -fx-text-fill: #8899AA;" +
-                "-fx-font-family: 'Courier New'; -fx-font-size: 9px; -fx-padding: 1 4;"
+                "-fx-font-family: 'Courier New'; -fx-font-size: 10px; -fx-padding: 2 6;"
             );
             HBox.setHgrow(nameLabel, Priority.ALWAYS);
             nameRow.getChildren().addAll(nameLabel, levelBadge, typeBadge);
@@ -285,38 +288,35 @@ public class CombatView {
             nameRow.getChildren().add(nameLabel);
         }
 
-        // Vital bars
+        // Defeated overlay
+        if (!enemy.isAlive()) {
+            card.setOpacity(0.3);
+            Label deadLabel = new Label("✕ DEFEATED");
+            deadLabel.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
+            card.getChildren().addAll(nameRow, deadLabel);
+            return card;
+        }
+
+        // Vital bars — lebih tebal
         VBox bars = UIFactory.compactVitalBars(
                 enemy.getCurrentHp(),    enemy.getStats().get(StatType.MAX_HP),
                 enemy.getCurrentShield(),enemy.getStats().get(StatType.MAX_SHIELD),
                 enemy.getCurrentMp(),    enemy.getStats().get(StatType.MAX_MP));
 
-        // Status effects row
-        HBox effects = new HBox(3);
+        // Status effects
+        HBox effects = new HBox(4);
         enemy.getActiveEffects().forEach(ef -> effects.getChildren().add(UIFactory.effectBadge(ef)));
 
-        // Dead overlay
-        if (!enemy.isAlive()) {
-            card.setOpacity(0.3);
-            Label deadLabel = new Label("✕ DEFEATED");
-            deadLabel.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 9px;");
-            card.getChildren().addAll(nameRow, deadLabel);
-            return card;
-        }
-
         card.getChildren().addAll(nameRow, bars, effects);
-
-        // Click = select as target for skill
         card.setOnMouseClicked(e -> handleTargetSelect(enemy));
-
         return card;
     }
 
     private VBox buildAllyCard(Entity ally) {
-        VBox card = new VBox(5);
-        card.setPadding(new Insets(8));
-        card.setPrefWidth(110);
-        card.setMaxWidth(130);
+        VBox card = new VBox(6);
+        card.setPadding(new Insets(10, 12, 10, 12));
+        card.setPrefWidth(150);
+        card.setMaxWidth(180);
 
         boolean isCurrentActor = cm.getCurrentActor() != null
                 && cm.getCurrentActor().getId().equals(ally.getId());
@@ -327,39 +327,62 @@ public class CombatView {
         card.setStyle(
             "-fx-background-color: #080D18;" +
             "-fx-border-color: " + borderColor + ";" +
-            "-fx-border-width: " + (isCurrentActor ? "2" : "1") + ";" +
+            "-fx-border-width: " + (isCurrentActor ? "2" : "1") + " " +
+                                   (isCurrentActor ? "2" : "1") + " " +
+                                   (isCurrentActor ? "2" : "1") + " 3;" +
             (isCurrentActor ? "-fx-effect: dropshadow(gaussian, #00E5FF, 10, 0.4, 0, 0);" : "")
         );
 
         // Name
         String nameStr = isPlayer
                 ? ally.getName()
-                : (ally instanceof Mercenary m ? m.getMercenaryType().subtitle : ally.getName());
+                : (ally instanceof Mercenary m ? m.getMercenaryType().displayName : ally.getName());
         Label nameLabel = new Label(nameStr.toUpperCase());
         String nameColor = !ally.isAlive() ? "#5A6A80" : isPlayer ? UIFactory.CYAN : UIFactory.TEXT;
-        nameLabel.setStyle("-fx-text-fill: " + nameColor + "; -fx-font-family: 'Courier New'; -fx-font-size: 9px; -fx-font-weight: bold;");
+        nameLabel.setStyle("-fx-text-fill: " + nameColor +
+                "; -fx-font-family: 'Courier New'; -fx-font-size: 12px; -fx-font-weight: bold;");
         nameLabel.setWrapText(true);
 
-        // Vital bars
-        VBox bars = UIFactory.compactVitalBars(
-                ally.getCurrentHp(),     ally.getStats().get(StatType.MAX_HP),
-                ally.getCurrentShield(), ally.getStats().get(StatType.MAX_SHIELD),
-                ally.getCurrentMp(),     ally.getStats().get(StatType.MAX_MP));
+        // Role badge
+        if (!isPlayer && ally instanceof Mercenary m) {
+            Label roleBadge = new Label("[" + m.getRole().name() + "]");
+            roleBadge.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
 
-        // Status effects (tiny)
-        HBox effects = new HBox(2);
-        ally.getActiveEffects().stream().limit(3)
-                .forEach(ef -> effects.getChildren().add(UIFactory.effectBadge(ef)));
+            // Vital bars
+            VBox bars = UIFactory.compactVitalBars(
+                    ally.getCurrentHp(),     ally.getStats().get(StatType.MAX_HP),
+                    ally.getCurrentShield(), ally.getStats().get(StatType.MAX_SHIELD),
+                    ally.getCurrentMp(),     ally.getStats().get(StatType.MAX_MP));
 
-        if (!ally.isAlive()) {
-            card.setOpacity(0.3);
-            Label dead = new Label("✕");
-            dead.setStyle("-fx-text-fill: #5A6A80; -fx-font-size: 14px;");
-            card.getChildren().addAll(nameLabel, dead);
-            return card;
+            HBox effects = new HBox(3);
+            ally.getActiveEffects().stream().limit(3)
+                    .forEach(ef -> effects.getChildren().add(UIFactory.effectBadge(ef)));
+
+            if (!ally.isAlive()) {
+                card.setOpacity(0.3);
+                card.getChildren().addAll(nameLabel, new Label("✕"));
+                return card;
+            }
+            card.getChildren().addAll(nameLabel, roleBadge, bars, effects);
+        } else {
+            // Vital bars
+            VBox bars = UIFactory.compactVitalBars(
+                    ally.getCurrentHp(),     ally.getStats().get(StatType.MAX_HP),
+                    ally.getCurrentShield(), ally.getStats().get(StatType.MAX_SHIELD),
+                    ally.getCurrentMp(),     ally.getStats().get(StatType.MAX_MP));
+
+            HBox effects = new HBox(3);
+            ally.getActiveEffects().stream().limit(3)
+                    .forEach(ef -> effects.getChildren().add(UIFactory.effectBadge(ef)));
+
+            if (!ally.isAlive()) {
+                card.setOpacity(0.3);
+                card.getChildren().addAll(nameLabel, new Label("✕"));
+                return card;
+            }
+            card.getChildren().addAll(nameLabel, bars, effects);
         }
 
-        card.getChildren().addAll(nameLabel, bars, effects);
         return card;
     }
 
@@ -420,7 +443,7 @@ public class CombatView {
     }
 
     private HBox buildSkillQuickBar() {
-        HBox bar = new HBox(6);
+        HBox bar = new HBox(8);
         bar.setAlignment(Pos.CENTER_LEFT);
         bar.setPadding(new Insets(0, 0, 6, 0));
 
@@ -430,36 +453,53 @@ public class CombatView {
         for (int i = 0; i < 4; i++) {
             String skillId = i < equipped.size() ? equipped.get(i) : null;
             int cd = skillId != null ? player.getSkillCooldown(skillId) : 0;
+            boolean ready = skillId != null && cd == 0;
 
-            VBox slot = new VBox(2);
+            VBox slot = new VBox(3);
             slot.setAlignment(Pos.CENTER);
-            slot.setPrefSize(72, 44);
+            slot.setPrefSize(110, 52);  // lebih besar dari sebelumnya (72×44)
 
             String slotStyle;
-            if (skillId != null && cd == 0) {
-                slotStyle = "-fx-background-color: #00E5FF11; -fx-border-color: #00E5FF44; -fx-border-width: 1; -fx-cursor: hand;";
+            if (ready) {
+                slotStyle = "-fx-background-color: #00E5FF11; -fx-border-color: #00E5FF55;" +
+                            " -fx-border-width: 1 1 1 2; -fx-cursor: hand;";
             } else if (skillId != null) {
-                slotStyle = "-fx-background-color: #1C2E4422; -fx-border-color: #1C2E44; -fx-border-width: 1;";
+                slotStyle = "-fx-background-color: #1C2E4411; -fx-border-color: #1C2E44;" +
+                            " -fx-border-width: 1;";
             } else {
-                slotStyle = "-fx-background-color: #0C1220; -fx-border-color: #1C2E4444; -fx-border-width: 1;";
+                slotStyle = "-fx-background-color: #0C1220; -fx-border-color: #1C2E4433;" +
+                            " -fx-border-width: 1;";
             }
             slot.setStyle(slotStyle);
 
-            Label nameLabel = new Label(skillId != null ? getSkillDisplayName(skillId) : "—");
-            nameLabel.setStyle("-fx-text-fill: " + (skillId != null ? UIFactory.CYAN : "#2A3A50") +
-                    "; -fx-font-family: 'Courier New'; -fx-font-size: 8px; -fx-alignment: center;");
+            // Skill name — lebih besar
+            String displayName = skillId != null ? getSkillDisplayName(skillId) : "—";
+            Label nameLabel = new Label(displayName);
+            nameLabel.setStyle(
+                "-fx-text-fill: " + (ready ? UIFactory.CYAN : skillId != null ? "#5A6A80" : "#2A3A50") + ";" +
+                "-fx-font-family: 'Courier New'; -fx-font-size: 11px; -fx-font-weight: bold;" +
+                "-fx-alignment: center; -fx-text-alignment: center;"
+            );
             nameLabel.setWrapText(true);
-            nameLabel.setMaxWidth(66);
+            nameLabel.setMaxWidth(100);
 
-            Label cdLabel = new Label(cd > 0 ? "CD: " + cd : (skillId != null ? "READY" : "EMPTY"));
-            cdLabel.setStyle("-fx-text-fill: " + (cd > 0 ? UIFactory.ORANGE : "#5A6A80") +
-                    "; -fx-font-family: 'Courier New'; -fx-font-size: 8px;");
+            // CD / Status
+            Label cdLabel = new Label(cd > 0 ? "CD: " + cd + "t" : skillId != null ? "READY" : "EMPTY");
+            cdLabel.setStyle(
+                "-fx-text-fill: " + (cd > 0 ? UIFactory.ORANGE : skillId != null ? "#00E67688" : "#2A3A50") + ";" +
+                "-fx-font-family: 'Courier New'; -fx-font-size: 10px;"
+            );
 
             slot.getChildren().addAll(nameLabel, cdLabel);
 
-            if (skillId != null && cd == 0) {
+            if (ready) {
                 final String sid = skillId;
                 slot.setOnMouseClicked(e -> submitSkillAction(sid));
+                // Hover effect
+                slot.setOnMouseEntered(e -> slot.setStyle(
+                    "-fx-background-color: #00E5FF22; -fx-border-color: #00E5FF;" +
+                    " -fx-border-width: 1 1 1 2; -fx-cursor: hand;"));
+                slot.setOnMouseExited(e -> slot.setStyle(slotStyle));
             }
 
             bar.getChildren().add(slot);
@@ -470,24 +510,41 @@ public class CombatView {
 
     private Button buildActionBtn(String text, String color, Runnable action) {
         Button btn = new Button(text);
-        btn.setPrefWidth(110);
+        btn.setPrefWidth(130);
         btn.setStyle(
-            "-fx-background-color: " + color + "15;" +
-            "-fx-border-color: " + color + "66;" +
+            "-fx-background-color: " + color + "18;" +
+            "-fx-border-color: " + color + "77;" +
             "-fx-border-width: 1;" +
             "-fx-text-fill: " + color + ";" +
             "-fx-font-family: 'Courier New', monospace;" +
-            "-fx-font-size: 11px;" +
+            "-fx-font-size: 13px;" +
             "-fx-font-weight: bold;" +
-            "-fx-padding: 8 4;" +
+            "-fx-padding: 10 8;" +
             "-fx-cursor: hand;"
         );
-        btn.setOnMouseEntered(e -> btn.setStyle(btn.getStyle()
-                .replace(color + "15", color + "28")
-                .replace(color + "66", color)));
-        btn.setOnMouseExited(e -> btn.setStyle(btn.getStyle()
-                .replace(color + "28", color + "15")
-                .replace("; -fx-border-color: " + color + ";", "; -fx-border-color: " + color + "66;")));
+        btn.setOnMouseEntered(e -> btn.setStyle(
+            "-fx-background-color: " + color + "30;" +
+            "-fx-border-color: " + color + ";" +
+            "-fx-border-width: 1;" +
+            "-fx-text-fill: " + color + ";" +
+            "-fx-font-family: 'Courier New', monospace;" +
+            "-fx-font-size: 13px;" +
+            "-fx-font-weight: bold;" +
+            "-fx-padding: 10 8;" +
+            "-fx-cursor: hand;" +
+            "-fx-effect: dropshadow(gaussian, " + color + ", 6, 0.3, 0, 0);"
+        ));
+        btn.setOnMouseExited(e -> btn.setStyle(
+            "-fx-background-color: " + color + "18;" +
+            "-fx-border-color: " + color + "77;" +
+            "-fx-border-width: 1;" +
+            "-fx-text-fill: " + color + ";" +
+            "-fx-font-family: 'Courier New', monospace;" +
+            "-fx-font-size: 13px;" +
+            "-fx-font-weight: bold;" +
+            "-fx-padding: 10 8;" +
+            "-fx-cursor: hand;"
+        ));
         btn.setOnAction(e -> action.run());
         return btn;
     }

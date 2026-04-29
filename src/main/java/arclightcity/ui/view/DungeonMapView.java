@@ -184,7 +184,7 @@ public class DungeonMapView {
     private VBox miniBar(String label, String color, double current, double max) {
         VBox box = new VBox(2);
         Label lbl = new Label(label + " " + (int)current + "/" + (int)max);
-        lbl.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 9px;");
+        lbl.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
 
         ProgressBar bar = new ProgressBar(max > 0 ? current / max : 0);
         bar.setPrefWidth(Double.MAX_VALUE);
@@ -213,7 +213,7 @@ public class DungeonMapView {
             Label l = new Label(it[0] + " " + it[1]);
             l.setStyle(
                 "-fx-text-fill: " + it[2] + ";" +
-                "-fx-font-family: 'Courier New'; -fx-font-size: 9px;"
+                "-fx-font-family: 'Courier New'; -fx-font-size: 11px;"
             );
             legend.getChildren().add(l);
         }
@@ -254,7 +254,7 @@ public class DungeonMapView {
             clearedBadge.setStyle(
                 "-fx-text-fill: #00E676;" +
                 "-fx-font-family: 'Courier New';" +
-                "-fx-font-size: 9px;" +
+                "-fx-font-size: 11px;" +
                 "-fx-background-color: #00E67622;" +
                 "-fx-border-color: #00E67655;" +
                 "-fx-border-width: 1;" +
@@ -270,7 +270,7 @@ public class DungeonMapView {
         Label desc = new Label(descText);
         desc.setWrapText(true);
         desc.setStyle("-fx-text-fill: " + (isCleared ? "#3A4A60" : "#8899AA") +
-                "; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+                "; -fx-font-family: 'Courier New'; -fx-font-size: 12px;");
 
         // Floor progress bar
         Floor floor = dm.getCurrentFloor();
@@ -283,7 +283,7 @@ public class DungeonMapView {
             progressRow.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
 
             Label progressLabel = new Label("EXPLORED: " + cleared + "/" + total);
-            progressLabel.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+            progressLabel.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 12px;");
 
             javafx.scene.control.ProgressBar progressBar = new javafx.scene.control.ProgressBar(
                     total > 0 ? (double) cleared / total : 0);
@@ -295,7 +295,7 @@ public class DungeonMapView {
 
             if (bossDown) {
                 Label bossLabel = new Label("☠ BOSS DEFEATED");
-                bossLabel.setStyle("-fx-text-fill: #FF174488; -fx-font-family: 'Courier New'; -fx-font-size: 9px;");
+                bossLabel.setStyle("-fx-text-fill: #FF174488; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
                 box.getChildren().addAll(typeRow, desc, progressRow, bossLabel);
             } else {
                 box.getChildren().addAll(typeRow, desc, progressRow);
@@ -330,11 +330,11 @@ public class DungeonMapView {
 
         // Hint navigasi via grid
         Label hint = new Label("▲ Click adjacent tile on the map to explore");
-        hint.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+        hint.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 12px;");
 
         // Boss belum dikalahkan — tampilkan reminder
         Label bossHint = new Label("☠ Defeat the BOSS to unlock next floor");
-        bossHint.setStyle("-fx-text-fill: #FF174488; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+        bossHint.setStyle("-fx-text-fill: #FF174488; -fx-font-family: 'Courier New'; -fx-font-size: 12px;");
 
         roomListContainer.getChildren().addAll(hint, bossHint);
 

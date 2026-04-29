@@ -151,7 +151,7 @@ public class CharacterCreateView {
         loreLabel.setStyle(
             "-fx-text-fill: #8899AA;" +
             "-fx-font-family: 'Courier New', monospace;" +
-            "-fx-font-size: 10px;"
+            "-fx-font-size: 12px;"
         );
 
         // Bonus preview (hardcoded display dari background)
@@ -160,7 +160,7 @@ public class CharacterCreateView {
         bonusLabel.setStyle(
             "-fx-text-fill: " + UIFactory.GREEN + ";" +
             "-fx-font-family: 'Courier New', monospace;" +
-            "-fx-font-size: 10px;"
+            "-fx-font-size: 12px;"
         );
 
         card.getChildren().addAll(nameLabel, loreLabel, bonusLabel);

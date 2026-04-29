@@ -103,9 +103,9 @@ public static class InventoryViewImpl {
                     "-fx-padding: 6;"
                 );
                 Label slotType = new Label(label);
-                slotType.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 9px;");
+                slotType.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
                 Label empty = new Label("—");
-                empty.setStyle("-fx-text-fill: #2A3A50; -fx-font-family: 'Courier New'; -fx-font-size: 9px;");
+                empty.setStyle("-fx-text-fill: #2A3A50; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
                 slotBox.getChildren().addAll(slotType, empty);
             } else {
                 // Slot terisi — border warna sesuai rarity
@@ -117,21 +117,21 @@ public static class InventoryViewImpl {
                     "-fx-padding: 6;"
                 );
                 Label slotType = new Label(label);
-                slotType.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 9px;");
+                slotType.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
                 String displayName = eq.getName().length() > 9
                         ? eq.getName().substring(0, 8) + "…"
                         : eq.getName();
                 Label itemName = new Label(displayName);
                 itemName.setStyle(
                     "-fx-text-fill: " + rarityColor + ";" +
-                    "-fx-font-family: 'Courier New'; -fx-font-size: 9px; -fx-font-weight: bold;"
+                    "-fx-font-family: 'Courier New'; -fx-font-size: 11px; -fx-font-weight: bold;"
                 );
                 // Upgrade level badge
                 if (eq.getUpgradeLevel() > 0) {
                     Label upgLabel = new Label("+" + eq.getUpgradeLevel());
                     upgLabel.setStyle(
                         "-fx-text-fill: " + UIFactory.YELLOW + ";" +
-                        "-fx-font-family: 'Courier New'; -fx-font-size: 8px;"
+                        "-fx-font-family: 'Courier New'; -fx-font-size: 10px;"
                     );
                     slotBox.getChildren().addAll(slotType, itemName, upgLabel);
                 } else {
@@ -162,7 +162,7 @@ public static class InventoryViewImpl {
             VBox m = new VBox(0);
             m.setAlignment(Pos.CENTER);
             Label name = new Label(mat[0]);
-            name.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 8px;");
+            name.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
             Label val = new Label(mat[1]);
             val.setStyle("-fx-text-fill: " + UIFactory.CYAN + "; -fx-font-family: 'Courier New'; -fx-font-size: 11px; -fx-font-weight: bold;");
             m.getChildren().addAll(name, val);
@@ -170,7 +170,7 @@ public static class InventoryViewImpl {
         }
 
         Label bagInfo = new Label("BAG " + inv.getBagSize() + "/" + inv.getMaxBagSize());
-        bagInfo.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+        bagInfo.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 12px;");
         HBox.setHgrow(new Region(), Priority.ALWAYS);
         bar.getChildren().addAll(new Region(), bagInfo);
         HBox.setHgrow(bar.getChildren().get(bar.getChildren().size() - 2), Priority.ALWAYS);
@@ -189,7 +189,7 @@ public static class InventoryViewImpl {
             boolean active = filter.equals(activeFilter);
             tab.setStyle(
                 "-fx-text-fill: " + (active ? UIFactory.CYAN : UIFactory.DIM) + ";" +
-                "-fx-font-family: 'Courier New'; -fx-font-size: 10px;" +
+                "-fx-font-family: 'Courier New'; -fx-font-size: 12px;" +
                 (active ? "-fx-border-color: transparent transparent #00E5FF transparent; -fx-border-width: 0 0 2 0;" : "")
             );
             tab.setCursor(javafx.scene.Cursor.HAND);
@@ -260,13 +260,13 @@ public static class InventoryViewImpl {
                 "; -fx-font-family: 'Courier New'; -fx-font-size: 12px; -fx-font-weight: bold;");
         Label rarityTag = new Label("[" + item.getRarity().displayName + "]");
         rarityTag.setStyle("-fx-text-fill: " + UIFactory.rarityColor(item.getRarity()) +
-                "88; -fx-font-family: 'Courier New'; -fx-font-size: 9px;");
+                "88; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
         nameRow.getChildren().addAll(nameLabel, rarityTag);
 
         // Stat summary (ambil 2 stat utama)
         String statSummary = buildStatSummary(item);
         Label descLabel = new Label(statSummary);
-        descLabel.setStyle("-fx-text-fill: #8899AA; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+        descLabel.setStyle("-fx-text-fill: #8899AA; -fx-font-family: 'Courier New'; -fx-font-size: 12px;");
         descLabel.setWrapText(true);
 
         info.getChildren().addAll(nameRow, descLabel);
@@ -281,7 +281,7 @@ public static class InventoryViewImpl {
             Button equipBtn = new Button("EQUIP");
             equipBtn.setStyle("-fx-background-color: #00E5FF15; -fx-border-color: #00E5FF55;" +
                     " -fx-border-width: 1; -fx-text-fill: #00E5FF;" +
-                    " -fx-font-family: 'Courier New'; -fx-font-size: 9px;" +
+                    " -fx-font-family: 'Courier New'; -fx-font-size: 11px;" +
                     " -fx-padding: 3 6; -fx-cursor: hand;");
             equipBtn.setOnAction(e -> {
                 var result = inv.equip(eq);
@@ -296,7 +296,7 @@ public static class InventoryViewImpl {
                     " -fx-border-color: " + (canUpgrade ? "#FFD60066" : "#5A6A8055") + ";" +
                     " -fx-border-width: 1;" +
                     " -fx-text-fill: " + (canUpgrade ? "#FFD600" : "#5A6A80") + ";" +
-                    " -fx-font-family: 'Courier New'; -fx-font-size: 9px;" +
+                    " -fx-font-family: 'Courier New'; -fx-font-size: 11px;" +
                     " -fx-padding: 3 6; -fx-cursor: " + (canUpgrade ? "hand" : "default") + ";");
             upgradeBtn.setDisable(!canUpgrade);
             upgradeBtn.setOnAction(e -> {
@@ -312,7 +312,7 @@ public static class InventoryViewImpl {
                     " -fx-border-color: " + (hasKit ? "#AA00FF66" : "#5A6A8055") + ";" +
                     " -fx-border-width: 1;" +
                     " -fx-text-fill: " + (hasKit ? "#AA00FF" : "#5A6A80") + ";" +
-                    " -fx-font-family: 'Courier New'; -fx-font-size: 9px;" +
+                    " -fx-font-family: 'Courier New'; -fx-font-size: 11px;" +
                     " -fx-padding: 3 6; -fx-cursor: " + (hasKit ? "hand" : "default") + ";");
             calibBtn.setDisable(!hasKit);
             calibBtn.setOnAction(e -> {
@@ -330,7 +330,7 @@ public static class InventoryViewImpl {
             Button useBtn = new Button("USE");
             useBtn.setStyle("-fx-background-color: #00E67615; -fx-border-color: #00E67655;" +
                     " -fx-border-width: 1; -fx-text-fill: #00E676;" +
-                    " -fx-font-family: 'Courier New'; -fx-font-size: 9px;" +
+                    " -fx-font-family: 'Courier New'; -fx-font-size: 11px;" +
                     " -fx-padding: 3 6; -fx-cursor: hand;");
             useBtn.setOnAction(e -> {
                 boolean used = inv.useConsumable(item.getId(), engine.getPlayer());
@@ -465,16 +465,16 @@ public static class MercenaryViewImpl {
         nameLabel.setStyle("-fx-text-fill: " + (isActive ? UIFactory.GREEN : UIFactory.TEXT) + "; -fx-font-family: 'Courier New'; -fx-font-size: 13px; -fx-font-weight: bold;");
 
         Label roleLabel = new Label("[" + merc.getRole().name() + "]");
-        roleLabel.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+        roleLabel.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 12px;");
 
         Label loyaltyLabel = new Label("♥ " + merc.getLoyaltyTitle());
-        loyaltyLabel.setStyle("-fx-text-fill: #FF6B6B; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+        loyaltyLabel.setStyle("-fx-text-fill: #FF6B6B; -fx-font-family: 'Courier New'; -fx-font-size: 12px;");
         HBox.setHgrow(nameLabel, Priority.ALWAYS);
         header.getChildren().addAll(nameLabel, roleLabel, loyaltyLabel);
 
         // Subtitle
         Label subtitle = new Label(merc.getMercenaryType().subtitle + " — Loyalty Lv." + merc.getLoyaltyLevel());
-        subtitle.setStyle("-fx-text-fill: #8899AA; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+        subtitle.setStyle("-fx-text-fill: #8899AA; -fx-font-family: 'Courier New'; -fx-font-size: 12px;");
 
         // Key stats
         HBox statsRow = new HBox(16);
@@ -511,7 +511,7 @@ public static class MercenaryViewImpl {
         VBox box = new VBox(0);
         box.setAlignment(Pos.CENTER);
         Label n = new Label(name);
-        n.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 9px;");
+        n.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
         Label v = new Label(value);
         v.setStyle("-fx-text-fill: #00E5FF; -fx-font-family: 'Courier New'; -fx-font-size: 11px; -fx-font-weight: bold;");
         box.getChildren().addAll(n, v);
@@ -552,7 +552,7 @@ public static class EventViewImpl {
             case NEUTRAL  -> UIFactory.DIM;
         };
         Label catBadge = new Label("[ " + event.getCategory().name() + " ]");
-        catBadge.setStyle("-fx-text-fill: " + catColor + "; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+        catBadge.setStyle("-fx-text-fill: " + catColor + "; -fx-font-family: 'Courier New'; -fx-font-size: 12px;");
 
         // Title
         Label title = new Label(event.getTitle());
@@ -642,7 +642,7 @@ public static class ShopViewImpl {
             "-fx-font-size: 14px; -fx-font-weight: bold;"
         );
         Label merchantQuote = new Label("\"I have just what you need... for the right price.\"");
-        merchantQuote.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+        merchantQuote.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 12px;");
         header.getChildren().addAll(merchantName, merchantQuote);
         root.getChildren().add(header);
 
@@ -729,7 +729,7 @@ public static class ShopViewImpl {
             .reduce("", (a, b) -> a.isEmpty() ? b : a + "  " + b);
 
         Label statLabel = new Label(stats.isEmpty() ? item.getDescription() : stats);
-        statLabel.setStyle("-fx-text-fill: #8899AA; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+        statLabel.setStyle("-fx-text-fill: #8899AA; -fx-font-family: 'Courier New'; -fx-font-size: 12px;");
         info.getChildren().addAll(name, statLabel);
 
         // Price + Buy button
@@ -749,7 +749,7 @@ public static class ShopViewImpl {
             "-fx-border-color: " + (canAfford ? "#FFD600" : "#5A6A80") + ";" +
             "-fx-border-width: 1;" +
             "-fx-text-fill: " + (canAfford ? "#FFD600" : "#5A6A80") + ";" +
-            "-fx-font-family: 'Courier New'; -fx-font-size: 10px;" +
+            "-fx-font-family: 'Courier New'; -fx-font-size: 12px;" +
             "-fx-padding: 4 10; -fx-cursor: " + (canAfford ? "hand" : "default") + ";"
         );
         buyBtn.setDisable(!canAfford);
@@ -870,7 +870,7 @@ public static class GameOverViewImpl {
         );
 
         Label quote = new Label("\"Death is just another form of data loss.\"");
-        quote.setStyle("-fx-text-fill: #2A3A50; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+        quote.setStyle("-fx-text-fill: #2A3A50; -fx-font-family: 'Courier New'; -fx-font-size: 12px;");
         quote.setWrapText(true);
 
         Button retry = UIFactory.btnDanger("↺ TRY AGAIN");

@@ -85,7 +85,7 @@ public class MercChatPanel extends VBox {
         headerLabel.setStyle(
             "-fx-text-fill: #5A6A80;" +
             "-fx-font-family: 'Courier New';" +
-            "-fx-font-size: 10px;" +
+            "-fx-font-size: 11px;" +
             "-fx-font-weight: bold;" +
             "-fx-letter-spacing: 2;"
         );
@@ -95,7 +95,7 @@ public class MercChatPanel extends VBox {
         channelLabel.setStyle(
             "-fx-text-fill: #2A3A50;" +
             "-fx-font-family: 'Courier New';" +
-            "-fx-font-size: 9px;"
+            "-fx-font-size: 11px;"
         );
 
         header.getChildren().addAll(dot, headerLabel, channelLabel);
@@ -160,7 +160,7 @@ public class MercChatPanel extends VBox {
             sysMsg.setStyle(
                 "-fx-text-fill: #2A3A50;" +
                 "-fx-font-family: 'Courier New';" +
-                "-fx-font-size: 9px;" +
+                "-fx-font-size: 11px;" +
                 "-fx-padding: 4 0;"
             );
             sysMsg.setOpacity(0);
@@ -219,7 +219,7 @@ public class MercChatPanel extends VBox {
         nameLabel.setStyle(
             "-fx-text-fill: " + color + ";" +
             "-fx-font-family: 'Courier New';" +
-            "-fx-font-size: 9px;" +
+            "-fx-font-size: 11px;" +
             "-fx-font-weight: bold;"
         );
 
@@ -240,7 +240,7 @@ public class MercChatPanel extends VBox {
         textLabel.setStyle(
             "-fx-text-fill: #8899AA;" +
             "-fx-font-family: 'Courier New';" +
-            "-fx-font-size: 10px;" +
+            "-fx-font-size: 11px;" +
             "-fx-padding: 0 0 0 10;"
         );
 

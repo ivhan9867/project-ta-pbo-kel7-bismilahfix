@@ -321,3 +321,48 @@ Game bisa dijalankan end-to-end setelah migrasi dari NetBeans Ant ke Maven.
 cd ArclightCity
 mvn javafx:run
 ```
+
+---
+
+## [v0.2.7] — 2026-04-29
+
+### Changed
+
+**[UI] Comprehensive UI Pass — semua screen diperbesar dan dirapikan**
+
+Global:
+- CSS `.root` font-size naik 13px → 14px
+- `UIFactory.sectionTitle()` lebih terang: 10px → 11px, #5A6A80 → #8899AA
+- `UIFactory.vitalBar()` label 10px → 11px, bar height 6px → 7px
+
+Combat screen:
+- Enemy card nama 11px → 14px, padding lebih lega, border left 3px
+- Ally card lebar 110px → 150px, nama 9px → 12px, tampilkan role badge
+- Skill slots 72×44px → 110×52px, font 8px → 11px, hover glow
+- Action buttons lebar 110 → 130px, font 11px → 13px, hover dropshadow
+- Combat log tinggi 110 → 130px, entry font 10px → 12px
+
+Semua screen:
+- Teks 9px → 11px, teks 10px → 12px, teks 8px → 10px (secara konsisten)
+- MercChatPanel: dialog text sedikit lebih besar untuk readability
+
+---
+
+## [v0.2.7.1] — 2026-04-29
+
+### Fixed
+
+**[BUG] Hub screen — bottom nav terpotong tidak terlihat (HubView.java)**
+- Root cause: setelah font diperbesar di v0.2.7, konten Hub (player bar + vitals +
+  district banner + 4 nav button) melebihi tinggi 820px sehingga bottom nav
+  terdorong keluar layar
+- Fix: wrap vitals + banner + nav buttons dalam ScrollPane dengan VBox.setVgrow(ALWAYS)
+  sehingga area tengah bisa discroll, sementara bottom nav tetap fixed di bawah
+- Player bar (atas) dan bottom nav (bawah) tidak ikut discroll
+
+**[BUG] Combat — action panel bisa terpotong di layar (CombatView.java)**
+- Root cause: UIFactory.spacer() dengan Priority.ALWAYS mendorong action panel
+  keluar layar ketika konten di atas (log + enemy + ally + status) terlalu besar
+- Fix 1: hapus UIFactory.spacer() sebelum action panel
+- Fix 2: hapus VBox.setVgrow(logScroll, ALWAYS) — combat log sekarang fixed
+  130px, tidak bisa grow tak terbatas

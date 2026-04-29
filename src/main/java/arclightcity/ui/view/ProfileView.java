@@ -181,10 +181,10 @@ public class ProfileView {
         nameLabel.setStyle("-fx-text-fill: #E0E8F0; -fx-font-family: 'Courier New'; -fx-font-size: 14px; -fx-font-weight: bold;");
 
         Label bgLabel = new Label("Background / " + player.getBackground().name);
-        bgLabel.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+        bgLabel.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 12px;");
 
         Label lvLabel = new Label("Level / " + player.getLevel() + " CHARACTER");
-        lvLabel.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+        lvLabel.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 12px;");
 
         info.getChildren().addAll(cityLabel, nameLabel, bgLabel, lvLabel);
         row.getChildren().addAll(avatar, info);
@@ -196,7 +196,7 @@ public class ProfileView {
         // EXP bar (replaces the social credit bar from original)
         VBox expSection = new VBox(2);
         Label expTitle = new Label("CHARACTER LEVEL — " + player.getLevel());
-        expTitle.setStyle("-fx-text-fill: #00E5FF; -fx-font-family: 'Courier New'; -fx-font-size: 10px; -fx-font-weight: bold;");
+        expTitle.setStyle("-fx-text-fill: #00E5FF; -fx-font-family: 'Courier New'; -fx-font-size: 12px; -fx-font-weight: bold;");
 
         ProgressBar expBar = new ProgressBar(player.getExpPercent());
         expBar.setMaxWidth(Double.MAX_VALUE);
@@ -204,7 +204,7 @@ public class ProfileView {
 
         Label expVal = new Label(UIFactory.formatNumber((long)player.getCurrentExp()) + " / " +
                 UIFactory.formatNumber((long)player.getExpToNextLevel()));
-        expVal.setStyle("-fx-text-fill: #FFD600; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+        expVal.setStyle("-fx-text-fill: #FFD600; -fx-font-family: 'Courier New'; -fx-font-size: 12px;");
         expVal.setAlignment(Pos.CENTER_RIGHT);
         expVal.setMaxWidth(Double.MAX_VALUE);
 
@@ -224,7 +224,7 @@ public class ProfileView {
         label.setStyle(
             "-fx-text-fill: #5A6A80;" +
             "-fx-font-family: 'Courier New';" +
-            "-fx-font-size: 10px;" +
+            "-fx-font-size: 12px;" +
             "-fx-font-weight: bold;" +
             "-fx-background-color: #080D18;"
         );

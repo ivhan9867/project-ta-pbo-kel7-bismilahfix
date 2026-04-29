@@ -112,26 +112,24 @@ public class UIFactory {
      */
     public static VBox vitalBar(String label, String color,
                                  double current, double max) {
-        VBox box = new VBox(2);
+        VBox box = new VBox(3);
 
-        // Label row
         HBox labelRow = new HBox();
         labelRow.setAlignment(Pos.CENTER_LEFT);
         Label nameLabel = new Label(label);
-        nameLabel.setStyle("-fx-text-fill: " + DIM + "; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+        nameLabel.setStyle("-fx-text-fill: " + DIM + "; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
         Label valueLabel = new Label(formatNumber((long)current) + "/" + formatNumber((long)max));
-        valueLabel.setStyle("-fx-text-fill: " + color + "; -fx-font-family: 'Courier New'; -fx-font-size: 10px; -fx-font-weight: bold;");
+        valueLabel.setStyle("-fx-text-fill: " + color + "; -fx-font-family: 'Courier New'; -fx-font-size: 11px; -fx-font-weight: bold;");
         HBox.setHgrow(nameLabel, Priority.ALWAYS);
         labelRow.getChildren().addAll(nameLabel, valueLabel);
 
-        // Progress bar
         ProgressBar bar = new ProgressBar(max > 0 ? current / max : 0);
         bar.setPrefWidth(Double.MAX_VALUE);
-        bar.setPrefHeight(6);
+        bar.setPrefHeight(7);
         bar.setStyle(
             "-fx-accent: " + color + ";" +
             "-fx-background-color: " + adjustOpacity(color, 0.15) + ";" +
-            "-fx-min-height: 6px; -fx-max-height: 6px;"
+            "-fx-min-height: 7px; -fx-max-height: 7px;"
         );
 
         box.getChildren().addAll(labelRow, bar);
@@ -213,7 +211,7 @@ public class UIFactory {
 
     public static Label sectionTitle(String text) {
         Label label = new Label(text);
-        label.setStyle("-fx-text-fill: " + DIM + "; -fx-font-family: 'Courier New'; -fx-font-size: 10px; -fx-font-weight: bold;");
+        label.setStyle("-fx-text-fill: #8899AA; -fx-font-family: 'Courier New'; -fx-font-size: 11px; -fx-font-weight: bold;");
         return label;
     }
 

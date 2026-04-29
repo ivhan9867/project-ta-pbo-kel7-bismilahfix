@@ -51,20 +51,20 @@ public class HubView {
     public Parent build() {
         Player player = engine.getPlayer();
         VBox root = UIFactory.screenRoot();
+        root.setFillWidth(true);
 
-        // ── Top: Player info bar ─────────────────────────
+        // ── Top: Player info bar (fixed, tidak discroll) ──
         root.getChildren().add(buildPlayerBar(player));
 
-        // ── Vitals ────────────────────────────────────────
-        root.getChildren().add(buildVitalsPanel(player));
+        // ── Scrollable area: vitals + banner + nav buttons ─
+        VBox scrollContent = new VBox(0);
+        scrollContent.setFillWidth(true);
+        scrollContent.getChildren().add(buildVitalsPanel(player));
+        scrollContent.getChildren().add(buildDistrictBanner(player));
 
-        // ── District banner ───────────────────────────────
-        root.getChildren().add(buildDistrictBanner(player));
-
-        // ── Main navigation buttons ───────────────────────
+        // Main nav buttons
         VBox navButtons = new VBox(10);
         navButtons.setPadding(new Insets(16));
-        VBox.setVgrow(navButtons, Priority.ALWAYS);
 
         Button enterDungeon = UIFactory.btnGold("▶  ENTER DUNGEON");
         enterDungeon.setOnAction(e -> {
@@ -83,11 +83,17 @@ public class HubView {
         profile.setOnAction(e -> router.showProfile());
 
         navButtons.getChildren().addAll(enterDungeon, mercenary, inventory, profile);
-        root.getChildren().add(navButtons);
+        scrollContent.getChildren().add(navButtons);
 
-        root.getChildren().add(UIFactory.spacer());
+        ScrollPane scrollPane = new ScrollPane(scrollContent);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setStyle("-fx-background-color: #050810; -fx-background: #050810;" +
+                            "-fx-border-color: transparent;");
+        VBox.setVgrow(scrollPane, Priority.ALWAYS);
+        root.getChildren().add(scrollPane);
 
-        // ── Bottom nav bar ────────────────────────────────
+        // ── Bottom nav (fixed, selalu terlihat) ───────────
         root.getChildren().add(buildBottomNav());
 
         UIFactory.fadeIn(root, 400);
@@ -144,7 +150,7 @@ public class HubView {
         expRow.setAlignment(Pos.CENTER_LEFT);
 
         Label expLabel = new Label("EXP");
-        expLabel.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+        expLabel.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 12px;");
 
         ProgressBar expBar = new ProgressBar(player.getExpPercent());
         expBar.setPrefWidth(Double.MAX_VALUE);
@@ -159,7 +165,7 @@ public class HubView {
         String expText = UIFactory.formatNumber((long)player.getCurrentExp()) + " / " +
                          UIFactory.formatNumber((long)player.getExpToNextLevel());
         Label expVal = new Label(expText);
-        expVal.setStyle("-fx-text-fill: #FFD600; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+        expVal.setStyle("-fx-text-fill: #FFD600; -fx-font-family: 'Courier New'; -fx-font-size: 12px;");
 
         expRow.getChildren().addAll(expLabel, expBar, expVal);
 
@@ -206,7 +212,7 @@ public class HubView {
         );
 
         Label subtitle = new Label("ARCLIGHT CITY — SECTOR 7");
-        subtitle.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 9px;");
+        subtitle.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
 
         Label district = new Label("NEON SLUM DISTRICT");
         district.setStyle(
@@ -219,12 +225,12 @@ public class HubView {
 
         int depth = player.getDungeonDepth();
         Label depthLabel = new Label("DEEPEST FLOOR: " + (depth > 0 ? depth : "NOT EXPLORED"));
-        depthLabel.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+        depthLabel.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 12px;");
 
         HBox mercInfo = new HBox(8);
         mercInfo.setAlignment(Pos.CENTER_LEFT);
         Label mercLabel = new Label("CREW: " + engine.getActiveMercs().size() + "/2 active");
-        mercLabel.setStyle("-fx-text-fill: #8899AA; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+        mercLabel.setStyle("-fx-text-fill: #8899AA; -fx-font-family: 'Courier New'; -fx-font-size: 12px;");
         mercInfo.getChildren().add(mercLabel);
 
         box.getChildren().addAll(subtitle, district, depthLabel, mercInfo);
@@ -270,17 +276,17 @@ public class HubView {
             Label icon = new Label(items[i][0]);
             icon.setStyle("-fx-text-fill: #5A6A80; -fx-font-size: 16px;");
             Label label = new Label(items[i][1]);
-            label.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 8px;");
+            label.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
 
             navItem.getChildren().addAll(icon, label);
             navItem.setOnMouseClicked(e -> actions[idx].run());
             navItem.setOnMouseEntered(e -> {
                 icon.setStyle("-fx-text-fill: #00E5FF; -fx-font-size: 16px;");
-                label.setStyle("-fx-text-fill: #00E5FF; -fx-font-family: 'Courier New'; -fx-font-size: 8px;");
+                label.setStyle("-fx-text-fill: #00E5FF; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
             });
             navItem.setOnMouseExited(e -> {
                 icon.setStyle("-fx-text-fill: #5A6A80; -fx-font-size: 16px;");
-                label.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 8px;");
+                label.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
             });
 
             nav.getChildren().add(navItem);
