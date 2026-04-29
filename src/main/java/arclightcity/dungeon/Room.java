@@ -17,6 +17,7 @@ public class Room {
     private final RoomType type;
     private       boolean  cleared   = false;
     private       boolean  visited   = false;
+    private       int      restUseCount = 0;  // jumlah kali REST room dipakai
 
     // Konten room (diisi saat generate)
     private List<Enemy>  enemies    = null;  // ENEMY / ELITE / BOSS
@@ -55,6 +56,9 @@ public class Room {
     public String        getShopId()         { return shopId; }
     public List<String>  getLootItemIds()    { return lootItemIds; }
     public List<Integer> getNextRoomIndexes(){ return nextRoomIndexes; }
+
+    public int  getRestUseCount()  { return restUseCount; }
+    public void incrementRestUse() { restUseCount++; }
 
     public boolean hasEnemies() {
         return enemies != null && enemies.stream().anyMatch(e -> e != null && e.isAlive());

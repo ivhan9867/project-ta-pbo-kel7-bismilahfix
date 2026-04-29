@@ -607,10 +607,20 @@ public static class EventViewImpl {
 public static class ShopViewImpl {
     private final GameEngine  engine;
     private final SceneRouter router;
+    private       List<arclightcity.item.Item> shopItems;
 
     ShopViewImpl(GameEngine engine, SceneRouter router) {
         this.engine = engine;
         this.router = router;
+        // Generate 4 item untuk dijual berdasarkan floor level
+        int floor = engine.getDungeonManager() != null
+                ? engine.getDungeonManager().getCurrentFloorNumber() : 1;
+        shopItems = arclightcity.item.LootManager.generateLoot("SHOP", floor);
+        // Pastikan minimal 4 item
+        while (shopItems.size() < 4) {
+            shopItems.addAll(arclightcity.item.LootManager.generateLoot("SHOP", floor));
+        }
+        shopItems = new java.util.ArrayList<>(shopItems.subList(0, Math.min(4, shopItems.size())));
     }
 
     Parent build() {
@@ -619,25 +629,141 @@ public static class ShopViewImpl {
                 "SHOP", () -> router.showDungeonMap(),
                 engine.getPlayer().getGold(), 0));
 
-        VBox content = new VBox(12);
-        content.setPadding(new Insets(20));
-        VBox.setVgrow(content, Priority.ALWAYS);
+        // Merchant header
+        VBox header = new VBox(4);
+        header.setPadding(new Insets(12, 16, 8, 16));
+        header.setStyle("-fx-background-color: #0C1220; -fx-border-color: #1C2E44; -fx-border-width: 0 0 1 0;");
 
-        Label title = new Label("🛒 WANDERING MERCHANT");
-        title.setStyle("-fx-text-fill: #FFAA00; -fx-font-family: 'Courier New'; -fx-font-size: 16px; -fx-font-weight: bold;");
+        Label merchantName = new Label("⚙ WANDERING MERCHANT");
+        merchantName.setStyle(
+            "-fx-text-fill: #FFAA00; -fx-font-family: 'Courier New';" +
+            "-fx-font-size: 14px; -fx-font-weight: bold;"
+        );
+        Label merchantQuote = new Label("\"I have just what you need... for the right price.\"");
+        merchantQuote.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+        header.getChildren().addAll(merchantName, merchantQuote);
+        root.getChildren().add(header);
 
-        Label desc = new Label("\"I have just what you need... for the right price.\"\n\n" +
-                "SHOP SYSTEM COMING SOON\n" +
-                "Items will be generated based on floor level.");
-        desc.setWrapText(true);
-        desc.setStyle("-fx-text-fill: #8899AA; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
+        // Shop items
+        Label itemsTitle = UIFactory.sectionTitle("FOR SALE");
+        itemsTitle.setPadding(new Insets(10, 16, 4, 16));
+        root.getChildren().add(itemsTitle);
 
-        Button leave = UIFactory.btnPrimary("LEAVE SHOP");
+        VBox itemList = new VBox(8);
+        itemList.setPadding(new Insets(8, 16, 8, 16));
+        VBox.setVgrow(itemList, Priority.ALWAYS);
+
+        for (arclightcity.item.Item item : shopItems) {
+            itemList.getChildren().add(buildShopRow(item));
+        }
+
+        ScrollPane scroll = new ScrollPane(itemList);
+        scroll.setFitToWidth(true);
+        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scroll.setStyle("-fx-background-color: #050810; -fx-background: #050810; -fx-border-color: transparent;");
+        VBox.setVgrow(scroll, Priority.ALWAYS);
+        root.getChildren().add(scroll);
+
+        // Leave button
+        VBox bottom = new VBox(0);
+        bottom.setPadding(new Insets(10, 16, 12, 16));
+        bottom.setStyle("-fx-border-color: #1C2E44; -fx-border-width: 1 0 0 0;");
+        Button leave = UIFactory.btnPrimary("← LEAVE SHOP");
         leave.setOnAction(e -> router.showDungeonMap());
+        bottom.getChildren().add(leave);
+        root.getChildren().add(bottom);
 
-        content.getChildren().addAll(title, desc, UIFactory.spacer(), leave);
-        root.getChildren().add(content);
+        UIFactory.fadeIn(root, 300);
         return root;
+    }
+
+    private HBox buildShopRow(arclightcity.item.Item item) {
+        // Harga berdasarkan rarity
+        int price = switch (item.getRarity()) {
+            case COMMON    -> 30  + (int)(Math.random() * 20);
+            case UNCOMMON  -> 80  + (int)(Math.random() * 40);
+            case RARE      -> 200 + (int)(Math.random() * 100);
+            case EPIC      -> 500 + (int)(Math.random() * 200);
+            case LEGENDARY -> 1200+ (int)(Math.random() * 300);
+        };
+
+        HBox row = new HBox(10);
+        row.setPadding(new Insets(10, 12, 10, 12));
+        row.setAlignment(Pos.CENTER_LEFT);
+        row.setStyle(
+            "-fx-background-color: #0C1220;" +
+            "-fx-border-color: " + UIFactory.rarityColor(item.getRarity()) + "33;" +
+            "-fx-border-width: 1 1 1 3;"
+        );
+
+        // Rarity bar
+        VBox rarityBar = new VBox();
+        rarityBar.setPrefWidth(3);
+        rarityBar.setStyle("-fx-background-color: " + UIFactory.rarityColor(item.getRarity()) + ";");
+
+        // Item info
+        VBox info = new VBox(3);
+        HBox.setHgrow(info, Priority.ALWAYS);
+
+        Label name = new Label(item.getFullName());
+        name.setStyle(
+            "-fx-text-fill: " + UIFactory.rarityColor(item.getRarity()) + ";" +
+            "-fx-font-family: 'Courier New'; -fx-font-size: 12px; -fx-font-weight: bold;"
+        );
+
+        // Stat preview (3 stat pertama)
+        String stats = item.getStatBonuses().entrySet().stream()
+            .limit(3)
+            .map(e -> {
+                boolean isPct = e.getKey().name().contains("CHANCE") ||
+                                e.getKey().name().contains("EVASION") ||
+                                e.getKey().name().contains("MULT") ||
+                                e.getKey().name().contains("PIERCE") ||
+                                e.getKey().name().contains("LIFESTEAL");
+                return e.getKey().displayName + ": +" +
+                       (isPct ? String.format("%.0f%%", e.getValue()*100)
+                              : String.format("%.0f", e.getValue()));
+            })
+            .reduce("", (a, b) -> a.isEmpty() ? b : a + "  " + b);
+
+        Label statLabel = new Label(stats.isEmpty() ? item.getDescription() : stats);
+        statLabel.setStyle("-fx-text-fill: #8899AA; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+        info.getChildren().addAll(name, statLabel);
+
+        // Price + Buy button
+        VBox buyBox = new VBox(4);
+        buyBox.setAlignment(Pos.CENTER_RIGHT);
+
+        Label priceLabel = new Label("⚙ " + price);
+        priceLabel.setStyle(
+            "-fx-text-fill: #FFD600; -fx-font-family: 'Courier New';" +
+            "-fx-font-size: 12px; -fx-font-weight: bold;"
+        );
+
+        boolean canAfford = engine.getPlayer().getGold() >= price;
+        Button buyBtn = new Button("BUY");
+        buyBtn.setStyle(
+            "-fx-background-color: " + (canAfford ? "#FFD60022" : "#1C2E4422") + ";" +
+            "-fx-border-color: " + (canAfford ? "#FFD600" : "#5A6A80") + ";" +
+            "-fx-border-width: 1;" +
+            "-fx-text-fill: " + (canAfford ? "#FFD600" : "#5A6A80") + ";" +
+            "-fx-font-family: 'Courier New'; -fx-font-size: 10px;" +
+            "-fx-padding: 4 10; -fx-cursor: " + (canAfford ? "hand" : "default") + ";"
+        );
+        buyBtn.setDisable(!canAfford);
+        buyBtn.setOnAction(e -> {
+            if (engine.getPlayer().getGold() >= price) {
+                engine.getPlayer().spendGold(price);
+                engine.getInventory().addItem(item);
+                shopItems.remove(item);
+                // Refresh view
+                router.showShop();
+            }
+        });
+
+        buyBox.getChildren().addAll(priceLabel, buyBtn);
+        row.getChildren().addAll(rarityBar, info, buyBox);
+        return row;
     }
 }
 

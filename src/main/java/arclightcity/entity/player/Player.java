@@ -145,6 +145,13 @@ public class Player extends Entity {
 
     // ── Skill Management ─────────────────────────────────────
 
+    /** Unlock skill tanpa perlu skillPoints — untuk starter skill dari background */
+    public void forceUnlockSkill(String skillId) {
+        if (!unlockedSkillIds.contains(skillId)) {
+            unlockedSkillIds.add(skillId);
+        }
+    }
+
     public boolean unlockSkill(String skillId) {
         if (skillPoints <= 0 || unlockedSkillIds.contains(skillId)) return false;
         unlockedSkillIds.add(skillId);

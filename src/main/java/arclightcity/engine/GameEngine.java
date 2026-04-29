@@ -77,13 +77,32 @@ public class GameEngine {
         // Beri starter items
         giveStarterItems();
 
+        // Auto-unlock dan equip 2 skill default sesuai background
+        giveStarterSkills(background);
+
         // Default: player punya 1 starter merc gratis (TANK-RX9)
         Mercenary starterMerc = EntityFactory.createMercenary(MercenaryType.TANK_RX9);
         ownedMercs.add(starterMerc);
-        // Auto-add ke active party
         activeMercs.add(starterMerc);
 
         transitionTo(GameState.HUB);
+    }
+
+    /** Auto-unlock 2 skill sesuai background dan langsung equip */
+    private void giveStarterSkills(PlayerBackground background) {
+        String[] skills = switch (background) {
+            case STREET_BRAWLER  -> new String[]{"POWER_STRIKE", "EXECUTE"};
+            case NETRUNNER       -> new String[]{"DEEP_HACK", "VIRUS_UPLOAD"};
+            case VETERAN_SOLDIER -> new String[]{"IRON_SHIELD", "SHOCKWAVE"};
+            case ENERGY_ADEPT    -> new String[]{"ENERGY_DRAIN", "BIO_IRRADIATE"};
+            case GHOST_OPERATIVE -> new String[]{"PHANTOM_SHOT", "SHADOW_STEP"};
+            case TECHWRIGHT      -> new String[]{"EMP_BURST", "FIELD_BARRIER"};
+        };
+
+        for (String skillId : skills) {
+            player.forceUnlockSkill(skillId);
+            player.equipSkill(skillId);
+        }
     }
 
     // ── Starter Items ─────────────────────────────────────────

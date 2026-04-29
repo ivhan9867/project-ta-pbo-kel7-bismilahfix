@@ -1,6 +1,6 @@
 # ⚡ ARCLIGHT CITY
 
-![Version](https://img.shields.io/badge/version-v0.2.4-00E5FF?style=flat-square)
+![Version](https://img.shields.io/badge/version-v0.2.5-00E5FF?style=flat-square)
 ![Java](https://img.shields.io/badge/Java-25-orange?style=flat-square)
 ![JavaFX](https://img.shields.io/badge/JavaFX-25-blue?style=flat-square)
 ![Build](https://img.shields.io/badge/build-Maven-AA00FF?style=flat-square)
@@ -41,7 +41,7 @@ Semua screen dibangun secara programmatic (view-as-code), bukan dengan file FXML
 | Profile / Stat Sheet | ✅ Jalan |
 | Victory & Game Over Screen | ✅ Jalan |
 | Event Room (pilihan + efek) | ✅ Jalan |
-| Shop Screen | 🚧 Placeholder |
+| Shop Screen (Basic) | ✅ Fixed v0.2.5 |
 | Skill Selection UI | 🚧 Coming v0.3 |
 | Save / Load | 🚧 Coming v0.6 |
 | Sound Effects | 🚧 Coming |

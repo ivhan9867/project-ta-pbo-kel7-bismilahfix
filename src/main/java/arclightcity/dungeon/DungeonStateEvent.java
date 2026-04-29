@@ -125,9 +125,16 @@ public class DungeonStateEvent {
     }
 
     public static DungeonStateEvent rest(double hpRestored, double mpRestored) {
-        return new Builder(Type.REST)
-                .message(String.format("🛌 Resting... +%.0f HP, +%.0f MP", hpRestored, mpRestored))
-                .build();
+        return rest(hpRestored, mpRestored, null);
+    }
+
+    public static DungeonStateEvent rest(double hpRestored, double mpRestored, String customMsg) {
+        String msg = customMsg != null
+                ? customMsg + (hpRestored > 0
+                    ? String.format(" +%.0f HP, +%.0f MP", hpRestored, mpRestored)
+                    : "")
+                : String.format("🛌 Resting... +%.0f HP, +%.0f MP", hpRestored, mpRestored);
+        return new Builder(Type.REST).message(msg).build();
     }
 
     public static DungeonStateEvent healed(int amount) {

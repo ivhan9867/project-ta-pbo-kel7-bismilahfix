@@ -107,15 +107,13 @@ public class DungeonManager {
         room.setVisited(true);
         emit(DungeonStateEvent.roomEntered(room));
 
-        // ── Backtrack guard ───────────────────────────────────
-        // Jika room sudah cleared, tidak perlu trigger event lagi.
-        // Player hanya melewati / istirahat sebentar.
-        if (room.isCleared()) {
+        // REST room special case: boleh dikunjungi berkali-kali (diminishing heal)
+        // Cleared hanya berarti "sudah pernah dipakai sekali", bukan "tidak bisa lagi"
+        if (room.isCleared() && room.getType() != Room.RoomType.REST) {
             emit(DungeonStateEvent.roomAlreadyCleared(room));
             return;
         }
 
-        // Room belum cleared — trigger event sesuai tipe
         switch (room.getType()) {
             case EMPTY  -> handleEmptyRoom(room);
             case REST   -> handleRestRoom(room);
@@ -137,20 +135,44 @@ public class DungeonManager {
     }
 
     private void handleRestRoom(Room room) {
-        // Pulihkan 35% HP dan 50% MP
-        double hpRestore = player.getStats().get(StatType.MAX_HP) * 0.35;
-        double mpRestore = player.getStats().get(StatType.MAX_MP) * 0.50;
+        // Diminishing heal per kunjungan:
+        //   Visit 1: 35% HP + 50% MP
+        //   Visit 2: 20% HP + 30% MP
+        //   Visit 3: 10% HP + 15% MP
+        //   Visit 4+: tidak ada efek (room kelelahan)
+        int useCount = room.getRestUseCount();
+        room.incrementRestUse();
+
+        double hpPct, mpPct;
+        String visitMsg;
+        switch (useCount) {
+            case 0 -> { hpPct = 0.35; mpPct = 0.50; visitMsg = "You rest and recover."; }
+            case 1 -> { hpPct = 0.20; mpPct = 0.30; visitMsg = "The zone is getting crowded. Partial recovery."; }
+            case 2 -> { hpPct = 0.10; mpPct = 0.15; visitMsg = "Not much left here. Minimal recovery."; }
+            default -> {
+                emit(DungeonStateEvent.rest(0, 0,
+                        "This rest zone is spent. Nothing left to recover."));
+                // Tidak set cleared — player masih bisa lewat
+                return;
+            }
+        }
+
+        double hpRestore = player.getStats().get(StatType.MAX_HP) * hpPct;
+        double mpRestore = player.getStats().get(StatType.MAX_MP) * mpPct;
         player.receiveHeal(hpRestore);
         player.restoreMp(mpRestore);
 
-        // Merc juga pulih
+        // Merc juga pulih (proporsi sama)
         activeMercs.forEach(m -> {
-            m.receiveHeal(m.getStats().get(StatType.MAX_HP) * 0.30);
-            m.restoreMp(m.getStats().get(StatType.MAX_MP) * 0.40);
+            m.receiveHeal(m.getStats().get(StatType.MAX_HP) * hpPct * 0.85);
+            m.restoreMp(m.getStats().get(StatType.MAX_MP) * mpPct * 0.85);
         });
 
-        room.setCleared(true);
-        emit(DungeonStateEvent.rest(hpRestore, mpRestore));
+        // REST room TIDAK set cleared — bisa dikunjungi lagi
+        // cleared hanya menandai "sudah dipakai pertama kali"
+        if (useCount == 0) room.setCleared(true);
+
+        emit(DungeonStateEvent.rest(hpRestore, mpRestore, visitMsg));
     }
 
     private void handleEnemyRoom(Room room, boolean isElite) {

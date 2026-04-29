@@ -347,3 +347,61 @@ mvn javafx:run
   Akan dipertimbangkan untuk dikembalikan sebagai "partial heal" di v0.3
 - Skill selection masih auto-pick (target v0.3)
 - Shop masih placeholder (target v0.5)
+
+---
+
+## [v0.2.5] - 2026-04-29
+
+### Fixed
+
+**[BUG] REST room tidak bisa dikunjungi lagi setelah cleared (DungeonManager.java)**
+- Sebelumnya: `enterRoom()` guard memblok RE room cleared → REST tidak bisa dipakai lagi
+- Fix: guard di `enterRoom()` sekarang mengecualikan `Room.RoomType.REST`
+- REST room menggunakan sistem diminishing heal berbasis `restUseCount`
+
+**[BUG] GameOver retry — skill slot kosong karena tidak ada starter skill (GameEngine.java)**
+- Player baru dibuat tanpa skill apapun di equippedSkillIds
+- Fix: `createCharacter()` sekarang memanggil `giveStarterSkills()` yang auto-unlock
+  dan equip 2 skill sesuai background tanpa memerlukan skillPoints
+
+### Added
+
+**[FEATURE] REST Room Diminishing Heal System (Room.java, DungeonManager.java, DungeonStateEvent.java)**
+- REST room bisa dikunjungi berkali-kali dengan heal yang berkurang:
+  - Kunjungan 1: +35% HP, +50% MP — "You rest and recover."
+  - Kunjungan 2: +20% HP, +30% MP — "The zone is getting crowded."
+  - Kunjungan 3: +10% HP, +15% MP — "Not much left here."
+  - Kunjungan 4+: tidak ada efek — "This rest zone is spent."
+- Room.java: tambah field `restUseCount` dan method `getRestUseCount()` + `incrementRestUse()`
+- DungeonStateEvent.rest() overload baru dengan custom message parameter
+- Merc juga pulih proporsional (85% dari heal player)
+
+**[FEATURE] Starter Skills per Background (GameEngine.java, Player.java)**
+- Setiap background sekarang punya 2 skill yang langsung unlocked dan diequip:
+  - Street Brawler  : POWER_STRIKE + EXECUTE
+  - Netrunner       : DEEP_HACK + VIRUS_UPLOAD
+  - Veteran Soldier : IRON_SHIELD + SHOCKWAVE
+  - Energy Adept    : ENERGY_DRAIN + BIO_IRRADIATE
+  - Ghost Operative : PHANTOM_SHOT + SHADOW_STEP
+  - Techwright      : EMP_BURST + FIELD_BARRIER
+- Player.java: tambah `forceUnlockSkill()` untuk bypass skillPoints requirement
+- Ini juga fix skill slot yang selalu kosong di combat screen
+
+**[FEATURE] Shop Fungsional — Basic (ViewsBundle.java)**
+- Shop sebelumnya hanya placeholder "COMING SOON"
+- Sekarang: generate 4 item random berbasis floor level untuk dijual
+- Harga per rarity: Common 30-50g, Uncommon 80-120g, Rare 200-300g,
+  Epic 500-700g, Legendary 1200-1500g
+- Tombol BUY: disabled + abu jika gold tidak cukup, aktif kuning jika cukup
+- Setelah beli, item langsung masuk inventory dan shop di-refresh
+- Meninggalkan shop kembali ke dungeon map
+
+### Changed
+
+**SceneRouter.showShop()** — sudah buat ShopViewImpl baru setiap kunjungan,
+  sehingga item list fresh (tidak ada item yang sudah dibeli masih tampil)
+
+### Known Issues
+- Skill selection di combat masih auto-pick skill pertama ready (target v0.3)
+- Mercenary hire di hub belum ada — hanya TANK-RX9 sebagai starter (target v0.6)
+- Shop item tidak persistent — keluar shop lalu masuk lagi = item list baru
