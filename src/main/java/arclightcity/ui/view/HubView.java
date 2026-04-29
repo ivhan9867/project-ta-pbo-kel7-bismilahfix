@@ -11,6 +11,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.util.Duration;
 import arclightcity.ui.controller.SceneRouter;
+import arclightcity.ui.view.MercenaryDialogue;
 import arclightcity.ui.util.UIFactory;
 
 /**
@@ -68,6 +69,7 @@ public class HubView {
         Button enterDungeon = UIFactory.btnGold("▶  ENTER DUNGEON");
         enterDungeon.setOnAction(e -> {
             engine.startDungeonRun();
+            router.emitChat(MercenaryDialogue.Trigger.HUB_ENTER_DUNGEON);
             router.showDungeonMap();
         });
 
@@ -89,6 +91,14 @@ public class HubView {
         root.getChildren().add(buildBottomNav());
 
         UIFactory.fadeIn(root, 400);
+
+        // Emit mercenary idle chat saat masuk hub
+        javafx.animation.Timeline hubIdle = new javafx.animation.Timeline(
+            new javafx.animation.KeyFrame(javafx.util.Duration.millis(800),
+                e -> router.emitChat(MercenaryDialogue.Trigger.HUB_IDLE))
+        );
+        hubIdle.play();
+
         return root;
     }
 
@@ -242,7 +252,7 @@ public class HubView {
         };
 
         Runnable[] actions = {
-            () -> {},                          // Craft (TODO)
+            () -> router.addSystemChat("CRAFT SYSTEM — Coming Soon"),  // Craft
             () -> router.showInventory(),
             () -> { engine.startDungeonRun(); router.showDungeonMap(); },
             () -> router.showMercenary(),

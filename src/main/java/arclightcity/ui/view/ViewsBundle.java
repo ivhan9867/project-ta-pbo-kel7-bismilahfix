@@ -15,6 +15,8 @@ import javafx.geometry.*;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ViewsBundle {
 

@@ -1,4 +1,5 @@
 package arclightcity.ui.util;
+import arclightcity.ui.ArclightApp;
 import arclightcity.item.Item;
 import arclightcity.entity.stats.DamageType;
 import arclightcity.entity.stats.StatType;
@@ -43,8 +44,9 @@ public class UIFactory {
     public static VBox screenRoot() {
         VBox root = new VBox();
         root.setStyle("-fx-background-color: " + BG_DEEP + ";");
-        root.setPrefSize(420, 820);
-        root.setMinSize(420, 820);
+        root.setPrefSize(ArclightApp.GAME_WIDTH, ArclightApp.SCREEN_HEIGHT);
+        root.setMinSize(ArclightApp.GAME_WIDTH, ArclightApp.SCREEN_HEIGHT);
+        root.setMaxWidth(ArclightApp.GAME_WIDTH);
         return root;
     }
 

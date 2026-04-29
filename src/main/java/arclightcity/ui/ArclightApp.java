@@ -13,8 +13,13 @@ import arclightcity.ui.controller.SceneRouter;
  */
 public class ArclightApp extends Application {
 
-    public static final double SCREEN_WIDTH  = 420;
+    // Total window size
+    public static final double SCREEN_WIDTH  = 860;
     public static final double SCREEN_HEIGHT = 820;
+
+    // Game area (kiri) — chat panel (kanan) = 860px total
+    public static final double GAME_WIDTH    = 560;
+    public static final double CHAT_WIDTH    = 300;
 
     private static GameEngine   engine;
     private static SceneRouter  router;

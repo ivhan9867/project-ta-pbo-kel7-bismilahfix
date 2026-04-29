@@ -12,6 +12,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.util.Duration;
 import arclightcity.ui.controller.SceneRouter;
+import arclightcity.ui.view.MercenaryDialogue;
 import arclightcity.ui.util.UIFactory;
 
 import java.util.List;
@@ -55,15 +56,26 @@ public class DungeonMapView {
         engine.setOnDungeonEvent(event -> {
             javafx.application.Platform.runLater(() -> {
                 switch (event.type) {
-                    case COMBAT_STARTED       -> router.showCombat();
+                    case COMBAT_STARTED       -> {
+                        router.emitChat(MercenaryDialogue.Trigger.COMBAT_START);
+                        router.showCombat();
+                    }
                     case EVENT_ENCOUNTERED    -> router.showEvent(event.dungeonEvent);
-                    case SHOP_OPENED          -> router.showShop();
+                    case SHOP_OPENED          -> {
+                        router.addSystemChat("Merchant encountered");
+                        router.showShop();
+                    }
                     case GAME_OVER            -> router.showGameOver();
                     case READY_FOR_NEXT_FLOOR -> showDescentPrompt(event.intValue);
-                    case LOOT_FOUND           -> showLootPopup(event);
-                    case REST                 -> showRestNotification(event.message);
+                    case LOOT_FOUND           -> {
+                        showLootPopup(event);
+                        router.emitChat(MercenaryDialogue.Trigger.DUNGEON_ENTER_LOOT);
+                    }
+                    case REST                 -> {
+                        showRestNotification(event.message);
+                        router.emitChat(MercenaryDialogue.Trigger.DUNGEON_ENTER_REST);
+                    }
                     case ROOM_ALREADY_CLEARED -> {
-                        // Backtrack ke tile yang sudah cleared — hanya refresh UI
                         refreshMapGrid();
                         refreshCurrentRoomInfo();
                         refreshNextRoomsPanel();

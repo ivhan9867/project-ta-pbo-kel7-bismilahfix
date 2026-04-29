@@ -10,6 +10,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 import arclightcity.ui.controller.SceneRouter;
+import arclightcity.ui.ArclightApp;
 import arclightcity.ui.util.UIFactory;
 
 /**
@@ -42,7 +43,7 @@ public class MainMenuView {
     public Parent build() {
         // ── Root ─────────────────────────────────────────
         StackPane root = new StackPane();
-        root.setPrefSize(420, 820);
+        root.setPrefSize(ArclightApp.SCREEN_WIDTH, ArclightApp.SCREEN_HEIGHT);
         root.setStyle("-fx-background-color: #050810;");
 
         // ── Background grid lines ─────────────────────────
@@ -171,25 +172,25 @@ public class MainMenuView {
 
     private Pane buildGridBackground() {
         Pane pane = new Pane();
-        pane.setPrefSize(420, 820);
+        pane.setPrefSize(ArclightApp.SCREEN_WIDTH, ArclightApp.SCREEN_HEIGHT);
 
         // Horizontal grid lines (setiap 40px)
-        for (int y = 0; y < 820; y += 40) {
-            Rectangle line = new Rectangle(0, y, 420, 1);
+        for (int y = 0; y < (int)ArclightApp.SCREEN_HEIGHT; y += 40) {
+            Rectangle line = new Rectangle(0, y, (int)ArclightApp.SCREEN_WIDTH, 1);
             line.setFill(Color.web("#1C2E44", 0.15));
             pane.getChildren().add(line);
         }
         // Vertical grid lines
-        for (int x = 0; x < 420; x += 40) {
-            Rectangle line = new Rectangle(x, 0, 1, 820);
+        for (int x = 0; x < (int)ArclightApp.SCREEN_WIDTH; x += 40) {
+            Rectangle line = new Rectangle(x, 0, 1, (int)ArclightApp.SCREEN_HEIGHT);
             line.setFill(Color.web("#1C2E44", 0.15));
             pane.getChildren().add(line);
         }
 
         // Perspective lines dari bawah (cyberpunk city look)
-        int cx = 210;
-        for (int x = 0; x <= 420; x += 60) {
-            javafx.scene.shape.Line perspLine = new javafx.scene.shape.Line(cx, 820, x, 300);
+        int cx = (int)(ArclightApp.SCREEN_WIDTH / 2);
+        for (int x = 0; x <= (int)ArclightApp.SCREEN_WIDTH; x += 60) {
+            javafx.scene.shape.Line perspLine = new javafx.scene.shape.Line(cx, (int)ArclightApp.SCREEN_HEIGHT, x, 300);
             perspLine.setStroke(Color.web("#00E5FF", 0.04));
             perspLine.setStrokeWidth(1);
             pane.getChildren().add(perspLine);
@@ -200,11 +201,11 @@ public class MainMenuView {
 
     private Pane buildScanlines() {
         Pane pane = new Pane();
-        pane.setPrefSize(420, 820);
+        pane.setPrefSize(ArclightApp.SCREEN_WIDTH, ArclightApp.SCREEN_HEIGHT);
         pane.setStyle("-fx-background-color: transparent;");
         // Scanlines horizontal tipis (setiap 2px)
-        for (int y = 0; y < 820; y += 3) {
-            Rectangle line = new Rectangle(0, y, 420, 1);
+        for (int y = 0; y < (int)ArclightApp.SCREEN_HEIGHT; y += 3) {
+            Rectangle line = new Rectangle(0, y, (int)ArclightApp.SCREEN_WIDTH, 1);
             line.setFill(Color.web("#000000", 0.08));
             pane.getChildren().add(line);
         }

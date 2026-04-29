@@ -15,6 +15,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.util.Duration;
 import arclightcity.ui.controller.SceneRouter;
+import arclightcity.ui.view.MercenaryDialogue;
 import arclightcity.ui.util.UIFactory;
 
 import java.util.List;
@@ -556,7 +557,25 @@ public class CombatView {
         addLog(event.getMessage(), color);
         refreshCombatants();
 
-        // Process next AI turn — pakai guard untuk cegah timeline menumpuk
+        // ── Chat triggers ──────────────────────────────────────
+        switch (event.getType()) {
+            case ENTITY_DIED -> {
+                // Cek apakah yang mati enemy atau ally
+                if (event.getMessage() != null && !event.getMessage().contains(engine.getPlayer().getName())) {
+                    router.emitChat(MercenaryDialogue.Trigger.COMBAT_ENEMY_DIES);
+                }
+            }
+            case DAMAGE_DEALT -> {
+                // Cek apakah player HP rendah (< 30%)
+                double hpPct = engine.getPlayer().getCurrentHp() /
+                               engine.getPlayer().getStats().get(arclightcity.entity.stats.StatType.MAX_HP);
+                if (hpPct < 0.30 && Math.random() < 0.4) { // 40% chance agar tidak spam
+                    router.emitChat(MercenaryDialogue.Trigger.COMBAT_PLAYER_LOW_HP);
+                }
+            }
+            default -> { }
+        }
+
         if (cm.isCombatActive() && !cm.isWaitingForPlayer() && !aiTurnPending) {
             aiTurnPending = true;
             Timeline delay = new Timeline(new KeyFrame(Duration.millis(500), e -> {
@@ -565,7 +584,6 @@ public class CombatView {
                     boolean ongoing = cm.processTurn();
                     refreshActionPanel();
                     if (!ongoing && cm.isCombatActive()) {
-                        // Combat selesai tapi result belum dikirim — trigger manual
                         addLog("Combat concluded.", "#5A6A80");
                     }
                 } else {
@@ -581,6 +599,11 @@ public class CombatView {
     private void handleCombatEnd(CombatResult result) {
         addLog(result.isVictory() ? "🏆 VICTORY!" : "💀 DEFEATED", UIFactory.YELLOW);
         combatLoop = null;
+
+        // Chat trigger untuk victory/defeat
+        router.emitChat(result.isVictory()
+                ? MercenaryDialogue.Trigger.COMBAT_VICTORY
+                : MercenaryDialogue.Trigger.COMBAT_DEFEAT);
 
         Timeline delay = new Timeline(new KeyFrame(Duration.millis(1500), e -> {
             if (result.isVictory()) router.showVictory(result);
