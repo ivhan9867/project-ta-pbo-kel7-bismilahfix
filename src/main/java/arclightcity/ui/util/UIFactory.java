@@ -45,8 +45,23 @@ public class UIFactory {
         VBox root = new VBox();
         root.setStyle("-fx-background-color: " + BG_DEEP + ";");
         root.setPrefSize(ArclightApp.GAME_WIDTH, ArclightApp.SCREEN_HEIGHT);
-        root.setMinSize(ArclightApp.GAME_WIDTH, ArclightApp.SCREEN_HEIGHT);
+        // Tidak set setMinSize — biarkan JavaFX layout engine mengatur
+        // setMinSize menyebabkan VBox memaksa tinggi minimum sehingga konten overflow
         root.setMaxWidth(ArclightApp.GAME_WIDTH);
+        root.setMaxHeight(ArclightApp.SCREEN_HEIGHT);
+        return root;
+    }
+
+    /**
+     * screenRootBorder — root BorderPane untuk views yang butuh fixed bottom element.
+     * top = header, center = scrollable content, bottom = action bar.
+     * Ini layout yang benar untuk views dengan konten yang bisa lebih panjang dari layar.
+     */
+    public static BorderPane screenRootBorder() {
+        BorderPane root = new BorderPane();
+        root.setStyle("-fx-background-color: " + BG_DEEP + ";");
+        root.setPrefSize(ArclightApp.GAME_WIDTH, ArclightApp.SCREEN_HEIGHT);
+        root.setMaxSize(ArclightApp.GAME_WIDTH, ArclightApp.SCREEN_HEIGHT);
         return root;
     }
 

@@ -344,4 +344,11 @@ public class Inventory {
             return new EquipResult(false, "❌ " + reason, null, null, null);
         }
     }
+
+    // ── Save/Load direct equip (bypass validation) ────────────
+    /** Dipakai saat restore dari save — langsung set slot tanpa cek kondisi */
+    public void forceEquipWeapon(Equipment eq)     { equippedWeapon     = eq; }
+    public void forceEquipArmor(Equipment eq)      { equippedArmor      = eq; }
+    public void forceEquipAccessory1(Equipment eq) { equippedAccessory1 = eq; }
+    public void forceEquipAccessory2(Equipment eq) { equippedAccessory2 = eq; }
 }

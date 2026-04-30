@@ -49,7 +49,7 @@ public class DungeonMapView {
     public DungeonMapView(GameEngine engine, SceneRouter router) {
         this.engine = engine;
         this.router = router;
-        wireEngineListeners();
+        // wireEngineListeners() dipanggil di build() setelah semua field siap
     }
 
     private void wireEngineListeners() {
@@ -95,32 +95,36 @@ public class DungeonMapView {
         DungeonManager dm = engine.getDungeonManager();
         Floor floor = dm.getCurrentFloor();
 
-        VBox root = UIFactory.screenRoot();
+        // BorderPane: top=header+vitals (fixed), center=map+roominfo (scrollable)
+        // bottom=room actions/DESCEND (fixed)
+        BorderPane bpRoot = UIFactory.screenRootBorder();
+        // Store reference for wireEngineListeners refresh
+        VBox root = new VBox(0); // internal reference masih dipakai
+        root.setStyle("-fx-background-color: #050810;");
 
-        // Header
+        // ── TOP: header + vitals (fixed) ──────────────────
+        VBox topFixed = new VBox(0);
         String floorTitle = "FLOOR " + dm.getCurrentFloorNumber() + ": " +
                 (floor != null ? floor.getTheme().displayName.toUpperCase() : "—");
-        root.getChildren().add(UIFactory.headerWithResources(
+        topFixed.getChildren().add(UIFactory.headerWithResources(
                 floorTitle,
                 () -> router.showHub(),
                 engine.getPlayer().getGold(),
                 dm.getCurrentFloorNumber()));
+        topFixed.getChildren().add(buildVitalsBar());
+        bpRoot.setTop(topFixed);
 
-        // Player vitals
-        root.getChildren().add(buildVitalsBar());
+        // ── CENTER: map grid + current room info (scrollable) ─
+        VBox centerContent = new VBox(0);
 
-        UIFactory.divider();
-
-        // ── Grid Map Interaktif ───────────────────────────────
+        // Grid Map
         dungeonGridMap = new DungeonGridMap(engine, () -> {
-            // Callback saat player klik tile — refresh info panel
             javafx.application.Platform.runLater(() -> {
                 refreshCurrentRoomInfo();
                 refreshNextRoomsPanel();
             });
         });
 
-        // Wrap dalam ScrollPane agar grid bisa discroll kalau panjang
         ScrollPane gridScroll = new ScrollPane(dungeonGridMap);
         gridScroll.setFitToWidth(true);
         gridScroll.setPrefHeight(290);
@@ -133,21 +137,36 @@ public class DungeonMapView {
             "-fx-border-width: 0 0 1 0;"
         );
         gridMapContainer = new VBox(gridScroll);
-        root.getChildren().add(gridMapContainer);
+        centerContent.getChildren().add(gridMapContainer);
 
         // Current room info
         currentRoomPanel = buildCurrentRoomPanel(dm);
-        root.getChildren().add(currentRoomPanel);
+        centerContent.getChildren().add(currentRoomPanel);
 
-        // Next rooms
+        ScrollPane centerScroll = new ScrollPane(centerContent);
+        centerScroll.setFitToWidth(true);
+        centerScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        centerScroll.setStyle(
+            "-fx-background-color: #050810;" +
+            "-fx-background: #050810;" +
+            "-fx-border-color: transparent;"
+        );
+        bpRoot.setCenter(centerScroll);
+
+        // ── BOTTOM: room actions / DESCEND (always visible) ──
         roomListContainer = new VBox(8);
-        roomListContainer.setPadding(new Insets(8, 16, 12, 16));
-        VBox.setVgrow(roomListContainer, Priority.ALWAYS);
+        roomListContainer.setPadding(new Insets(8, 16, 10, 16));
+        roomListContainer.setStyle(
+            "-fx-background-color: #0C1220;" +
+            "-fx-border-color: #1C2E44;" +
+            "-fx-border-width: 1 0 0 0;"
+        );
         refreshNextRooms(dm);
-        root.getChildren().add(roomListContainer);
+        bpRoot.setBottom(roomListContainer);
 
-        UIFactory.fadeIn(root, 300);
-        return root;
+        wireEngineListeners();
+        UIFactory.fadeIn(bpRoot, 300);
+        return bpRoot;
     }
 
     // ── Vitals bar ────────────────────────────────────────
@@ -365,14 +384,17 @@ public class DungeonMapView {
         if (currentRoomPanel == null) return;
         DungeonManager dm = engine.getDungeonManager();
         VBox newPanel = buildCurrentRoomPanel(dm);
-        // Cari parent dan replace
-        if (currentRoomPanel.getParent() instanceof VBox parent) {
-            int idx = parent.getChildren().indexOf(currentRoomPanel);
+
+        javafx.scene.Parent parent = currentRoomPanel.getParent();
+        if (parent instanceof VBox vb) {
+            int idx = vb.getChildren().indexOf(currentRoomPanel);
             if (idx >= 0) {
-                parent.getChildren().set(idx, newPanel);
+                vb.getChildren().set(idx, newPanel);
                 currentRoomPanel = newPanel;
             }
         }
+        // Refresh bottom room actions juga
+        refreshNextRoomsPanel();
     }
 
     private void refreshMapGrid() {

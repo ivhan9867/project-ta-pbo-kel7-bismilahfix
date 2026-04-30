@@ -539,10 +539,9 @@ public static class EventViewImpl {
         VBox root = UIFactory.screenRoot();
         root.getChildren().add(UIFactory.headerBar("EVENT", null));
 
-        // Event card
-        VBox card = new VBox(12);
-        card.setPadding(new Insets(20, 20, 20, 20));
-        VBox.setVgrow(card, Priority.ALWAYS);
+        // Scrollable content area
+        VBox scrollContent = new VBox(12);
+        scrollContent.setPadding(new Insets(20, 20, 16, 20));
 
         // Category badge
         String catColor = switch (event.getCategory()) {
@@ -561,7 +560,7 @@ public static class EventViewImpl {
             "-fx-font-family: 'Courier New', monospace;" +
             "-fx-font-size: 18px;" +
             "-fx-font-weight: bold;" +
-            "-fx-effect: dropshadow(gaussian, " + catColor + ", 8, 0.3, 0, 0);"
+            "-fx-effect: dropshadow(gaussian, " + catColor + ", 6, 0.3, 0, 0);"
         );
         title.setWrapText(true);
 
@@ -572,31 +571,43 @@ public static class EventViewImpl {
         narrative.setStyle("-fx-text-fill: #8899AA; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
         narrativePanel.getChildren().add(narrative);
 
-        card.getChildren().addAll(catBadge, title, narrativePanel, UIFactory.spacer());
+        scrollContent.getChildren().addAll(catBadge, title, narrativePanel);
 
-        // Choices
+        // Choices section
+        VBox choicesBox = new VBox(8);
+        choicesBox.setPadding(new Insets(8, 0, 0, 0));
+
         if (event.hasChoices()) {
             Label choiceTitle = UIFactory.sectionTitle("CHOOSE YOUR ACTION:");
-            card.getChildren().add(choiceTitle);
+            choicesBox.getChildren().add(choiceTitle);
 
             for (int i = 0; i < event.getChoices().length; i++) {
                 final int idx = i;
                 DungeonEvent.EventChoice choice = event.getChoices()[i];
-
                 Button btn = UIFactory.btnPrimary("▶  " + choice.label);
                 btn.setOnAction(e -> {
                     engine.resolveEventChoice(event, idx);
                     router.showDungeonMap();
                 });
-                card.getChildren().add(btn);
+                choicesBox.getChildren().add(btn);
             }
         } else {
             Button okBtn = UIFactory.btnPrimary("CONTINUE");
             okBtn.setOnAction(e -> router.showDungeonMap());
-            card.getChildren().add(okBtn);
+            choicesBox.getChildren().add(okBtn);
         }
 
-        root.getChildren().add(card);
+        scrollContent.getChildren().add(choicesBox);
+
+        // Wrap dalam ScrollPane agar choices tidak terpotong
+        ScrollPane scroll = new ScrollPane(scrollContent);
+        scroll.setFitToWidth(true);
+        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scroll.setStyle("-fx-background-color: #050810; -fx-background: #050810;" +
+                        "-fx-border-color: transparent;");
+        VBox.setVgrow(scroll, Priority.ALWAYS);
+        root.getChildren().add(scroll);
+
         UIFactory.fadeIn(root, 400);
         return root;
     }
@@ -653,7 +664,7 @@ public static class ShopViewImpl {
 
         VBox itemList = new VBox(8);
         itemList.setPadding(new Insets(8, 16, 8, 16));
-        VBox.setVgrow(itemList, Priority.ALWAYS);
+        // Tidak pakai setVgrow(ALWAYS) — itemList sudah di dalam ScrollPane
 
         for (arclightcity.item.Item item : shopItems) {
             itemList.getChildren().add(buildShopRow(item));
@@ -786,7 +797,6 @@ public static class VictoryViewImpl {
 
     Parent build() {
         VBox root = UIFactory.screenRoot();
-        root.setAlignment(Pos.CENTER);
 
         VBox content = new VBox(16);
         content.setAlignment(Pos.CENTER);
@@ -819,7 +829,13 @@ public static class VictoryViewImpl {
         hubBtn.setOnAction(e -> router.showHub());
 
         content.getChildren().addAll(victory, turns, rewards, continueBtn, hubBtn);
-        root.getChildren().add(content);
+
+        ScrollPane scroll = new ScrollPane(content);
+        scroll.setFitToWidth(true);
+        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scroll.setStyle("-fx-background-color: #050810; -fx-background: #050810; -fx-border-color: transparent;");
+        VBox.setVgrow(scroll, Priority.ALWAYS);
+        root.getChildren().add(scroll);
 
         UIFactory.fadeIn(root, 600);
         UIFactory.glowPulse(victory, "#FFD600");
@@ -883,7 +899,13 @@ public static class GameOverViewImpl {
         menu.setOnAction(e -> router.showMainMenu());
 
         content.getChildren().addAll(dead, sub, stats, quote, retry, menu);
-        root.getChildren().add(content);
+
+        ScrollPane scroll = new ScrollPane(content);
+        scroll.setFitToWidth(true);
+        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scroll.setStyle("-fx-background-color: #050810; -fx-background: #050810; -fx-border-color: transparent;");
+        VBox.setVgrow(scroll, Priority.ALWAYS);
+        root.getChildren().add(scroll);
 
         UIFactory.fadeIn(root, 800);
         return root;

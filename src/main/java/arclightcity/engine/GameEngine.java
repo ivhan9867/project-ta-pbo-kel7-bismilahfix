@@ -183,6 +183,8 @@ public class GameEngine {
 
     public void descend() {
         dungeonManager.advanceToNextFloor();
+        // Auto-save setiap turun floor
+        autoSave();
     }
 
     public void resolveEventChoice(DungeonEvent event, int choiceIndex) {
@@ -238,6 +240,84 @@ public class GameEngine {
     public void returnToHub() {
         transitionTo(GameState.HUB);
     }
+
+    // ════════════════════════════════════════════════════════
+    // SAVE / LOAD SYSTEM
+    // ════════════════════════════════════════════════════════
+
+    /** Simpan game ke manual save slot */
+    public arclightcity.save.SaveManager.SaveResult saveGame() {
+        arclightcity.save.GameSaveState state =
+                arclightcity.save.GameStateConverter.toSaveState(this, false);
+        arclightcity.save.SaveManager.SaveResult result =
+                arclightcity.save.SaveManager.saveManual(state);
+        System.out.println("[GameEngine] Manual save: " + result.message());
+        return result;
+    }
+
+    /** Auto-save — dipanggil otomatis setiap turun floor */
+    public void autoSave() {
+        arclightcity.save.GameSaveState state =
+                arclightcity.save.GameStateConverter.toSaveState(this, true);
+        arclightcity.save.SaveManager.SaveResult result =
+                arclightcity.save.SaveManager.saveAuto(state);
+        System.out.println("[GameEngine] Auto-save: " + result.message());
+    }
+
+    /** Load game dari save terbaru (manual atau auto) */
+    public boolean loadGame() {
+        var opt = arclightcity.save.SaveManager.loadLatest();
+        if (opt.isEmpty()) {
+            System.out.println("[GameEngine] No save found.");
+            return false;
+        }
+        arclightcity.save.GameStateConverter.restoreFromSave(this, opt.get());
+        return true;
+    }
+
+    /** Cek apakah ada save yang bisa di-load */
+    public boolean hasSave() {
+        return arclightcity.save.SaveManager.hasSave();
+    }
+
+    /** Info save terbaru untuk ditampilkan di main menu */
+    public String getSaveSummary() {
+        return arclightcity.save.SaveManager.getSaveSummary();
+    }
+
+    /**
+     * Buat character dari save data (dipakai oleh GameStateConverter).
+     * Tidak memanggil giveStarterItems/giveStarterSkills karena data
+     * sudah direstored dari save.
+     */
+    public void createCharacterFromSave(String name, PlayerBackground background,
+                                         arclightcity.save.GameSaveState.PlayerData pd) {
+        this.player    = new Player(name, background);
+        this.inventory = new Inventory(player);
+        this.dungeonManager = new DungeonManager();
+        wireDungeonListeners();
+
+        // Restore player stats dari save
+        player.setLevelDirect(pd.level);
+        player.setExpDirect(pd.currentExp, pd.expToNext);
+        player.setGold(pd.gold);
+        player.setHpDirect(pd.currentHp);
+        player.setMpDirect(pd.currentMp);
+        player.setShieldDirect(pd.currentShield);
+        player.setSkillPointsDirect(pd.skillPoints);
+        player.setDungeonDepth(pd.dungeonDepth);
+
+        // Restore skills
+        pd.unlockedSkillIds.forEach(player::forceUnlockSkill);
+        pd.equippedSkillIds.forEach(player::equipSkill);
+
+        transitionTo(GameState.HUB);
+    }
+
+    // Helper methods untuk GameStateConverter
+    public void clearMercsForLoad()              { ownedMercs.clear(); activeMercs.clear(); }
+    public void addOwnedMercForLoad(Mercenary m) { ownedMercs.add(m); }
+    public void addActiveMercForLoad(Mercenary m){ if (!activeMercs.contains(m)) activeMercs.add(m); }
 
     // ════════════════════════════════════════════════════════
     // LISTENERS (untuk JavaFX binding)

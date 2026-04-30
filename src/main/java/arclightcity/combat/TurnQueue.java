@@ -168,6 +168,33 @@ public class TurnQueue {
         return Collections.unmodifiableList(turnOrder);
     }
 
+    /**
+     * Ambil daftar entity yang akan giliran berikutnya (dari posisi current ke depan),
+     * max N entity. Digunakan untuk turn order bar di CombatView.
+     */
+    public List<Entity> getUpcomingTurns(int maxCount) {
+        List<Entity> upcoming = new ArrayList<>();
+        for (int i = currentIndex; i < turnOrder.size() && upcoming.size() < maxCount; i++) {
+            Entity e = turnOrder.get(i);
+            if (e.isAlive()) upcoming.add(e);
+        }
+        // Jika kurang dari maxCount, tambah dari round berikutnya (simulasi)
+        if (upcoming.size() < maxCount) {
+            List<TurnSlot> sorted = new ArrayList<>(allSlots);
+            sorted.removeIf(s -> !s.entity.isAlive());
+            sorted.sort((a, b) -> {
+                double aS = a.entity.getStats().get(StatType.SPEED) + a.initiative;
+                double bS = b.entity.getStats().get(StatType.SPEED) + b.initiative;
+                return Double.compare(bS, aS);
+            });
+            for (TurnSlot slot : sorted) {
+                if (upcoming.size() >= maxCount) break;
+                if (!upcoming.contains(slot.entity)) upcoming.add(slot.entity);
+            }
+        }
+        return upcoming;
+    }
+
     public int  getRoundNumber() { return roundNumber; }
     public int  getCurrentIndex(){ return currentIndex; }
 

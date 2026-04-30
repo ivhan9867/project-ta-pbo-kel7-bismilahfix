@@ -15,7 +15,7 @@ public class ArclightApp extends Application {
 
     // Total window size
     public static final double SCREEN_WIDTH  = 860;
-    public static final double SCREEN_HEIGHT = 820;
+    public static final double SCREEN_HEIGHT = 920; // +100px untuk combat layout
 
     // Game area (kiri) — chat panel (kanan) = 860px total
     public static final double GAME_WIDTH    = 560;

@@ -152,6 +152,17 @@ public class Player extends Entity {
         }
     }
 
+    // ── Save/Load direct setters ──────────────────────────────
+
+    /** Untuk restore dari save — set level langsung tanpa trigger level up */
+    public void setLevelDirect(int level)                          { this.level = level; }
+    public void setExpDirect(double exp, double toNext)            { this.currentExp = exp; this.expToNextLevel = toNext; }
+    public void setGold(long gold)                                 { this.gold = Math.max(0, gold); }
+    public void setHpDirect(double hp)                             { this.currentHp = Math.min(hp, stats.get(StatType.MAX_HP)); }
+    public void setMpDirect(double mp)                             { this.currentMp = Math.min(mp, stats.get(StatType.MAX_MP)); }
+    public void setShieldDirect(double shield)                     { this.currentShield = Math.min(shield, stats.get(StatType.MAX_SHIELD)); }
+    public void setSkillPointsDirect(int pts)                      { this.skillPoints = pts; }
+
     public boolean unlockSkill(String skillId) {
         if (skillPoints <= 0 || unlockedSkillIds.contains(skillId)) return false;
         unlockedSkillIds.add(skillId);

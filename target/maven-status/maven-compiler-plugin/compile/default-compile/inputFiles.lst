@@ -52,6 +52,9 @@ D:\KULIAH PEMROGRAMAN\SEMESTER 2\JAVA OOP SEMESTER 2\ArclightCity\src\main\java\
 D:\KULIAH PEMROGRAMAN\SEMESTER 2\JAVA OOP SEMESTER 2\ArclightCity\src\main\java\arclightcity\item\Material.java
 D:\KULIAH PEMROGRAMAN\SEMESTER 2\JAVA OOP SEMESTER 2\ArclightCity\src\main\java\arclightcity\item\UpgradeSystem.java
 D:\KULIAH PEMROGRAMAN\SEMESTER 2\JAVA OOP SEMESTER 2\ArclightCity\src\main\java\arclightcity\item\Weapon.java
+D:\KULIAH PEMROGRAMAN\SEMESTER 2\JAVA OOP SEMESTER 2\ArclightCity\src\main\java\arclightcity\save\GameSaveState.java
+D:\KULIAH PEMROGRAMAN\SEMESTER 2\JAVA OOP SEMESTER 2\ArclightCity\src\main\java\arclightcity\save\GameStateConverter.java
+D:\KULIAH PEMROGRAMAN\SEMESTER 2\JAVA OOP SEMESTER 2\ArclightCity\src\main\java\arclightcity\save\SaveManager.java
 D:\KULIAH PEMROGRAMAN\SEMESTER 2\JAVA OOP SEMESTER 2\ArclightCity\src\main\java\arclightcity\ui\ArclightApp.java
 D:\KULIAH PEMROGRAMAN\SEMESTER 2\JAVA OOP SEMESTER 2\ArclightCity\src\main\java\arclightcity\ui\controller\SceneRouter.java
 D:\KULIAH PEMROGRAMAN\SEMESTER 2\JAVA OOP SEMESTER 2\ArclightCity\src\main\java\arclightcity\ui\util\UIFactory.java

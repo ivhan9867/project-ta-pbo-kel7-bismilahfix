@@ -9,6 +9,7 @@ import javafx.geometry.*;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import javafx.scene.layout.BorderPane;
 import javafx.util.Duration;
 import arclightcity.ui.controller.SceneRouter;
 import arclightcity.ui.view.MercenaryDialogue;
@@ -50,19 +51,23 @@ public class HubView {
 
     public Parent build() {
         Player player = engine.getPlayer();
-        VBox root = UIFactory.screenRoot();
-        root.setFillWidth(true);
 
-        // ── Top: Player info bar (fixed, tidak discroll) ──
-        root.getChildren().add(buildPlayerBar(player));
+        // ── Gunakan BorderPane agar bottom nav SELALU di bawah ──
+        // BorderPane.bottom = fixed, BorderPane.center = scrollable
+        BorderPane root = new BorderPane();
+        root.setStyle("-fx-background-color: #050810;");
+        root.setPrefSize(arclightcity.ui.ArclightApp.GAME_WIDTH,
+                         arclightcity.ui.ArclightApp.SCREEN_HEIGHT);
 
-        // ── Scrollable area: vitals + banner + nav buttons ─
+        // ── TOP: player bar (fixed) ───────────────────────────
+        root.setTop(buildPlayerBar(player));
+
+        // ── CENTER: scrollable content ────────────────────────
         VBox scrollContent = new VBox(0);
         scrollContent.setFillWidth(true);
         scrollContent.getChildren().add(buildVitalsPanel(player));
         scrollContent.getChildren().add(buildDistrictBanner(player));
 
-        // Main nav buttons
         VBox navButtons = new VBox(10);
         navButtons.setPadding(new Insets(16));
 
@@ -72,38 +77,55 @@ public class HubView {
             router.emitChat(MercenaryDialogue.Trigger.HUB_ENTER_DUNGEON);
             router.showDungeonMap();
         });
-
         Button mercenary = UIFactory.btnPrimary("◈  MERCENARY");
         mercenary.setOnAction(e -> router.showMercenary());
-
         Button inventory = UIFactory.btnPrimary("⊞  INVENTORY");
         inventory.setOnAction(e -> router.showInventory());
-
         Button profile = UIFactory.btnPrimary("☰  PROFILE");
         profile.setOnAction(e -> router.showProfile());
 
-        navButtons.getChildren().addAll(enterDungeon, mercenary, inventory, profile);
+        // SAVE button
+        Button saveBtn = new Button("💾  SAVE GAME");
+        saveBtn.setMaxWidth(Double.MAX_VALUE);
+        saveBtn.setStyle(
+            "-fx-background-color: #FFD60011;" +
+            "-fx-border-color: #FFD60066;" +
+            "-fx-border-width: 1;" +
+            "-fx-text-fill: #FFD600;" +
+            "-fx-font-family: 'Courier New'; -fx-font-size: 13px;" +
+            "-fx-padding: 10 20; -fx-cursor: hand;"
+        );
+        saveBtn.setOnAction(e -> {
+            var result = engine.saveGame();
+            router.addSystemChat(result.success()
+                    ? "✅ " + result.message()
+                    : "❌ " + result.message());
+        });
+
+        navButtons.getChildren().addAll(enterDungeon, mercenary, inventory, profile, saveBtn);
         scrollContent.getChildren().add(navButtons);
 
         ScrollPane scrollPane = new ScrollPane(scrollContent);
         scrollPane.setFitToWidth(true);
         scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scrollPane.setStyle("-fx-background-color: #050810; -fx-background: #050810;" +
-                            "-fx-border-color: transparent;");
-        VBox.setVgrow(scrollPane, Priority.ALWAYS);
-        root.getChildren().add(scrollPane);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scrollPane.setStyle(
+            "-fx-background-color: #050810;" +
+            "-fx-background: #050810;" +
+            "-fx-border-color: transparent;"
+        );
+        root.setCenter(scrollPane);
 
-        // ── Bottom nav (fixed, selalu terlihat) ───────────
-        root.getChildren().add(buildBottomNav());
+        // ── BOTTOM: nav bar — selalu terlihat karena BorderPane.bottom ──
+        root.setBottom(buildBottomNav());
 
         UIFactory.fadeIn(root, 400);
 
-        // Emit mercenary idle chat saat masuk hub
-        javafx.animation.Timeline hubIdle = new javafx.animation.Timeline(
+        // Merc idle chat
+        new javafx.animation.Timeline(
             new javafx.animation.KeyFrame(javafx.util.Duration.millis(800),
                 e -> router.emitChat(MercenaryDialogue.Trigger.HUB_IDLE))
-        );
-        hubIdle.play();
+        ).play();
 
         return root;
     }
@@ -242,11 +264,14 @@ public class HubView {
     private HBox buildBottomNav() {
         HBox nav = new HBox(0);
         nav.setAlignment(Pos.CENTER);
+        nav.setMinHeight(64);
+        nav.setMaxHeight(64);
+        nav.setPrefHeight(64);
         nav.setStyle(
             "-fx-background-color: #0C1220;" +
             "-fx-border-color: #1C2E44;" +
             "-fx-border-width: 1 0 0 0;" +
-            "-fx-padding: 8 0;"
+            "-fx-padding: 6 0;"
         );
 
         String[][] items = {

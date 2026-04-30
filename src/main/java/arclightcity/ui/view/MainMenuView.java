@@ -122,21 +122,35 @@ public class MainMenuView {
         Button newGame = UIFactory.btnPrimary("[ ENTER ARCLIGHT CITY ]");
         newGame.setOnAction(e -> router.showCharacterCreate());
 
+        // CONTINUE — aktif jika ada save
+        boolean hasSave = engine.hasSave();
+        String saveInfo = hasSave ? engine.getSaveSummary() : "No save data";
+
         Button continueBtn = new Button("[ CONTINUE ]");
         continueBtn.setMaxWidth(Double.MAX_VALUE);
+        continueBtn.setDisable(!hasSave);
         continueBtn.setStyle(
-            "-fx-background-color: transparent;" +
-            "-fx-border-color: #5A6A80;" +
+            "-fx-background-color: " + (hasSave ? "#00E5FF11" : "transparent") + ";" +
+            "-fx-border-color: " + (hasSave ? "#00E5FF" : "#5A6A80") + ";" +
             "-fx-border-width: 1;" +
-            "-fx-text-fill: #5A6A80;" +
+            "-fx-text-fill: " + (hasSave ? "#00E5FF" : "#5A6A80") + ";" +
             "-fx-font-family: 'Courier New', monospace;" +
             "-fx-font-size: 13px;" +
             "-fx-padding: 10 20;" +
-            "-fx-cursor: hand;"
+            "-fx-cursor: " + (hasSave ? "hand" : "default") + ";"
         );
-        continueBtn.setDisable(true); // TODO: save system
+        continueBtn.setOnAction(e -> {
+            if (engine.loadGame()) router.showHub();
+        });
 
-        buttons.getChildren().addAll(newGame, continueBtn);
+        // Save info label
+        Label saveLabel = new Label(saveInfo);
+        saveLabel.setStyle(
+            "-fx-text-fill: " + (hasSave ? "#5A6A80" : "#2A3A50") + ";" +
+            "-fx-font-family: 'Courier New'; -fx-font-size: 10px;"
+        );
+
+        buttons.getChildren().addAll(newGame, continueBtn, saveLabel);
 
         // ── Version info ──────────────────────────────────
         Label version = new Label("v0.1 ALPHA  ·  TUGAS AKHIR OOP");

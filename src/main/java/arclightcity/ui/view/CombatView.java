@@ -1,7 +1,6 @@
 package arclightcity.ui.view;
 import arclightcity.entity.base.Entity;
 import arclightcity.entity.stats.StatType;
-
 import arclightcity.combat.*;
 import arclightcity.engine.GameEngine;
 import arclightcity.entity.enemy.Enemy;
@@ -11,12 +10,19 @@ import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.geometry.*;
 import javafx.scene.Parent;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.TextAlignment;
 import javafx.util.Duration;
 import arclightcity.ui.controller.SceneRouter;
 import arclightcity.ui.view.MercenaryDialogue;
 import arclightcity.ui.util.UIFactory;
+import java.util.List;
+import java.util.ArrayList;
 
 import java.util.List;
 
@@ -46,15 +52,34 @@ public class CombatView {
     private final SceneRouter router;
     private CombatManager     cm;
 
-    // UI refs untuk update
-    private VBox    enemyContainer;
-    private HBox    allyContainer;
-    private VBox    logContainer;
+    // UI refs
+    private VBox       enemyContainer;
+    private HBox       allyContainer;
+    private VBox       logContainer;
     private ScrollPane logScroll;
-    private VBox    actionPanel;
-    private Label   turnLabel;
-    private Label   currentActorLabel;
-    private Timeline combatLoop;
+    private VBox       actionPanel;
+    private Label      turnLabel;
+    private Label      currentActorLabel;
+    private HBox       turnOrderBar;     // v0.3: antrian giliran
+    private Timeline   combatLoop;
+
+    // v0.3: AI turn guard
+    private boolean aiTurnPending = false;
+
+    // v0.3: Target Selection mode
+    private boolean          targetSelectMode = false;
+    private String           pendingSkillId   = null;
+    private java.util.function.Consumer<Entity> onTargetSelected = null;
+
+    // v0.3: Combat speed — default 1200ms agar player sempat baca log
+    // 1× = 1200ms (comfortable), 2× = 500ms (faster), SKIP = 50ms
+    private int combatSpeedMs = 1200;
+
+    // v0.3: Floating damage texts
+    private record FloatingText(String text, String color,
+                                double x, double y, long startMs) {}
+    private final java.util.List<FloatingText> floatingTexts
+            = new java.util.ArrayList<>();
 
     public CombatView(GameEngine engine, SceneRouter router) {
         this.engine = engine;
@@ -63,45 +88,75 @@ public class CombatView {
     }
 
     public Parent build() {
-        VBox root = UIFactory.screenRoot();
+        // BorderPane: top=fixed headers, center=scrollable battle area, bottom=action panel
+        BorderPane root = UIFactory.screenRootBorder();
 
-        // ── Top bar ──────────────────────────────────────
-        root.getChildren().add(buildTopBar());
+        // ── TOP: TopBar + TurnOrderBar (fixed) ───────────
+        VBox topSection = new VBox(0);
+        topSection.getChildren().add(buildTopBar());
 
-        // ── Combat log ───────────────────────────────────
-        root.getChildren().add(buildCombatLog());
+        turnOrderBar = new HBox(6);
+        turnOrderBar.setPadding(new Insets(5, 12, 5, 12));
+        turnOrderBar.setMinHeight(36);
+        turnOrderBar.setMaxHeight(36);
+        turnOrderBar.setAlignment(Pos.CENTER_LEFT);
+        turnOrderBar.setStyle(
+            "-fx-background-color: #080D18;" +
+            "-fx-border-color: #1C2E44;" +
+            "-fx-border-width: 0 0 1 0;"
+        );
+        topSection.getChildren().add(turnOrderBar);
+        root.setTop(topSection);
 
-        // ── Enemy area ───────────────────────────────────
+        // ── CENTER: scrollable battle area ───────────────
+        VBox battleArea = new VBox(0);
+
+        // Combat log
+        battleArea.getChildren().add(buildCombatLog());
+
+        // Enemy area
         VBox enemySection = new VBox(6);
-        enemySection.setPadding(new Insets(8, 12, 4, 12));
+        enemySection.setPadding(new Insets(6, 12, 4, 12));
         enemySection.setStyle("-fx-border-color: #1C2E44; -fx-border-width: 0 0 1 0;");
         Label enemySectionTitle = UIFactory.sectionTitle("◆ ENEMIES");
         enemySectionTitle.setPadding(new Insets(0, 0, 4, 0));
         enemyContainer = new VBox(6);
         enemySection.getChildren().addAll(enemySectionTitle, enemyContainer);
-        root.getChildren().add(enemySection);
+        battleArea.getChildren().add(enemySection);
 
-        // ── Ally area ────────────────────────────────────
+        // Ally area
         VBox allySection = new VBox(6);
-        allySection.setPadding(new Insets(8, 12, 4, 12));
+        allySection.setPadding(new Insets(6, 12, 4, 12));
         allySection.setStyle("-fx-border-color: #1C2E44; -fx-border-width: 0 0 1 0;");
         Label allySectionTitle = UIFactory.sectionTitle("◈ ALLIES");
         allySectionTitle.setPadding(new Insets(0, 0, 4, 0));
         allyContainer = new HBox(8);
         allySection.getChildren().addAll(allySectionTitle, allyContainer);
-        root.getChildren().add(allySection);
+        battleArea.getChildren().add(allySection);
 
-        // ── Status effects ────────────────────────────────
-        root.getChildren().add(buildStatusPanel());
+        // Status effects
+        battleArea.getChildren().add(buildStatusPanel());
 
-        // Tidak ada spacer — biarkan action panel langsung di bawah status
-        // spacer dihapus karena menyebabkan action panel terpotong di layar kecil
+        // Wrap dalam ScrollPane agar battle area bisa discroll jika konten panjang
+        ScrollPane battleScroll = new ScrollPane(battleArea);
+        battleScroll.setFitToWidth(true);
+        battleScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        battleScroll.setStyle(
+            "-fx-background-color: #050810;" +
+            "-fx-background: #050810;" +
+            "-fx-border-color: transparent;"
+        );
+        root.setCenter(battleScroll);
 
-        // ── Action panel (selalu di bawah, tidak terpotong) ─
+        // ── BOTTOM: action panel (selalu terlihat) ────────
         actionPanel = new VBox(8);
-        actionPanel.setPadding(new Insets(10, 12, 12, 12));
-        actionPanel.setStyle("-fx-background-color: #0C1220; -fx-border-color: #1C2E44; -fx-border-width: 1 0 0 0;");
-        root.getChildren().add(actionPanel);
+        actionPanel.setPadding(new Insets(8, 12, 10, 12));
+        actionPanel.setStyle(
+            "-fx-background-color: #0C1220;" +
+            "-fx-border-color: #1C2E44;" +
+            "-fx-border-width: 1 0 0 0;"
+        );
+        root.setBottom(actionPanel);
 
         // Initial render
         refreshCombatants();
@@ -158,8 +213,8 @@ public class CombatView {
 
     private VBox buildCombatLog() {
         VBox wrapper = new VBox();
-        wrapper.setPrefHeight(130);
-        wrapper.setMaxHeight(130);
+        wrapper.setPrefHeight(150);  // naik dari 130 → memanfaatkan +100px
+        wrapper.setMaxHeight(150);
         wrapper.setStyle("-fx-background-color: #050810; -fx-border-color: #1C2E44; -fx-border-width: 0 0 1 0;");
 
         logContainer = new VBox(2);
@@ -167,7 +222,7 @@ public class CombatView {
 
         logScroll = new ScrollPane(logContainer);
         logScroll.setFitToWidth(true);
-        logScroll.setPrefHeight(130);
+        logScroll.setPrefHeight(150);
         logScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         logScroll.setStyle("-fx-background-color: #050810; -fx-background: #050810; -fx-border-color: transparent;");
 
@@ -248,8 +303,8 @@ public class CombatView {
     }
 
     private VBox buildEnemyCard(Entity enemy) {
-        VBox card = new VBox(6);
-        card.setPadding(new Insets(10, 12, 10, 12));
+        VBox card = new VBox(4);  // spacing 6→4
+        card.setPadding(new Insets(8, 12, 8, 12));  // 10→8 atas/bawah
         card.setCursor(javafx.scene.Cursor.HAND);
 
         boolean isCurrentActor = cm.getCurrentActor() != null
@@ -288,6 +343,47 @@ public class CombatView {
             nameRow.getChildren().add(nameLabel);
         }
 
+        // Target select mode: highlight style + konten tetap ditampilkan
+        if (targetSelectMode && enemy.isAlive()) {
+            card.setStyle(
+                "-fx-background-color: #FFD60011;" +
+                "-fx-border-color: #FFD600;" +
+                "-fx-border-width: 2;" +
+                "-fx-effect: dropshadow(gaussian, #FFD600, 12, 0.4, 0, 0);" +
+                "-fx-cursor: hand;"
+            );
+            card.setOnMouseClicked(e -> handleTargetSelect(enemy));
+            card.setOnMouseEntered(e -> card.setStyle(
+                "-fx-background-color: #FFD60022;" +
+                "-fx-border-color: #FFD600;" +
+                "-fx-border-width: 2;" +
+                "-fx-effect: dropshadow(gaussian, #FFD600, 18, 0.6, 0, 0);" +
+                "-fx-cursor: hand;"
+            ));
+            card.setOnMouseExited(e -> card.setStyle(
+                "-fx-background-color: #FFD60011;" +
+                "-fx-border-color: #FFD600;" +
+                "-fx-border-width: 2;" +
+                "-fx-effect: dropshadow(gaussian, #FFD600, 12, 0.4, 0, 0);" +
+                "-fx-cursor: hand;"
+            ));
+
+            // Tambah konten: nama + bars tetap tampil
+            VBox bars = UIFactory.compactVitalBars(
+                    enemy.getCurrentHp(),     enemy.getStats().get(StatType.MAX_HP),
+                    enemy.getCurrentShield(), enemy.getStats().get(StatType.MAX_SHIELD),
+                    enemy.getCurrentMp(),     enemy.getStats().get(StatType.MAX_MP));
+
+            // Label TARGET di atas nama
+            Label targetHint = new Label("▶ SELECT TARGET");
+            targetHint.setStyle(
+                "-fx-text-fill: #FFD600; -fx-font-family: 'Courier New';" +
+                "-fx-font-size: 9px; -fx-font-weight: bold;"
+            );
+            card.getChildren().addAll(targetHint, nameRow, bars);
+            return card;
+        }
+
         // Defeated overlay
         if (!enemy.isAlive()) {
             card.setOpacity(0.3);
@@ -313,8 +409,8 @@ public class CombatView {
     }
 
     private VBox buildAllyCard(Entity ally) {
-        VBox card = new VBox(6);
-        card.setPadding(new Insets(10, 12, 10, 12));
+        VBox card = new VBox(4);  // 6→4
+        card.setPadding(new Insets(8, 12, 8, 12));  // 10→8
         card.setPrefWidth(150);
         card.setMaxWidth(180);
 
@@ -395,23 +491,58 @@ public class CombatView {
 
         if (cm == null || !cm.isCombatActive()) return;
 
-        if (!cm.isWaitingForPlayer()) {
-            Label waiting = new Label("Processing turn...");
-            waiting.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
-            actionPanel.getChildren().add(waiting);
+        // Target select mode indicator
+        if (targetSelectMode) {
+            HBox hint = new HBox(8);
+            hint.setAlignment(Pos.CENTER);
+            Label hintLabel = new Label("▶ Click an enemy to target  ");
+            hintLabel.setStyle("-fx-text-fill: #FFD600; -fx-font-family: 'Courier New';" +
+                               "-fx-font-size: 12px; -fx-font-weight: bold;");
+            Button cancelTarget = new Button("✕ CANCEL");
+            cancelTarget.setStyle("-fx-background-color: transparent; -fx-border-color: #5A6A80;" +
+                                  "-fx-border-width: 1; -fx-text-fill: #5A6A80;" +
+                                  "-fx-font-family: 'Courier New'; -fx-font-size: 10px; -fx-cursor: hand;");
+            cancelTarget.setOnAction(e -> {
+                targetSelectMode = false;
+                pendingSkillId   = null;
+                refreshCombatants();
+                refreshActionPanel();
+            });
+            hint.getChildren().addAll(hintLabel, cancelTarget);
+            actionPanel.getChildren().add(hint);
             return;
         }
+
+        if (!cm.isWaitingForPlayer()) {
+            HBox processingRow = new HBox(8);
+            processingRow.setAlignment(Pos.CENTER);
+            Label waiting = new Label("⟳ Processing...");
+            waiting.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
+            processingRow.getChildren().add(waiting);
+
+            // Speed control tetap tampil saat AI turn
+            processingRow.getChildren().add(buildSpeedControl());
+            actionPanel.getChildren().add(processingRow);
+            return;
+        }
+
+        // Speed control di atas action buttons
+        HBox speedRow = new HBox();
+        speedRow.setAlignment(Pos.CENTER_RIGHT);
+        speedRow.getChildren().add(buildSpeedControl());
+        actionPanel.getChildren().add(speedRow);
 
         // Row 1: Attack + Skill + Item
         HBox row1 = new HBox(8);
         row1.setAlignment(Pos.CENTER);
 
+        // ATTACK — enter target select mode
         Button attackBtn = buildActionBtn("⚔ ATTACK", UIFactory.RED, () -> {
-            Entity target = getFirstAliveEnemy();
-            if (target != null) {
-                engine.submitCombatAction(CombatAction.basicAttack(
-                        java.util.List.of(target.getId())));
-            }
+            addLog("▶ Click an enemy to attack", UIFactory.YELLOW);
+            targetSelectMode = true;
+            pendingSkillId   = null;
+            refreshCombatants();
+            refreshActionPanel();
         });
 
         Button skillBtn = buildActionBtn("★ SKILL", UIFactory.CYAN, () -> showSkillMenu());
@@ -419,7 +550,7 @@ public class CombatView {
 
         row1.getChildren().addAll(attackBtn, skillBtn, itemBtn);
 
-        // Row 2: Defend + spacer + Flee
+        // Row 2: Defend + Flee
         HBox row2 = new HBox(8);
         row2.setAlignment(Pos.CENTER);
 
@@ -553,6 +684,10 @@ public class CombatView {
     // SKILL / ITEM MENUS
     // ════════════════════════════════════════════════════
 
+    // ════════════════════════════════════════════════════
+    // v0.3: SKILL SELECTION POPUP
+    // ════════════════════════════════════════════════════
+
     private void showSkillMenu() {
         Player player = engine.getPlayer();
         List<String> equipped = player.getEquippedSkillIds();
@@ -560,23 +695,94 @@ public class CombatView {
             addLog("No skills equipped!", UIFactory.ORANGE);
             return;
         }
-        // Simple: pakai skill pertama yang ready
+
+        // Hapus popup lama jika ada
+        actionPanel.getChildren().removeIf(n -> "skill-popup".equals(n.getId()));
+
+        VBox popup = new VBox(6);
+        popup.setId("skill-popup");
+        popup.setPadding(new Insets(12));
+        popup.setStyle(
+            "-fx-background-color: #0C1220EE;" +
+            "-fx-border-color: #00E5FF55;" +
+            "-fx-border-width: 1;" +
+            "-fx-effect: dropshadow(gaussian, #00E5FF, 12, 0.2, 0, 0);"
+        );
+
+        Label title = new Label("◈ SELECT SKILL");
+        title.setStyle("-fx-text-fill: #00E5FF; -fx-font-family: 'Courier New';" +
+                       "-fx-font-size: 12px; -fx-font-weight: bold;");
+        popup.getChildren().add(title);
+
         for (String skillId : equipped) {
-            if (player.getSkillCooldown(skillId) == 0) {
-                submitSkillAction(skillId);
-                return;
+            int cd = player.getSkillCooldown(skillId);
+            boolean ready = cd == 0;
+            SkillInfo info = getSkillInfo(skillId);
+
+            Button btn = new Button(
+                (ready ? "▶ " : "✕ ") + info.name() +
+                "   [MP:" + info.mpCost() + "]" +
+                (cd > 0 ? "  [CD:" + cd + "t]" : "  READY") +
+                (info.isAoe() ? "  [AoE]" : "")
+            );
+            btn.setMaxWidth(Double.MAX_VALUE);
+            btn.setDisable(!ready);
+
+            String c = ready ? "#00E5FF" : "#5A6A80";
+            btn.setStyle(
+                "-fx-background-color: " + (ready ? "#00E5FF11" : "transparent") + ";" +
+                "-fx-border-color: " + c + "55;" +
+                "-fx-border-width: 1 1 1 3;" +
+                "-fx-text-fill: " + c + ";" +
+                "-fx-font-family: 'Courier New'; -fx-font-size: 11px;" +
+                "-fx-padding: 8 10; -fx-cursor: " + (ready ? "hand" : "default") + ";"
+            );
+
+            // Tooltip deskripsi
+            Tooltip tip = new Tooltip(info.description());
+            tip.setStyle("-fx-background-color: #0C1220; -fx-text-fill: #8899AA;" +
+                         "-fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+            btn.setTooltip(tip);
+
+            if (ready) {
+                final String sid = skillId;
+                btn.setOnAction(e -> {
+                    actionPanel.getChildren().removeIf(n -> "skill-popup".equals(n.getId()));
+                    submitSkillAction(sid);
+                });
             }
+            popup.getChildren().add(btn);
         }
-        addLog("All skills on cooldown!", UIFactory.ORANGE);
+
+        Button cancel = new Button("✕  CANCEL");
+        cancel.setStyle("-fx-background-color: transparent; -fx-border-color: #5A6A8066;" +
+                        "-fx-border-width: 1; -fx-text-fill: #5A6A80;" +
+                        "-fx-font-family: 'Courier New'; -fx-font-size: 10px; -fx-cursor: hand;");
+        cancel.setOnAction(e -> actionPanel.getChildren()
+                .removeIf(n -> "skill-popup".equals(n.getId())));
+        popup.getChildren().add(cancel);
+
+        actionPanel.getChildren().add(0, popup);
     }
 
     private void submitSkillAction(String skillId) {
-        Entity target = getFirstAliveEnemy();
-        if (target != null) {
-            engine.submitCombatAction(CombatAction.useSkill(
-                    skillId, java.util.List.of(target.getId())));
+        SkillInfo info = getSkillInfo(skillId);
+        if (info.isAoe()) {
+            List<String> allEnemyIds = cm.getEnemies().stream()
+                    .filter(Entity::isAlive).map(Entity::getId).toList();
+            engine.submitCombatAction(CombatAction.useSkill(skillId, allEnemyIds));
+        } else {
+            // Enter target select mode
+            addLog("▶ Click an enemy to target", UIFactory.YELLOW);
+            pendingSkillId   = skillId;
+            targetSelectMode = true;
+            refreshCombatants(); // re-render enemy cards dengan highlight
         }
     }
+
+    // ════════════════════════════════════════════════════
+    // v0.3: ITEM MENU
+    // ════════════════════════════════════════════════════
 
     private void showItemMenu() {
         var consumables = engine.getInventory().getConsumables();
@@ -584,19 +790,89 @@ public class CombatView {
             addLog("No items available!", UIFactory.ORANGE);
             return;
         }
-        // Pakai consumable pertama
-        var first = consumables.get(0);
-        engine.getInventory().useConsumable(first.getId(), engine.getPlayer());
-        engine.submitCombatAction(CombatAction.useItem(first.getId(),
-                java.util.List.of(engine.getPlayer().getId())));
-        addLog("Used: " + first.getName(), UIFactory.GREEN);
+
+        actionPanel.getChildren().removeIf(n -> "item-popup".equals(n.getId()));
+
+        VBox popup = new VBox(6);
+        popup.setId("item-popup");
+        popup.setPadding(new Insets(12));
+        popup.setStyle("-fx-background-color: #0C1220EE; -fx-border-color: #00E67655;" +
+                       "-fx-border-width: 1;");
+
+        Label title = new Label("⊞ USE ITEM");
+        title.setStyle("-fx-text-fill: #00E676; -fx-font-family: 'Courier New';" +
+                       "-fx-font-size: 12px; -fx-font-weight: bold;");
+        popup.getChildren().add(title);
+
+        for (var cons : consumables) {
+            Button btn = new Button("▶  " + cons.getName() +
+                    " ×" + cons.getStackCount());
+            btn.setMaxWidth(Double.MAX_VALUE);
+            btn.setStyle("-fx-background-color: #00E67611; -fx-border-color: #00E67655;" +
+                         "-fx-border-width: 1 1 1 3; -fx-text-fill: #00E676;" +
+                         "-fx-font-family: 'Courier New'; -fx-font-size: 11px;" +
+                         "-fx-padding: 8 10; -fx-cursor: hand;");
+            btn.setOnAction(e -> {
+                boolean used = engine.getInventory().useConsumable(
+                        cons.getId(), engine.getPlayer());
+                if (used) addLog("Used: " + cons.getName(), UIFactory.GREEN);
+                actionPanel.getChildren().removeIf(n -> "item-popup".equals(n.getId()));
+                refreshCombatants();
+            });
+            popup.getChildren().add(btn);
+        }
+
+        Button cancel = new Button("✕  CANCEL");
+        cancel.setStyle("-fx-background-color: transparent; -fx-border-color: #5A6A8066;" +
+                        "-fx-border-width: 1; -fx-text-fill: #5A6A80;" +
+                        "-fx-font-family: 'Courier New'; -fx-font-size: 10px; -fx-cursor: hand;");
+        cancel.setOnAction(e -> actionPanel.getChildren()
+                .removeIf(n -> "item-popup".equals(n.getId())));
+        popup.getChildren().add(cancel);
+
+        actionPanel.getChildren().add(0, popup);
+    }
+
+    // ════════════════════════════════════════════════════
+    // v0.3: SKILL INFO DATABASE
+    // ════════════════════════════════════════════════════
+
+    private record SkillInfo(String name, String description, int mpCost, boolean isAoe) {}
+
+    private SkillInfo getSkillInfo(String skillId) {
+        return switch (skillId) {
+            case "POWER_STRIKE"  -> new SkillInfo("Power Strike",
+                    "Heavy blow: 1.8× ATK damage.", 15, false);
+            case "EXECUTE"       -> new SkillInfo("Execute",
+                    "Instant kill if HP < 25%. Else 1.5× damage.", 25, false);
+            case "DEEP_HACK"     -> new SkillInfo("Deep Hack",
+                    "Cyber + HACK debuff (-30% ATK) for 3 turns.", 20, false);
+            case "VIRUS_UPLOAD"  -> new SkillInfo("Virus Upload",
+                    "DOT: Cyber damage each turn for 4 turns.", 18, false);
+            case "PHANTOM_SHOT"  -> new SkillInfo("Phantom Shot",
+                    "High crit chance attack. Enters stealth.", 20, false);
+            case "SHADOW_STEP"   -> new SkillInfo("Shadow Step",
+                    "2× crit damage. Ignore all armor.", 22, false);
+            case "IRON_SHIELD"   -> new SkillInfo("Iron Shield",
+                    "BLOCK buff for 2 turns. Reduce damage greatly.", 18, false);
+            case "SHOCKWAVE"     -> new SkillInfo("Shockwave",
+                    "AoE physical hit to all enemies.", 24, true);
+            case "ENERGY_DRAIN"  -> new SkillInfo("Energy Drain",
+                    "Drain MP from target, restore own MP.", 10, false);
+            case "BIO_IRRADIATE" -> new SkillInfo("Bio Irradiate",
+                    "AoE Energy DOT + CORRODE debuff.", 28, true);
+            case "EMP_BURST"     -> new SkillInfo("EMP Burst",
+                    "AoE Cyber + STUN Android enemies 1 turn.", 30, true);
+            case "FIELD_BARRIER" -> new SkillInfo("Field Barrier",
+                    "Shield barrier on all allies.", 25, true);
+            default              -> new SkillInfo(skillId.replace("_", " "),
+                    "Special skill.", 15, false);
+        };
     }
 
     // ════════════════════════════════════════════════════
     // EVENT HANDLERS
     // ════════════════════════════════════════════════════
-
-    private boolean aiTurnPending = false; // guard agar Timeline tidak stack
 
     private void handleCombatEvent(CombatEvent event) {
         String color = switch (event.getType()) {
@@ -613,41 +889,40 @@ public class CombatView {
         };
         addLog(event.getMessage(), color);
         refreshCombatants();
+        refreshTurnOrderBar();
 
-        // ── Chat triggers ──────────────────────────────────────
+        // Chat triggers
         switch (event.getType()) {
             case ENTITY_DIED -> {
-                // Cek apakah yang mati enemy atau ally
-                if (event.getMessage() != null && !event.getMessage().contains(engine.getPlayer().getName())) {
+                if (event.getMessage() != null &&
+                    !event.getMessage().contains(engine.getPlayer().getName())) {
                     router.emitChat(MercenaryDialogue.Trigger.COMBAT_ENEMY_DIES);
                 }
             }
             case DAMAGE_DEALT -> {
-                // Cek apakah player HP rendah (< 30%)
                 double hpPct = engine.getPlayer().getCurrentHp() /
-                               engine.getPlayer().getStats().get(arclightcity.entity.stats.StatType.MAX_HP);
-                if (hpPct < 0.30 && Math.random() < 0.4) { // 40% chance agar tidak spam
+                               engine.getPlayer().getStats().get(StatType.MAX_HP);
+                if (hpPct < 0.30 && Math.random() < 0.4) {
                     router.emitChat(MercenaryDialogue.Trigger.COMBAT_PLAYER_LOW_HP);
                 }
             }
             default -> { }
         }
 
+        // AI turn dengan combatSpeedMs delay
+        int delay = Math.max(50, combatSpeedMs); // minimum 50ms
         if (cm.isCombatActive() && !cm.isWaitingForPlayer() && !aiTurnPending) {
             aiTurnPending = true;
-            Timeline delay = new Timeline(new KeyFrame(Duration.millis(500), e -> {
+            Timeline t = new Timeline(new KeyFrame(Duration.millis(delay), e -> {
                 aiTurnPending = false;
                 if (cm.isCombatActive() && !cm.isWaitingForPlayer()) {
-                    boolean ongoing = cm.processTurn();
+                    cm.processTurn();
                     refreshActionPanel();
-                    if (!ongoing && cm.isCombatActive()) {
-                        addLog("Combat concluded.", "#5A6A80");
-                    }
                 } else {
                     refreshActionPanel();
                 }
             }));
-            delay.play();
+            t.play();
         } else if (!aiTurnPending) {
             refreshActionPanel();
         }
@@ -672,9 +947,17 @@ public class CombatView {
 
     private void handleTargetSelect(Entity enemy) {
         if (!cm.isWaitingForPlayer() || !enemy.isAlive()) return;
-        // Simple: basic attack ke enemy yang diklik
-        engine.submitCombatAction(CombatAction.basicAttack(
-                java.util.List.of(enemy.getId())));
+
+        if (targetSelectMode && pendingSkillId != null) {
+            // Target select for skill
+            targetSelectMode = false;
+            String sid = pendingSkillId;
+            pendingSkillId = null;
+            engine.submitCombatAction(CombatAction.useSkill(sid, List.of(enemy.getId())));
+        } else {
+            // Normal attack
+            engine.submitCombatAction(CombatAction.basicAttack(List.of(enemy.getId())));
+        }
     }
 
     // ════════════════════════════════════════════════════
@@ -684,16 +967,16 @@ public class CombatView {
     public void startCombatLoop() {
         if (cm == null) return;
         addLog("⚔ Combat begins!", UIFactory.CYAN);
-        aiTurnPending = false;
+        aiTurnPending    = false;
+        targetSelectMode = false;
+        combatSpeedMs    = 1200; // default: comfortable reading speed
 
-        // Kick off first turn dengan sedikit delay agar UI ter-render dulu
         Timeline firstTurn = new Timeline(new KeyFrame(Duration.millis(300), e -> {
             boolean ongoing = cm.processTurn();
             refreshCombatants();
             refreshActionPanel();
-            if (!ongoing) {
-                addLog("Combat ended immediately.", "#5A6A80");
-            }
+            refreshTurnOrderBar();
+            if (!ongoing) addLog("Combat ended immediately.", "#5A6A80");
         }));
         firstTurn.play();
     }
@@ -701,6 +984,88 @@ public class CombatView {
     // ════════════════════════════════════════════════════
     // HELPERS
     // ════════════════════════════════════════════════════
+
+    // ════════════════════════════════════════════════════
+    // v0.3: TURN ORDER BAR + SPEED CONTROL
+    // ════════════════════════════════════════════════════
+
+    private void refreshTurnOrderBar() {
+        if (turnOrderBar == null || cm == null) return;
+        turnOrderBar.getChildren().clear();
+
+        Label lbl = new Label("NEXT ›");
+        lbl.setStyle("-fx-text-fill: #2A3A50; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+        turnOrderBar.getChildren().add(lbl);
+
+        List<Entity> upcoming = cm.getTurnQueue().getUpcomingTurns(6);
+        Entity current = cm.getCurrentActor();
+
+        for (int i = 0; i < upcoming.size(); i++) {
+            Entity e   = upcoming.get(i);
+            boolean isCur = current != null && e.getId().equals(current.getId()) && i == 0;
+            boolean isP   = e instanceof Player;
+            boolean isM   = e instanceof Mercenary;
+            String  clr   = isP ? UIFactory.CYAN : isM ? UIFactory.GREEN : UIFactory.RED;
+
+            VBox slot = new VBox(2);
+            slot.setAlignment(Pos.CENTER);
+            slot.setPadding(new Insets(2, 8, 2, 8));
+            slot.setStyle(isCur
+                ? "-fx-background-color: " + clr + "18; -fx-border-color: " + clr + "66; -fx-border-width: 1;"
+                : "-fx-background-color: transparent;");
+
+            String name = e.getName().length() > 7 ? e.getName().substring(0, 6) + "." : e.getName();
+            Label nameL = new Label(isCur ? "▶ " + name : name);
+            nameL.setStyle(
+                "-fx-text-fill: " + (isCur ? clr : clr + "77") + ";" +
+                "-fx-font-family: 'Courier New'; -fx-font-size: " + (isCur ? "10" : "9") + "px;" +
+                (isCur ? "-fx-font-weight: bold;" : "")
+            );
+
+            double hpPct = e.getCurrentHp() / e.getStats().get(StatType.MAX_HP);
+            ProgressBar hp = new ProgressBar(hpPct);
+            hp.setPrefWidth(48); hp.setPrefHeight(3);
+            hp.setStyle("-fx-accent: " + clr + "; -fx-background-color: " + clr + "22;" +
+                        "-fx-min-height: 3px; -fx-max-height: 3px;");
+
+            slot.getChildren().addAll(nameL, hp);
+            turnOrderBar.getChildren().add(slot);
+
+            if (i < upcoming.size() - 1) {
+                Label sep = new Label("›");
+                sep.setStyle("-fx-text-fill: #1C2E44; -fx-font-size: 9px;");
+                turnOrderBar.getChildren().add(sep);
+            }
+        }
+    }
+
+    private HBox buildSpeedControl() {
+        HBox bar = new HBox(4);
+        bar.setAlignment(Pos.CENTER_RIGHT);
+        HBox.setHgrow(bar, Priority.ALWAYS);
+
+        Label lbl = new Label("SPD:");
+        lbl.setStyle("-fx-text-fill: #2A3A50; -fx-font-family: 'Courier New'; -fx-font-size: 9px;");
+        bar.getChildren().add(lbl);
+
+        for (int[] spec : new int[][]{{1, 1200}, {2, 500}, {0, 50}}) {
+            int label = spec[0], ms = spec[1];
+            String text = ms == 50 ? "SKIP" : label + "×";
+            boolean active = combatSpeedMs == ms;
+
+            Button b = new Button(text);
+            b.setStyle(
+                "-fx-background-color: " + (active ? "#00E5FF22" : "transparent") + ";" +
+                "-fx-border-color: " + (active ? "#00E5FF" : "#1C2E44") + ";" +
+                "-fx-border-width: 1; -fx-text-fill: " + (active ? "#00E5FF" : "#5A6A80") + ";" +
+                "-fx-font-family: 'Courier New'; -fx-font-size: 9px; -fx-padding: 2 5; -fx-cursor: hand;"
+            );
+            final int speedMs = ms;
+            b.setOnAction(e -> { combatSpeedMs = speedMs; refreshActionPanel(); });
+            bar.getChildren().add(b);
+        }
+        return bar;
+    }
 
     private Entity getFirstAliveEnemy() {
         if (cm == null) return null;
