@@ -28,7 +28,7 @@ public class VoidSpecter extends Enemy {
     private boolean isPhasing     = false;
 
     public VoidSpecter() {
-        super("Void Specter",
+        super("Kuntilanak Abadi",
               "Sisa kesadaran digital yang terperangkap antara dunia nyata dan jaringan data. " +
               "Bentuknya berubah-ubah seperti sinyal yang terdistorsi.",
               EntityType.ELITE,

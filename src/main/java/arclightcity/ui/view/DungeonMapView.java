@@ -9,9 +9,11 @@ import javafx.animation.*;
 import javafx.geometry.*;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
+import javafx.scene.control.Alert;
 import javafx.scene.layout.*;
 import javafx.util.Duration;
 import arclightcity.ui.controller.SceneRouter;
+import arclightcity.ui.ArclightApp;
 import arclightcity.ui.view.MercenaryDialogue;
 import arclightcity.ui.util.UIFactory;
 
@@ -66,6 +68,7 @@ public class DungeonMapView {
                         router.showShop();
                     }
                     case GAME_OVER            -> router.showGameOver();
+                    case LEVEL_UP             -> showLevelUpNotification(event);
                     case READY_FOR_NEXT_FLOOR -> showDescentPrompt(event.intValue);
                     case LOOT_FOUND           -> {
                         showLootPopup(event);
@@ -81,6 +84,9 @@ public class DungeonMapView {
                         refreshNextRoomsPanel();
                     }
                     case ROOM_CLEARED, ROOM_ENTERED, FLOOR_ENTERED -> {
+                        if (event.type == DungeonStateEvent.Type.FLOOR_ENTERED) {
+                            router.emitChat(MercenaryDialogue.Trigger.DUNGEON_ENTER_FLOOR);
+                        }
                         refreshMapGrid();
                         refreshCurrentRoomInfo();
                         refreshNextRoomsPanel();
@@ -364,20 +370,113 @@ public class DungeonMapView {
 
     // ── Descent prompt ─────────────────────────────────────
 
-    private void showDescentPrompt(int nextFloor) {
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setTitle("FLOOR CLEARED");
-        alert.setHeaderText("Floor cleared! Ready to descend.");
-        alert.setContentText("Proceed to Floor " + nextFloor + "?\n\nHP partially restored.");
-        alert.getDialogPane().setStyle(
-            "-fx-background-color: #0C1220;" +
-            "-fx-border-color: #00E5FF;" +
-            "-fx-border-width: 1;" +
-            "-fx-font-family: 'Courier New';"
+    private void showLevelUpNotification(DungeonStateEvent event) {
+        int newLevel   = event.intValue;
+        int skillPts   = engine.getPlayer().getSkillPoints();
+
+        // Chat notification
+        router.addSystemChat("⬆ LEVEL UP → LV." + newLevel);
+
+        // Alert dialog
+        javafx.scene.control.Alert alert = UIFactory.showInfoAlert(
+            "⬆ LEVEL UP!",
+            "You reached Level " + newLevel + "!\n\n" +
+            "Skill Points available: " + skillPts + "\n" +
+            "Visit your Profile to unlock new skills."
         );
-        alert.showAndWait().ifPresent(result -> {
-            if (result == ButtonType.OK) engine.descend();
-        });
+
+        // Glow effect saat level up
+        UIFactory.fadeIn((javafx.scene.layout.Region)
+            javafx.stage.Stage.getWindows().stream()
+                .filter(w -> w.isShowing()).findFirst()
+                .map(w -> ((javafx.stage.Stage)w).getScene().getRoot())
+                .orElse(null), 300);
+    }
+
+    private void showDescentPrompt(int nextFloor) {
+        // Floor transition animation — overlay cyberpunk style
+        // Tampilkan overlay, tunggu user konfirmasi, lalu animate descent
+        javafx.scene.control.Alert alert = UIFactory.showInfoAlert(
+            "▼ DESCEND TO FLOOR " + nextFloor,
+            "Floor cleared. Ready to descend.\n\n" +
+            "[ Floor " + (nextFloor - 1) + " → Floor " + nextFloor + " ]\n\n" +
+            "HP partially restored on arrival."
+        );
+
+        // Setelah alert ditutup, jalankan transition animation
+        playFloorTransition(nextFloor, () -> engine.descend());
+    }
+
+    /**
+     * Floor transition animation:
+     * 1. Fade out screen ke hitam (400ms)
+     * 2. Tampilkan teks "DESCENDING TO FLOOR X" (600ms)
+     * 3. Fade in screen baru (400ms)
+     */
+    private void playFloorTransition(int nextFloor,  Runnable onDescend) {
+        // Ambil root scene pane
+        javafx.scene.Parent sceneRoot = router.getStage().getScene().getRoot();
+        if (!(sceneRoot instanceof javafx.scene.layout.Pane rootPane)) {
+            onDescend.run();
+            return;
+        }
+
+        // Overlay gelap
+        javafx.scene.layout.StackPane overlay = new javafx.scene.layout.StackPane();
+        overlay.setStyle("-fx-background-color: #000000;");
+        overlay.setOpacity(0);
+        overlay.setPrefSize(ArclightApp.SCREEN_WIDTH, ArclightApp.SCREEN_HEIGHT);
+
+        // Teks transisi
+        javafx.scene.layout.VBox textBox = new javafx.scene.layout.VBox(12);
+        textBox.setAlignment(javafx.geometry.Pos.CENTER);
+
+        javafx.scene.control.Label descLabel = new javafx.scene.control.Label(
+            "▼ DESCENDING");
+        descLabel.setStyle("-fx-text-fill: #00E5FF; -fx-font-family: 'Courier New';" +
+                           "-fx-font-size: 24px; -fx-font-weight: bold;");
+
+        javafx.scene.control.Label floorLabel = new javafx.scene.control.Label(
+            "FLOOR " + nextFloor);
+        floorLabel.setStyle("-fx-text-fill: #FFD600; -fx-font-family: 'Courier New';" +
+                            "-fx-font-size: 36px; -fx-font-weight: bold;" +
+                            "-fx-effect: dropshadow(gaussian, #FFD600, 20, 0.5, 0, 0);");
+
+        javafx.scene.control.Label scanLabel = new javafx.scene.control.Label(
+            "[ SCANNING SECTOR... ]");
+        scanLabel.setStyle("-fx-text-fill: #2A3A50; -fx-font-family: 'Courier New';" +
+                           "-fx-font-size: 12px;");
+
+        textBox.getChildren().addAll(descLabel, floorLabel, scanLabel);
+        overlay.getChildren().add(textBox);
+
+        rootPane.getChildren().add(overlay);
+
+        // Timeline: fade in overlay → descend → fade out
+        Timeline timeline = new Timeline(
+            // 0ms: mulai fade in
+            new KeyFrame(Duration.ZERO,
+                new KeyValue(overlay.opacityProperty(), 0)),
+            // 400ms: fully black
+            new KeyFrame(Duration.millis(400),
+                new KeyValue(overlay.opacityProperty(), 1.0)),
+            // 600ms: jalankan descend (screen sudah hitam)
+            new KeyFrame(Duration.millis(600), e -> {
+                onDescend.run();
+                // Update floor label
+                floorLabel.setText("FLOOR " + engine.getDungeonManager().getCurrentFloorNumber());
+                scanLabel.setText("[ SECTOR LOADED ]");
+                scanLabel.setStyle(scanLabel.getStyle().replace("#2A3A50", "#00E676"));
+            }),
+            // 1200ms: mulai fade out
+            new KeyFrame(Duration.millis(1200),
+                new KeyValue(overlay.opacityProperty(), 1.0)),
+            // 1600ms: fully visible again
+            new KeyFrame(Duration.millis(1600),
+                new KeyValue(overlay.opacityProperty(), 0))
+        );
+        timeline.setOnFinished(e -> rootPane.getChildren().remove(overlay));
+        timeline.play();
     }
 
     private void refreshCurrentRoomInfo() {

@@ -18,7 +18,7 @@ import java.util.*;
  *
  * Layout:
  *   ┌─────────────────────────┐
- *   │ ◈ CREW COMMS            │  ← header
+ *   │ ◈ BISIK KAWULA            │  ← header
  *   ├─────────────────────────┤
  *   │ [chat scroll area]      │
  *   │ > KiraVoss:             │
@@ -39,13 +39,13 @@ public class MercChatPanel extends VBox {
 
     // Warna per merc untuk avatar dot
     private static final Map<MercenaryType, String> MERC_COLORS = Map.of(
-        MercenaryType.KIRA_VOSS,     "#AA00FF",   // purple — sniper
-        MercenaryType.TANK_RX9,      "#00E5FF",   // cyan — android
-        MercenaryType.SERA_MEND,     "#00E676",   // green — medic
-        MercenaryType.VECTOR,        "#FF1744",   // red — assassin
-        MercenaryType.MAGNUS_FORGE,  "#FF6B00",   // orange — gunner
-        MercenaryType.ECHO_NULL,     "#FFD600",   // yellow — jammer
-        MercenaryType.LYRA_BLOOM,    "#FF69B4"    // pink — shaman
+        MercenaryType.KIRA_VOSS,     "#C8860A",   // gold — Srikandi
+        MercenaryType.TANK_RX9,      "#8855CC",   // ungu — Gatot Kaca
+        MercenaryType.SERA_MEND,     "#44AA44",   // hijau — Nyai Roro
+        MercenaryType.VECTOR,        "#CC2200",   // merah — Rangga
+        MercenaryType.MAGNUS_FORGE,  "#AA5500",   // coklat — Bima
+        MercenaryType.ECHO_NULL,     "#2255AA",   // biru tua — Ki Ageng
+        MercenaryType.LYRA_BLOOM,    "#FFB830"    // gold terang — Dewi Sri
     );
 
     private final VBox        messageContainer;
@@ -81,7 +81,7 @@ public class MercChatPanel extends VBox {
         pulse.setCycleCount(Timeline.INDEFINITE);
         pulse.play();
 
-        Label headerLabel = new Label("CREW COMMS");
+        Label headerLabel = new Label("BISIK KAWULA");
         headerLabel.setStyle(
             "-fx-text-fill: #5A6A80;" +
             "-fx-font-family: 'Courier New';" +
@@ -118,8 +118,8 @@ public class MercChatPanel extends VBox {
         getChildren().add(scrollPane);
 
         // Welcome message
-        addSystemMessage("CREW COMMS ONLINE");
-        addSystemMessage("Waiting for crew to speak...");
+        addSystemMessage("BISIK KAWULA ONLINE");
+        addSystemMessage("Menunggu kawula berbicara...");
     }
 
     // ── Public API ────────────────────────────────────────────
@@ -191,7 +191,7 @@ public class MercChatPanel extends VBox {
     public void clear() {
         Platform.runLater(() -> {
             messageContainer.getChildren().clear();
-            addSystemMessage("CREW COMMS ONLINE");
+            addSystemMessage("BISIK KAWULA ONLINE");
         });
     }
 

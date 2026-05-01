@@ -4,6 +4,8 @@ import arclightcity.combat.CombatResult;
 import arclightcity.dungeon.DungeonEvent;
 import arclightcity.engine.GameEngine;
 import arclightcity.entity.mercenary.Mercenary;
+import arclightcity.entity.mercenary.MercenaryType;
+import arclightcity.entity.EntityFactory;
 import arclightcity.entity.stats.StatType;
 import arclightcity.item.*;
 import arclightcity.item.Equipment;
@@ -394,6 +396,7 @@ public static class MercenaryViewImpl {
 
     private final GameEngine  engine;
     private final SceneRouter router;
+    private String activeTab = "ROSTER";
 
     MercenaryViewImpl(GameEngine engine, SceneRouter router) {
         this.engine = engine;
@@ -401,82 +404,91 @@ public static class MercenaryViewImpl {
     }
 
     Parent build() {
-        VBox root = UIFactory.screenRoot();
-        root.getChildren().add(UIFactory.headerWithResources(
-                "MERCENARY", () -> router.showHub(), engine.getPlayer().getGold(), 0));
+        BorderPane root = UIFactory.screenRootBorder();
 
-        // Active party info
-        HBox partyBar = new HBox(8);
-        partyBar.setPadding(new Insets(8, 16, 8, 16));
-        partyBar.setStyle("-fx-background-color: #0C1220; -fx-border-color: #1C2E44; -fx-border-width: 0 0 1 0;");
-        Label partyLabel = new Label("ACTIVE CREW: " + engine.getActiveMercs().size() + " / 2");
-        partyLabel.setStyle("-fx-text-fill: #00E5FF; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
-        partyBar.getChildren().add(partyLabel);
-        root.getChildren().add(partyBar);
+        VBox top = new VBox(0);
+        top.getChildren().add(UIFactory.headerWithResources(
+                "MERCENARY", () -> router.showHub(),
+                engine.getPlayer().getGold(), 0));
 
-        // Owned mercs list
-        Label listTitle = UIFactory.sectionTitle("MERCENARY ROSTER");
-        listTitle.setPadding(new Insets(10, 16, 4, 16));
-        root.getChildren().add(listTitle);
-
-        ScrollPane scroll = new ScrollPane();
-        scroll.setFitToWidth(true);
-        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scroll.setStyle("-fx-background-color: #050810; -fx-background: #050810; -fx-border-color: transparent;");
-        VBox.setVgrow(scroll, Priority.ALWAYS);
-
-        VBox mercList = new VBox(8);
-        mercList.setPadding(new Insets(8, 16, 8, 16));
-
-        var owned = engine.getOwnedMercs();
-        if (owned.isEmpty()) {
-            Label none = new Label("No mercenaries hired.");
-            none.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-padding: 20;");
-            mercList.getChildren().add(none);
-        } else {
-            for (Mercenary merc : owned) {
-                mercList.getChildren().add(buildMercCard(merc));
-            }
+        HBox tabBar = new HBox(0);
+        tabBar.setStyle("-fx-background-color: #0C1220;" +
+                        "-fx-border-color: #1C2E44; -fx-border-width: 0 0 1 0;");
+        for (String tab : new String[]{"ROSTER", "HIRE"}) {
+            Button btn = new Button(tab);
+            boolean active = tab.equals(activeTab);
+            btn.setStyle(
+                "-fx-background-color: " + (active ? "#00E5FF11" : "transparent") + ";" +
+                "-fx-text-fill: " + (active ? UIFactory.CYAN : UIFactory.DIM) + ";" +
+                "-fx-font-family: 'Courier New'; -fx-font-size: 11px; -fx-font-weight: bold;" +
+                "-fx-padding: 10 24;" +
+                "-fx-border-color: transparent transparent " +
+                    (active ? "#00E5FF" : "transparent") + " transparent;" +
+                "-fx-border-width: 0 0 2 0; -fx-cursor: hand;"
+            );
+            final String t = tab;
+            btn.setOnAction(e -> { activeTab = t; root.setCenter(buildCenter()); });
+            tabBar.getChildren().add(btn);
         }
-
-        scroll.setContent(mercList);
-        root.getChildren().add(scroll);
-
+        Label crewBadge = new Label("  CREW: " + engine.getActiveMercs().size() + "/2  ");
+        crewBadge.setStyle("-fx-background-color: #00E5FF11; -fx-text-fill: #00E5FF;" +
+                           "-fx-font-family: 'Courier New'; -fx-font-size: 10px;" +
+                           "-fx-padding: 2 8; -fx-border-color: #00E5FF44; -fx-border-width: 1;");
+        HBox.setMargin(crewBadge, new Insets(8, 8, 8, 8));
+        tabBar.getChildren().add(crewBadge);
+        top.getChildren().add(tabBar);
+        root.setTop(top);
+        root.setCenter(buildCenter());
         UIFactory.fadeIn(root, 300);
         return root;
     }
 
+    private ScrollPane buildCenter() {
+        VBox content = activeTab.equals("HIRE") ? buildHireTab() : buildRosterTab();
+        ScrollPane scroll = new ScrollPane(content);
+        scroll.setFitToWidth(true);
+        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scroll.setStyle("-fx-background-color: #050810; -fx-background: #050810;" +
+                        "-fx-border-color: transparent;");
+        return scroll;
+    }
+
+    private VBox buildRosterTab() {
+        VBox list = new VBox(8);
+        list.setPadding(new Insets(10, 16, 10, 16));
+        var owned = engine.getOwnedMercs();
+        if (owned.isEmpty()) {
+            Label none = new Label("No mercenaries hired yet.\nVisit HIRE tab to recruit crew.");
+            none.setWrapText(true);
+            none.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New';" +
+                          "-fx-font-size: 11px; -fx-padding: 20;");
+            list.getChildren().add(none);
+        } else {
+            for (Mercenary merc : owned) list.getChildren().add(buildMercCard(merc));
+        }
+        return list;
+    }
+
     private VBox buildMercCard(Mercenary merc) {
         boolean isActive = engine.getActiveMercs().contains(merc);
-
-        VBox card = new VBox(8);
+        VBox card = new VBox(6);
         card.setPadding(new Insets(12));
-        card.setStyle(
-            "-fx-background-color: " + (isActive ? "#0C1A0C" : "#0C1220") + ";" +
-            "-fx-border-color: " + (isActive ? UIFactory.GREEN : "#1C2E44") + ";" +
-            "-fx-border-width: 1 1 1 3;"
-        );
-
-        // Header row
+        card.setStyle("-fx-background-color: " + (isActive ? "#0A180A" : "#0C1220") + ";" +
+                      "-fx-border-color: " + (isActive ? UIFactory.GREEN : "#1C2E44") + ";" +
+                      "-fx-border-width: 1 1 1 3;");
         HBox header = new HBox(10);
         header.setAlignment(Pos.CENTER_LEFT);
-
         Label nameLabel = new Label(merc.getMercenaryType().displayName.toUpperCase());
-        nameLabel.setStyle("-fx-text-fill: " + (isActive ? UIFactory.GREEN : UIFactory.TEXT) + "; -fx-font-family: 'Courier New'; -fx-font-size: 13px; -fx-font-weight: bold;");
-
-        Label roleLabel = new Label("[" + merc.getRole().name() + "]");
-        roleLabel.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 12px;");
-
-        Label loyaltyLabel = new Label("♥ " + merc.getLoyaltyTitle());
-        loyaltyLabel.setStyle("-fx-text-fill: #FF6B6B; -fx-font-family: 'Courier New'; -fx-font-size: 12px;");
+        nameLabel.setStyle("-fx-text-fill: " + (isActive ? UIFactory.GREEN : UIFactory.TEXT) +
+                           "; -fx-font-family: 'Courier New'; -fx-font-size: 13px; -fx-font-weight: bold;");
         HBox.setHgrow(nameLabel, Priority.ALWAYS);
+        Label roleLabel = new Label("[" + merc.getRole().name() + "]");
+        roleLabel.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+        Label loyaltyLabel = new Label("♥ " + merc.getLoyaltyTitle());
+        loyaltyLabel.setStyle("-fx-text-fill: #FF6B6B; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
         header.getChildren().addAll(nameLabel, roleLabel, loyaltyLabel);
-
-        // Subtitle
-        Label subtitle = new Label(merc.getMercenaryType().subtitle + " — Loyalty Lv." + merc.getLoyaltyLevel());
-        subtitle.setStyle("-fx-text-fill: #8899AA; -fx-font-family: 'Courier New'; -fx-font-size: 12px;");
-
-        // Key stats
+        Label subtitle = new Label(merc.getMercenaryType().subtitle);
+        subtitle.setStyle("-fx-text-fill: #8899AA; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
         HBox statsRow = new HBox(16);
         statsRow.getChildren().addAll(
             miniStat("HP",  String.valueOf((int)merc.getStats().get(StatType.MAX_HP))),
@@ -484,26 +496,99 @@ public static class MercenaryViewImpl {
             miniStat("SPD", String.valueOf((int)merc.getStats().get(StatType.SPEED))),
             miniStat("ATK", String.valueOf((int)Math.max(
                 merc.getStats().get(StatType.PHYSICAL_ATK),
-                Math.max(merc.getStats().get(StatType.CYBER_ATK), merc.getStats().get(StatType.ENERGY_ATK)))))
+                Math.max(merc.getStats().get(StatType.CYBER_ATK),
+                         merc.getStats().get(StatType.ENERGY_ATK)))))
         );
-
-        // Vitals
         VBox vitals = UIFactory.compactVitalBars(
                 merc.getCurrentHp(),     merc.getStats().get(StatType.MAX_HP),
                 merc.getCurrentShield(), merc.getStats().get(StatType.MAX_SHIELD),
                 merc.getCurrentMp(),     merc.getStats().get(StatType.MAX_MP));
-
-        // Toggle active button
-        Button toggleBtn = isActive
-                ? UIFactory.btnDanger("REMOVE FROM CREW")
-                : UIFactory.btnPrimary("ADD TO CREW");
+        Button toggleBtn = isActive ? UIFactory.btnDanger("REMOVE FROM CREW")
+                                    : UIFactory.btnPrimary("ADD TO CREW");
+        toggleBtn.setMaxWidth(Double.MAX_VALUE);
         toggleBtn.setOnAction(e -> {
             if (isActive) engine.removeFromActiveParty(merc.getMercenaryType());
-            else          engine.addToActiveParty(merc.getMercenaryType());
-            router.showMercenary(); // refresh
+            else if (!engine.addToActiveParty(merc.getMercenaryType()))
+                router.addSystemChat("Crew is full! Remove one first.");
+            router.showMercenary();
         });
-
         card.getChildren().addAll(header, subtitle, statsRow, vitals, toggleBtn);
+        return card;
+    }
+
+    private VBox buildHireTab() {
+        VBox list = new VBox(8);
+        list.setPadding(new Insets(10, 16, 10, 16));
+        Label gold = new Label("Your Gold: ⚙ " + engine.getPlayer().getGold());
+        gold.setStyle("-fx-text-fill: #FFD600; -fx-font-family: 'Courier New';" +
+                      "-fx-font-size: 12px; -fx-font-weight: bold; -fx-padding: 0 0 8 0;");
+        list.getChildren().add(gold);
+        for (MercenaryType type : MercenaryType.values()) {
+            boolean alreadyOwned = engine.getOwnedMercs().stream()
+                    .anyMatch(m -> m.getMercenaryType() == type);
+            list.getChildren().add(buildHireCard(type, alreadyOwned));
+        }
+        return list;
+    }
+
+    private VBox buildHireCard(MercenaryType type, boolean owned) {
+        Mercenary sample = EntityFactory.createMercenary(type);
+        long cost = sample.getHireCost();
+        boolean canAfford = engine.getPlayer().getGold() >= cost;
+        VBox card = new VBox(6);
+        card.setPadding(new Insets(12));
+        card.setStyle("-fx-background-color: #0C1220; -fx-border-color: " +
+                      (owned ? UIFactory.GREEN : canAfford ? "#1C2E4488" : "#1C2E4444") +
+                      "; -fx-border-width: 1 1 1 3;");
+        HBox header = new HBox(10);
+        header.setAlignment(Pos.CENTER_LEFT);
+        Label nameLabel = new Label(type.displayName.toUpperCase());
+        nameLabel.setStyle("-fx-text-fill: " + (owned ? UIFactory.GREEN : UIFactory.TEXT) +
+                           "; -fx-font-family: 'Courier New'; -fx-font-size: 13px; -fx-font-weight: bold;");
+        HBox.setHgrow(nameLabel, Priority.ALWAYS);
+        Label roleLabel = new Label(type.subtitle);
+        roleLabel.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+        header.getChildren().addAll(nameLabel, roleLabel);
+        HBox statsRow = new HBox(16);
+        statsRow.getChildren().addAll(
+            miniStat("HP",  String.valueOf((int)sample.getStats().get(StatType.MAX_HP))),
+            miniStat("SHD", String.valueOf((int)sample.getStats().get(StatType.MAX_SHIELD))),
+            miniStat("SPD", String.valueOf((int)sample.getStats().get(StatType.SPEED))),
+            miniStat("ATK", String.valueOf((int)Math.max(
+                sample.getStats().get(StatType.PHYSICAL_ATK),
+                Math.max(sample.getStats().get(StatType.CYBER_ATK),
+                         sample.getStats().get(StatType.ENERGY_ATK)))))
+        );
+        HBox bottomRow = new HBox(10);
+        bottomRow.setAlignment(Pos.CENTER_LEFT);
+        if (owned) {
+            Label ob = new Label("✓ ALREADY IN ROSTER");
+            ob.setStyle("-fx-text-fill: " + UIFactory.GREEN +
+                        "; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
+            bottomRow.getChildren().add(ob);
+        } else {
+            Label priceLabel = new Label("⚙ " + cost + " gold");
+            priceLabel.setStyle("-fx-text-fill: " + (canAfford ? "#FFD600" : "#5A6A80") +
+                                "; -fx-font-family: 'Courier New'; -fx-font-size: 12px; -fx-font-weight: bold;");
+            HBox.setHgrow(priceLabel, Priority.ALWAYS);
+            Button hireBtn = new Button("HIRE");
+            hireBtn.setDisable(!canAfford);
+            hireBtn.setStyle("-fx-background-color: " + (canAfford ? "#FFD60022" : "transparent") + ";" +
+                             "-fx-border-color: " + (canAfford ? "#FFD600" : "#1C2E44") + ";" +
+                             "-fx-border-width: 1; -fx-text-fill: " + (canAfford ? "#FFD600" : "#5A6A80") + ";" +
+                             "-fx-font-family: 'Courier New'; -fx-font-size: 11px;" +
+                             "-fx-padding: 6 16; -fx-cursor: " + (canAfford ? "hand" : "default") + ";");
+            hireBtn.setOnAction(e -> {
+                if (engine.hireMercenary(type)) {
+                    router.addSystemChat(type.displayName + " joined the crew!");
+                    router.showMercenary();
+                } else {
+                    router.addSystemChat("Not enough gold!");
+                }
+            });
+            bottomRow.getChildren().addAll(priceLabel, hireBtn);
+        }
+        card.getChildren().addAll(header, statsRow, bottomRow);
         return card;
     }
 
@@ -511,9 +596,10 @@ public static class MercenaryViewImpl {
         VBox box = new VBox(0);
         box.setAlignment(Pos.CENTER);
         Label n = new Label(name);
-        n.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
+        n.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
         Label v = new Label(value);
-        v.setStyle("-fx-text-fill: #00E5FF; -fx-font-family: 'Courier New'; -fx-font-size: 11px; -fx-font-weight: bold;");
+        v.setStyle("-fx-text-fill: #00E5FF; -fx-font-family: 'Courier New';" +
+                   "-fx-font-size: 11px; -fx-font-weight: bold;");
         box.getChildren().addAll(n, v);
         return box;
     }
@@ -691,13 +777,14 @@ public static class ShopViewImpl {
     }
 
     private HBox buildShopRow(arclightcity.item.Item item) {
-        // Harga berdasarkan rarity
+        // Harga deterministik berdasarkan item ID hash — tidak berubah tiap render
+        int seed = Math.abs(item.getId().hashCode());
         int price = switch (item.getRarity()) {
-            case COMMON    -> 30  + (int)(Math.random() * 20);
-            case UNCOMMON  -> 80  + (int)(Math.random() * 40);
-            case RARE      -> 200 + (int)(Math.random() * 100);
-            case EPIC      -> 500 + (int)(Math.random() * 200);
-            case LEGENDARY -> 1200+ (int)(Math.random() * 300);
+            case COMMON    -> 30   + (seed % 20);
+            case UNCOMMON  -> 80   + (seed % 40);
+            case RARE      -> 200  + (seed % 100);
+            case EPIC      -> 500  + (seed % 200);
+            case LEGENDARY -> 1200 + (seed % 300);
         };
 
         HBox row = new HBox(10);
@@ -891,7 +978,10 @@ public static class GameOverViewImpl {
 
         Button retry = UIFactory.btnDanger("↺ TRY AGAIN");
         retry.setOnAction(e -> {
+            // Reset penuh: buat karakter baru (createCharacter sudah clear inventory & mercs)
             engine.createCharacter(player.getName(), player.getBackground());
+            // Hapus auto-save agar tidak bisa load state yang sudah kalah
+            arclightcity.save.SaveManager.deleteAllSaves();
             router.showHub();
         });
 

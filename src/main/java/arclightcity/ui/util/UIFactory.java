@@ -22,17 +22,18 @@ import javafx.util.Duration;
 public class UIFactory {
 
     // ── Color Constants ───────────────────────────────────
-    public static final String CYAN    = "#00E5FF";
-    public static final String YELLOW  = "#FFD600";
-    public static final String RED     = "#FF1744";
-    public static final String PURPLE  = "#AA00FF";
-    public static final String GREEN   = "#00E676";
-    public static final String ORANGE  = "#FF6B00";
-    public static final String DIM     = "#5A6A80";
-    public static final String TEXT    = "#E0E8F0";
-    public static final String BG_DEEP = "#050810";
-    public static final String BG_PANEL= "#0C1220";
-    public static final String BORDER  = "#1C2E44";
+    // ── Color Constants — Nusantara Theme ────────────────────
+    public static final String CYAN    = "#C8860A";   // gold utama
+    public static final String YELLOW  = "#FFB830";   // gold terang
+    public static final String RED     = "#CC2200";   // merah bata
+    public static final String PURPLE  = "#8855CC";   // ungu mistis
+    public static final String GREEN   = "#44AA44";   // hijau tua
+    public static final String ORANGE  = "#AA5500";   // coklat oranye
+    public static final String DIM     = "#7A6650";   // teks redup
+    public static final String TEXT    = "#EDE0C8";   // teks kertas tua
+    public static final String BG_DEEP = "#0A0604";   // latar hitam hangat
+    public static final String BG_PANEL= "#150E08";   // panel gelap
+    public static final String BORDER  = "#3A2810";   // border kayu
 
     // ══════════════════════════════════════════════════════
     // SCREEN WRAPPER
@@ -331,11 +332,20 @@ public class UIFactory {
             "-fx-label-padding: 0;"
         );
 
-        Tooltip tip = new Tooltip(effect.getType().description +
-                "\nTurns: " + effect.getRemainingTurns() +
-                (effect.getStackCount() > 1 ? " | Stack: " + effect.getStackCount() : ""));
-        tip.setStyle("-fx-background-color: " + BG_PANEL + "; -fx-text-fill: " + TEXT + "; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
-        Tooltip.install(badge, tip);
+        // Tooltip: nama, deskripsi, sisa durasi
+        javafx.scene.control.Tooltip tip = new javafx.scene.control.Tooltip(
+            effect.getType().displayName + "\n" +
+            effect.getType().description + "\n" +
+            "Turns: " + effect.getRemainingTurns() +
+            (effect.getStackCount() > 1 ? " | Stack: " + effect.getStackCount() : "")
+        );
+        tip.setStyle(
+            "-fx-background-color: " + BG_PANEL + ";" +
+            "-fx-text-fill: " + TEXT + ";" +
+            "-fx-font-family: 'Courier New'; -fx-font-size: 11px;" +
+            "-fx-border-color: " + color + "55; -fx-border-width: 1;"
+        );
+        javafx.scene.control.Tooltip.install(badge, tip);
 
         return badge;
     }
@@ -455,8 +465,34 @@ public class UIFactory {
     }
 
     private static String adjustOpacity(String hex, double opacity) {
-        // Tambah opacity sebagai alpha hex (approx)
         int alpha = (int)(opacity * 255);
         return hex + String.format("%02X", alpha);
+    }
+
+    // ── Alert helper ──────────────────────────────────────────
+
+    /**
+     * Tampilkan info alert dengan style cyberpunk dark.
+     * Return Alert setelah showAndWait() dipanggil.
+     */
+    public static javafx.scene.control.Alert showInfoAlert(String title, String content) {
+        javafx.scene.control.Alert alert =
+            new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.INFORMATION);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(content);
+        alert.getDialogPane().setStyle(
+            "-fx-background-color: #0C1220;" +
+            "-fx-border-color: #00E5FF55;" +
+            "-fx-border-width: 1;" +
+            "-fx-font-family: 'Courier New';"
+        );
+        javafx.scene.Node contentLabel =
+            alert.getDialogPane().lookup(".content.label");
+        if (contentLabel instanceof javafx.scene.control.Label lbl) {
+            lbl.setStyle("-fx-text-fill: #8899AA; -fx-font-family: 'Courier New';");
+        }
+        alert.showAndWait();
+        return alert;
     }
 }

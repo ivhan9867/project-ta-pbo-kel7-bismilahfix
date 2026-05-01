@@ -24,7 +24,7 @@ public class GlitchDrone extends Enemy {
     private boolean hasSelfDestructed = false;
 
     public GlitchDrone() {
-        super("Glitch Drone",
+        super("Genderuwo Mekanik",
               "Drone surveillance MegaCorp yang sistemnya korup. " +
               "Matanya berkedip merah dan bergerak tidak menentu seperti glitch.",
               EntityType.ENEMY,

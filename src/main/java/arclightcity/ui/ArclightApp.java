@@ -32,7 +32,7 @@ public class ArclightApp extends Application {
         router       = new SceneRouter(stage, engine);
 
         // Setup stage
-        stage.setTitle("ARCLIGHT CITY");
+        stage.setTitle("MYTHIC ITEM OBTAINED");
         stage.setWidth(SCREEN_WIDTH);
         stage.setHeight(SCREEN_HEIGHT);
         stage.setResizable(false);

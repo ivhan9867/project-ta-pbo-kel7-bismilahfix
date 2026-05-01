@@ -178,4 +178,21 @@ public abstract class Mercenary extends Entity {
             default   -> "Unknown";
         };
     }
+
+    // ── Save/Load helpers ─────────────────────────────────────
+
+    /** Set loyalty langsung tanpa trigger level up (untuk restore dari save) */
+    public void setLoyaltyDirect(int level) {
+        this.loyaltyLevel = Math.max(0, Math.min(10, level));
+    }
+
+    /** Restore vitals dari save — set HP/MP/Shield langsung */
+    public void restoreVitals(double hp, double mp, double shield) {
+        double maxHp     = getStats().get(arclightcity.entity.stats.StatType.MAX_HP);
+        double maxMp     = getStats().get(arclightcity.entity.stats.StatType.MAX_MP);
+        double maxShield = getStats().get(arclightcity.entity.stats.StatType.MAX_SHIELD);
+        this.currentHp     = Math.min(hp,     maxHp);
+        this.currentMp     = Math.min(mp,     maxMp);
+        this.currentShield = Math.min(shield, maxShield);
+    }
 }

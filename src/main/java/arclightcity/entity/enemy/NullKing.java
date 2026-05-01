@@ -32,7 +32,7 @@ public class NullKing extends Boss {
     private int     cloneCount       = 0; // Phase 2: spawn phantom clone
 
     public NullKing() {
-        super("Null King",
+        super("Batara Kala",
               "Suaranya terdengar dari mana-mana dan tidak dari mana-mana. " +
               "'Kalian semua hanyalah data dalam sistemku.'",
               EnemyRace.ANDROID,

@@ -524,30 +524,54 @@ public class DungeonGridMap extends StackPane {
     private void drawHoverTooltip(Room room, int idx) {
         if (!isAdjacent(idx)) return;
 
-        // Tooltip di bawah canvas
-        String text = roomName(room.getType()) +
-                (room.isCleared() ? " (Cleared)" : "");
-        Color clr = roomColor(room.getType());
+        Color clr     = roomColor(room.getType());
+        String line1  = roomName(room.getType()) + (room.isCleared() ? " ✓" : "");
 
-        double tooltipW = 160;
+        // Enemy room: tampilkan preview enemy
+        String line2 = null;
+        if (!room.isCleared() && room.getEnemies() != null && !room.getEnemies().isEmpty()) {
+            long alive = room.getEnemies().stream()
+                    .filter(e -> e != null && e.isAlive()).count();
+            String names = room.getEnemies().stream()
+                    .filter(e -> e != null && e.isAlive())
+                    .limit(2)
+                    .map(e -> e.getName())
+                    .reduce("", (a, b) -> a.isEmpty() ? b : a + ", ");
+            line2 = alive + " enemy: " + names;
+        } else if (room.getType() == Room.RoomType.REST) {
+            if (room.getRestUseCount() == 0)      line2 = "Recover HP & MP (+35%/+50%)";
+            else if (room.getRestUseCount() == 1) line2 = "Partial recovery (+20%/+30%)";
+            else if (room.getRestUseCount() == 2) line2 = "Minimal recovery (+10%/+15%)";
+            else                                   line2 = "Zone exhausted — no effect";
+        }
+
+        // Hitung lebar tooltip
+        double tooltipW = line2 != null ? 220 : 160;
+        double tooltipH = line2 != null ? 36 : 22;
         double col = idx % COLS;
-        double tx = tileX((int)col) + TILE_SIZE/2.0 - tooltipW/2.0;
-        double ty = tileY(idx / COLS) - 26;
+        double tx  = tileX((int)col) + TILE_SIZE / 2.0 - tooltipW / 2.0;
+        double ty  = tileY(idx / COLS) - tooltipH - 4;
 
         // Clamp ke canvas
         tx = Math.max(4, Math.min(canvas.getWidth() - tooltipW - 4, tx));
         if (ty < 4) ty = tileY(idx / COLS) + TILE_SIZE + 4;
 
         gc.setFill(Color.web("#0C1220EE"));
-        gc.fillRoundRect(tx, ty, tooltipW, 20, 4, 4);
+        gc.fillRoundRect(tx, ty, tooltipW, tooltipH, 4, 4);
         gc.setStroke(clr.deriveColor(0, 1, 1, 0.5));
         gc.setLineWidth(1);
-        gc.strokeRoundRect(tx, ty, tooltipW, 20, 4, 4);
+        gc.strokeRoundRect(tx, ty, tooltipW, tooltipH, 4, 4);
 
         gc.setFill(clr);
         gc.setFont(Font.font("Courier New", FontWeight.BOLD, 11));
         gc.setTextAlign(TextAlignment.CENTER);
-        gc.fillText(text, tx + tooltipW/2, ty + 14);
+        gc.fillText(line1, tx + tooltipW / 2, ty + 14);
+
+        if (line2 != null) {
+            gc.setFill(Color.web("#8899AA"));
+            gc.setFont(Font.font("Courier New", 9));
+            gc.fillText(line2, tx + tooltipW / 2, ty + 28);
+        }
     }
 
     // ── Player ────────────────────────────────────────────────

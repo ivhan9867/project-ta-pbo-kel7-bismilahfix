@@ -22,7 +22,7 @@ public class NeonSerpent extends Enemy {
     private int bleedStacks = 0;
 
     public NeonSerpent() {
-        super("Neon Serpent",
+        super("Naga Basuki",
               "Ular mutant raksasa yang tubuhnya bersinar cahaya neon ungu. " +
               "Gerakan hipnotis, gigitan mematikan.",
               EntityType.ENEMY,

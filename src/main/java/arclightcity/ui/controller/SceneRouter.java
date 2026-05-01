@@ -82,6 +82,12 @@ public class SceneRouter {
         setSceneWithChat(profileView.build());
     }
 
+    public void showProfile(String tab) {
+        profileView = new ProfileView(engine, this);
+        profileView.setActiveTab(tab);
+        setSceneWithChat(profileView.build());
+    }
+
     public void showEvent(DungeonEvent event) {
         eventView = new EventView(engine, this, event);
         setSceneWithChat(eventView.build());

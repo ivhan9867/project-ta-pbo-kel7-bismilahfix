@@ -16,6 +16,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
+import arclightcity.ui.ArclightApp;
 import javafx.scene.text.TextAlignment;
 import javafx.util.Duration;
 import arclightcity.ui.controller.SceneRouter;
@@ -80,6 +81,8 @@ public class CombatView {
                                 double x, double y, long startMs) {}
     private final java.util.List<FloatingText> floatingTexts
             = new java.util.ArrayList<>();
+    private Canvas   floatCanvas;   // overlay untuk floating damage numbers
+    private Timeline floatLoop;     // animation loop untuk floating texts
 
     public CombatView(GameEngine engine, SceneRouter router) {
         this.engine = engine;
@@ -114,7 +117,7 @@ public class CombatView {
         // Combat log
         battleArea.getChildren().add(buildCombatLog());
 
-        // Enemy area
+        // Enemy area — wrapped in StackPane for floating damage overlay
         VBox enemySection = new VBox(6);
         enemySection.setPadding(new Insets(6, 12, 4, 12));
         enemySection.setStyle("-fx-border-color: #1C2E44; -fx-border-width: 0 0 1 0;");
@@ -122,7 +125,13 @@ public class CombatView {
         enemySectionTitle.setPadding(new Insets(0, 0, 4, 0));
         enemyContainer = new VBox(6);
         enemySection.getChildren().addAll(enemySectionTitle, enemyContainer);
-        battleArea.getChildren().add(enemySection);
+
+        // StackPane untuk floating damage overlay di atas enemy section
+        floatCanvas = new Canvas(ArclightApp.GAME_WIDTH, 200);
+        floatCanvas.setMouseTransparent(true); // tidak blok mouse events
+        StackPane enemyStack = new StackPane(enemySection, floatCanvas);
+        enemyStack.setAlignment(Pos.TOP_LEFT);
+        battleArea.getChildren().add(enemyStack);
 
         // Ally area
         VBox allySection = new VBox(6);
@@ -843,7 +852,7 @@ public class CombatView {
         return switch (skillId) {
             case "POWER_STRIKE"  -> new SkillInfo("Power Strike",
                     "Heavy blow: 1.8× ATK damage.", 15, false);
-            case "EXECUTE"       -> new SkillInfo("Execute",
+            case "TEBASAN"       -> new SkillInfo("Execute",
                     "Instant kill if HP < 25%. Else 1.5× damage.", 25, false);
             case "DEEP_HACK"     -> new SkillInfo("Deep Hack",
                     "Cyber + HACK debuff (-30% ATK) for 3 turns.", 20, false);
@@ -890,6 +899,7 @@ public class CombatView {
         addLog(event.getMessage(), color);
         refreshCombatants();
         refreshTurnOrderBar();
+        handleFloatingDamage(event); // spawn floating numbers
 
         // Chat triggers
         switch (event.getType()) {
@@ -966,6 +976,8 @@ public class CombatView {
 
     public void startCombatLoop() {
         if (cm == null) return;
+        // Clear log dari combat sebelumnya
+        if (logContainer != null) logContainer.getChildren().clear();
         addLog("⚔ Combat begins!", UIFactory.CYAN);
         aiTurnPending    = false;
         targetSelectMode = false;
@@ -1067,6 +1079,109 @@ public class CombatView {
         return bar;
     }
 
+    // ════════════════════════════════════════════════════
+    // FLOATING DAMAGE NUMBERS
+    // ════════════════════════════════════════════════════
+
+    /** Spawn angka floating di atas canvas enemy area */
+    private void spawnFloat(String text, String color, int enemyIndex) {
+        if (floatCanvas == null) return;
+        // Posisi X: spread berdasarkan index enemy (estimasi card ~180px wide)
+        double x = 60 + (enemyIndex * 180) + (Math.random() * 60 - 30);
+        double y = 40 + (Math.random() * 20);
+        floatingTexts.add(new FloatingText(text, color, x, y, System.currentTimeMillis()));
+        if (floatLoop == null || floatLoop.getStatus() != Animation.Status.RUNNING) {
+            startFloatLoop();
+        }
+    }
+
+    private void startFloatLoop() {
+        floatLoop = new Timeline(new KeyFrame(Duration.millis(16), e -> drawFloats()));
+        floatLoop.setCycleCount(Timeline.INDEFINITE);
+        floatLoop.play();
+    }
+
+    private void drawFloats() {
+        if (floatCanvas == null) return;
+        GraphicsContext gc = floatCanvas.getGraphicsContext2D();
+        gc.clearRect(0, 0, floatCanvas.getWidth(), floatCanvas.getHeight());
+
+        long now = System.currentTimeMillis();
+        floatingTexts.removeIf(ft -> (now - ft.startMs()) > 1400);
+
+        for (FloatingText ft : floatingTexts) {
+            double elapsed = (now - ft.startMs()) / 1400.0; // 0→1
+            double yOffset = elapsed * 55;             // melayang ke atas 55px
+            double alpha   = elapsed < 0.5 ? 1.0 : (1.0 - elapsed) * 2; // fade out
+
+            try {
+                Color c = Color.web(ft.color(), alpha);
+                gc.setFill(c);
+                // Ukuran font: crit lebih besar
+                boolean isCrit = ft.text().contains("!");
+                gc.setFont(Font.font("Courier New",
+                        javafx.scene.text.FontWeight.BOLD, isCrit ? 18 : 14));
+                gc.setTextAlign(javafx.scene.text.TextAlignment.CENTER);
+                gc.fillText(ft.text(), ft.x(), ft.y() - yOffset);
+            } catch (Exception ignored) {}
+        }
+
+        if (floatingTexts.isEmpty() && floatLoop != null) {
+            floatLoop.stop();
+            floatLoop = null;
+        }
+    }
+
+    /** Parse combat event message untuk extract damage value */
+    private void handleFloatingDamage(CombatEvent event) {
+        if (floatCanvas == null || cm == null) return;
+
+        String msg   = event.getMessage();
+        if (msg == null) return;
+
+        String color;
+        String displayText;
+
+        switch (event.getType()) {
+            case DAMAGE_DEALT -> {
+                // Extract angka dari pesan "X hits Y for Z damage"
+                java.util.regex.Matcher m =
+                    java.util.regex.Pattern.compile("for (\\d+)").matcher(msg);
+                if (!m.find()) return;
+                int dmg = Integer.parseInt(m.group(1));
+                boolean isCrit = msg.contains("CRIT") || msg.contains("critical");
+                color       = isCrit ? "#FFD600" : "#FF6B6B";
+                displayText = isCrit ? dmg + "!" : String.valueOf(dmg);
+            }
+            case HEAL_RECEIVED -> {
+                java.util.regex.Matcher m =
+                    java.util.regex.Pattern.compile("(\\d+)").matcher(msg);
+                if (!m.find()) return;
+                color       = UIFactory.GREEN;
+                displayText = "+" + m.group(1);
+            }
+            case EFFECT_TICK -> {
+                java.util.regex.Matcher m =
+                    java.util.regex.Pattern.compile("(\\d+)").matcher(msg);
+                if (!m.find()) return;
+                color       = UIFactory.ORANGE;
+                displayText = m.group(1);
+            }
+            default -> { return; }
+        }
+
+        // Spawn di posisi enemy yang terkena (estimasi dari posisi di container)
+        int enemyIdx = 0;
+        List<Entity> enemies = cm.getAllEnemies(); // getAllEnemies() returns List<Entity>
+        for (int i = 0; i < enemies.size(); i++) {
+            if (msg.contains(enemies.get(i).getName())) {
+                enemyIdx = i;
+                break;
+            }
+        }
+        spawnFloat(displayText, color, enemyIdx);
+    }
+
     private Entity getFirstAliveEnemy() {
         if (cm == null) return null;
         return cm.getLivingEnemies().stream().findFirst().orElse(null);
@@ -1074,11 +1189,11 @@ public class CombatView {
 
     private String getSkillDisplayName(String skillId) {
         return switch (skillId) {
-            case "POWER_STRIKE"  -> "POWER\nSTRIKE";
-            case "PHANTOM_SHOT"  -> "PHANTOM\nSHOT";
-            case "SHADOW_STEP"   -> "SHADOW\nSTEP";
-            case "DEEP_HACK"     -> "DEEP\nHACK";
-            case "EXECUTE"       -> "EXECUTE";
+            case "POWER_STRIKE"  -> "PUKULAN\nHARIMAU";
+            case "PHANTOM_SHOT"  -> "PANAH\nBAYANGAN";
+            case "SHADOW_STEP"   -> "LANGKAH\nGAIB";
+            case "DEEP_HACK"     -> "SANTET\nDIGITAL";
+            case "TEBASAN"       -> "EXECUTE";
             default              -> skillId.replace("_", "\n").substring(0, Math.min(skillId.length(), 10));
         };
     }

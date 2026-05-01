@@ -26,7 +26,7 @@ public class IronClad extends Enemy {
     private boolean phaseTransitionTriggered3 = false;
 
     public IronClad() {
-        super("Iron Clad",
+        super("Raksasa Kala",
               "Mantan prajurit yang 80% tubuhnya digantikan besi dan baja industri. " +
               "Tidak lagi merasa sakit. Mungkin tidak lagi manusia.",
               EntityType.ELITE,

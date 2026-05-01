@@ -346,6 +346,11 @@ public class Inventory {
     }
 
     // ── Save/Load direct equip (bypass validation) ────────────
+    /** Semua item di bag untuk save system */
+    public java.util.List<Item> getAllBagItems() {
+        return java.util.Collections.unmodifiableList(bag);
+    }
+
     /** Dipakai saat restore dari save — langsung set slot tanpa cek kondisi */
     public void forceEquipWeapon(Equipment eq)     { equippedWeapon     = eq; }
     public void forceEquipArmor(Equipment eq)      { equippedArmor      = eq; }

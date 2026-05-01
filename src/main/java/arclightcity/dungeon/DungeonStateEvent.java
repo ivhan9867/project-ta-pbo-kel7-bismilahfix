@@ -33,6 +33,7 @@ public class DungeonStateEvent {
         MAP_REVEALED,
         NOTHING,
         GAME_OVER,
+        LEVEL_UP,
         ERROR
     }
 
@@ -196,5 +197,14 @@ public class DungeonStateEvent {
         Builder stringValue(String v)     { stringValue = v; return this; }
         Builder dungeonEvent(DungeonEvent e) { dungeonEvent = e; return this; }
         DungeonStateEvent build()         { return new DungeonStateEvent(this); }
+    }
+
+    /** Event saat player naik level setelah combat */
+    public static DungeonStateEvent levelUp(int newLevel, int skillPoints) {
+        return new Builder(Type.LEVEL_UP)
+                .message("⬆ LEVEL UP! Now Level " + newLevel +
+                         " — +" + skillPoints + " Skill Point(s) available!")
+                .intValue(newLevel)
+                .build();
     }
 }

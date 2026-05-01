@@ -12,9 +12,9 @@ public enum PlayerBackground {
 
     // ── STREET FIGHTER ───────────────────────────────────────
     STREET_BRAWLER(
-        "Street Brawler",
-        "Tumbuh di jalanan Arclight City, survive dengan tangan kosong. " +
-        "Keras, cepat, dan tidak kenal ampun.",
+        "Pendekar Betawi",
+        "Tumbuh di gang sempit Batavia Bawah, bertahan dengan silat dan nyali. " +
+        "Keras, cepat, dan tidak kenal ampun — tubuh adalah senjata terkuat.",
         sheet -> {
             sheet.addBase(StatType.PHYSICAL_ATK, 12);
             sheet.addBase(StatType.MAX_HP,        30);
@@ -26,9 +26,9 @@ public enum PlayerBackground {
     ),
 
     NETRUNNER(
-        "Netrunner",
-        "Eks-karyawan MegaCorp yang kabur setelah tahu terlalu banyak. " +
-        "Otak jenius, jari cepat, dan tahu cara merusak sistem.",
+        "Dukun Digital",
+        "Mantan abdi dalem kraton yang menggabungkan ilmu mistis kuno dengan " +
+        "teknologi mutakhir. Santet dan hack adalah dua sisi dari koin yang sama.",
         sheet -> {
             sheet.addBase(StatType.CYBER_ATK,     15);
             sheet.addBase(StatType.MAX_MP,         25);
@@ -41,9 +41,9 @@ public enum PlayerBackground {
     ),
 
     VETERAN_SOLDIER(
-        "Veteran Soldier",
-        "Mantan tentara bayaran yang berpengalaman di medan perang. " +
-        "Terlatih, disiplin, dan tahu cara bertahan di kondisi terburuk.",
+        "Prajurit Majapahit",
+        "Veteran perang dari era kerajaan yang entah bagaimana terjebak di zaman ini. " +
+        "Disiplin baja, pertahanan kokoh, dan pengalaman ribuan pertempuran.",
         sheet -> {
             sheet.addBase(StatType.PHYSICAL_ATK, 8);
             sheet.addBase(StatType.PHYSICAL_DEF, 15);
@@ -57,9 +57,9 @@ public enum PlayerBackground {
     ),
 
     ENERGY_ADEPT(
-        "Energy Adept",
-        "Satu dari sedikit orang yang bisa memanipulasi energi neon langsung. " +
-        "Asal-usulnya misterius — bahkan dia sendiri tidak sepenuhnya tahu.",
+        "Pawang Neon",
+        "Keturunan pawang hujan yang kemampuannya berevolusi menyesuaikan zaman. " +
+        "Bisa memanipulasi energi alam — petir, api, dan cahaya neon sekalipun.",
         sheet -> {
             sheet.addBase(StatType.ENERGY_ATK,   18);
             sheet.addBase(StatType.ENERGY_DEF,   12);
@@ -71,9 +71,9 @@ public enum PlayerBackground {
     ),
 
     GHOST_OPERATIVE(
-        "Ghost Operative",
-        "Agen bayangan tanpa identitas resmi. Spesialis infiltrasi, " +
-        "sabotase, dan menghilang sebelum musuh sadar apa yang terjadi.",
+        "Mata-mata Demak",
+        "Agen bayangan tanpa wajah resmi — warisan tradisi telik sandi kerajaan Demak. " +
+        "Menghilang sebelum musuh sadar ada yang masuk, menyerang sebelum ada yang berkedip.",
         sheet -> {
             sheet.addBase(StatType.EVASION,      0.10);
             sheet.addBase(StatType.SPEED,          6);
@@ -86,9 +86,9 @@ public enum PlayerBackground {
     ),
 
     TECHWRIGHT(
-        "Techwright",
-        "Insinyur jalanan yang bisa merakit senjata dari sampah dan " +
-        "menemukan celah di armor siapapun. Inovatif dan adaptif.",
+        "Empu Modern",
+        "Penerus tradisi empu keris yang menggabungkan pamor kuno dengan teknologi masa kini. " +
+        "Setiap senjata yang ia tempa menyimpan jiwa dan kekuatan tersendiri.",
         sheet -> {
             sheet.addBase(StatType.PHYSICAL_ATK,  6);
             sheet.addBase(StatType.CYBER_ATK,     10);

@@ -5,13 +5,13 @@ package arclightcity.entity.mercenary;
  */
 public enum MercenaryType {
 
-    KIRA_VOSS       ("Kira Voss",       "Ghost Sniper"),
-    TANK_RX9        ("Tank-RX9",        "Combat Android"),
-    SERA_MEND       ("Sera Mend",       "Field Medic"),
-    VECTOR          ("Vector",          "Cyber Assassin"),
-    MAGNUS_FORGE    ("Magnus Forge",    "Heavy Gunner"),
-    ECHO_NULL       ("Echo Null",       "Signal Jammer"),
-    LYRA_BLOOM      ("Lyra Bloom",      "Neon Shaman");
+    KIRA_VOSS       ("Srikandi",      "Pemanah Bayangan"),
+    TANK_RX9        ("Gatot Kaca",    "Ksatria Baja"),
+    SERA_MEND       ("Nyai Roro",     "Tabib Mistis"),
+    VECTOR          ("Rangga",        "Pembunuh Bayaran"),
+    MAGNUS_FORGE    ("Bima",          "Petarung Agung"),
+    ECHO_NULL       ("Ki Ageng",      "Dukun Tua"),
+    LYRA_BLOOM      ("Dewi Sri",      "Penjaga Keseimbangan");
 
     public final String displayName;
     public final String subtitle;

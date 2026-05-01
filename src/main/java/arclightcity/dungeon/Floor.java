@@ -95,11 +95,11 @@ public class Floor {
     // ── Floor Theme ──────────────────────────────────────────
 
     public enum FloorTheme {
-        NEON_SLUM     ("Neon Slum",      "Jalanan bawah Arclight City, bau uap dan sinyal korup.",     "#FF00AA"),
-        CORPORATE_HQ  ("Corporate HQ",   "Gedung korporat steril dengan keamanan berlapis-lapis.",     "#00AAFF"),
-        DATA_VAULT    ("Data Vault",      "Server room bawah tanah, penuh entitas digital tersesat.",    "#AA00FF"),
-        NEON_WASTES   ("Neon Wastes",    "Zona radiasi neon, berbahaya tapi kaya akan loot langka.",    "#FFAA00"),
-        VOID_RIFT     ("Void Rift",      "Celah antara dunia nyata dan jaringan data — anomali murni.", "#FF0000");
+        NEON_SLUM     ("Pasar Malam Gaib",  "Pasar mistis bawah tanah — bau kemenyan dan daging bakar bercampur.", "#CC8800"),
+        CORPORATE_HQ  ("Candi Terlarang",   "Candi kuno tersegel, penuh jebakan dan kutukan leluhur.",             "#AA4400"),
+        DATA_VAULT    ("Hutan Angker",      "Hutan belantara Kalimantan, dijaga roh-roh purba yang gelisah.",      "#336622"),
+        NEON_WASTES   ("Goa Naga",          "Gua bawah gunung berapi tempat naga purba bersemayam.",               "#884400"),
+        VOID_RIFT     ("Kahyangan Rusak",   "Langit para dewa yang runtuh — berbahaya tapi penuh artefak sakti.", "#882200");
 
         public final String displayName;
         public final String description;

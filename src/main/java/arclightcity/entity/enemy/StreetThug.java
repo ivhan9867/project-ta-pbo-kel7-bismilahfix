@@ -19,7 +19,7 @@ import java.util.List;
 public class StreetThug extends Enemy {
 
     public StreetThug() {
-        super("Street Thug",
+        super("Leak Pengembara",
               "Preman jalanan Arclight City yang desperate dan berbahaya.",
               EntityType.ENEMY,
               EnemyRace.HUMAN,

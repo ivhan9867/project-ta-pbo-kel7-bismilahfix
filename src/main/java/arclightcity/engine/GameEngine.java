@@ -145,12 +145,24 @@ public class GameEngine {
         });
 
         dungeonManager.setCombatEndListener(result -> {
-            // Auto-resolve loot dari combat
-            result.getLootItemIds().forEach(tableId -> {
-                List<Item> drops = LootManager.generateLoot(
-                        tableId, dungeonManager.getCurrentFloorNumber());
-                drops.forEach(inventory::addItem);
-            });
+            if (result.isVictory()) {
+                // ── Terapkan reward ke player ─────────────────
+                int levelsGained = player.gainExp(result.getTotalExpGained());
+                player.addGold(result.getTotalGoldGained());
+                result.getLootItemIds().forEach(tableId -> {
+                    List<Item> drops = LootManager.generateLoot(
+                            tableId, dungeonManager.getCurrentFloorNumber());
+                    drops.forEach(inventory::addItem);
+                });
+                // Level up notification
+                if (levelsGained > 0 && onDungeonEvent != null) {
+                    onDungeonEvent.accept(
+                        arclightcity.dungeon.DungeonStateEvent.levelUp(
+                            player.getLevel(), player.getSkillPoints()));
+                }
+                // POIN 2: Loyalty mercenary naik setelah setiap combat victory
+                activeMercs.forEach(m -> m.completeMission());
+            }
             if (onCombatEnd != null) onCombatEnd.accept(result);
             transitionTo(GameState.DUNGEON);
         });

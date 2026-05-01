@@ -1,47 +1,43 @@
 /* ═══════════════════════════════════════════════════════════
-   ARCLIGHT CITY — GLOBAL STYLESHEET
-   Tema: Cyberpunk Dark dengan Neon Accent
+   MYTHIC ITEM OBTAINED — GLOBAL STYLESHEET
+   Tema: Nusantara Dark — Gold, Merah Bata, Hijau Tua
    Font: Monospace (Courier New / system monospace)
    Palette:
-     --bg-deep    : #050810  (latar paling gelap)
-     --bg-panel   : #0C1220  (panel / card)
-     --bg-overlay : #111928  (overlay ringan)
-     --neon-cyan  : #00E5FF  (aksen utama)
-     --neon-yellow: #FFD600  (gold / exp bar)
-     --neon-red   : #FF1744  (HP bar / danger)
-     --neon-purple: #AA00FF  (shield / energy)
-     --neon-green : #00E676  (buff / success)
-     --text-main  : #E0E8F0  (teks utama)
-     --text-dim   : #5A6A80  (teks redup)
-     --border     : #1C2E44  (garis pembatas)
+     --bg-deep    : #0A0604  (latar hitam hangat)
+     --bg-panel   : #150E08  (panel / card)
+     --gold-main  : #C8860A  (aksen utama — emas batik)
+     --gold-bright: #FFB830  (highlight gold)
+     --merah      : #CC2200  (HP / bahaya)
+     --hijau-tua  : #2D6A2D  (buff / sukses)
+     --text-main  : #EDE0C8  (teks utama — kertas tua)
+     --text-dim   : #7A6650  (teks redup)
+     --border     : #3A2810  (garis pembatas)
 ══════════════════════════════════════════════════════════ */
 
 /* ── ROOT ─────────────────────────────────────────────── */
 .root {
-    -fx-background-color: #050810;
+    -fx-background-color: #0A0604;
     -fx-font-family: "Courier New", "Courier", monospace;
     -fx-font-size: 14px;
-    -fx-text-fill: #E0E8F0;
+    -fx-text-fill: #EDE0C8;
 }
 
 /* ── SCREEN CONTAINER ────────────────────────────────── */
 .screen-root {
-    -fx-background-color: #050810;
-    -fx-min-width: 420px;
-    -fx-min-height: 820px;
+    -fx-background-color: #0A0604;
 }
 
 /* ── PANEL / CARD ────────────────────────────────────── */
 .panel {
-    -fx-background-color: #0C1220;
-    -fx-border-color: #1C2E44;
+    -fx-background-color: #150E08;
+    -fx-border-color: #3A2810;
     -fx-border-width: 1px;
     -fx-padding: 12px;
 }
 
 .panel-highlight {
-    -fx-background-color: #0C1220;
-    -fx-border-color: #00E5FF;
+    -fx-background-color: #150E08;
+    -fx-border-color: #C8860A;
     -fx-border-width: 1px 1px 1px 3px;
     -fx-padding: 12px;
 }
@@ -51,103 +47,60 @@
     -fx-font-family: "Courier New", monospace;
     -fx-font-size: 32px;
     -fx-font-weight: bold;
-    -fx-text-fill: #00E5FF;
-    -fx-effect: dropshadow(gaussian, #00E5FF, 15, 0.6, 0, 0);
+    -fx-text-fill: #FFB830;
+    -fx-effect: dropshadow(gaussian, #C8860A, 15, 0.6, 0, 0);
 }
 
 .title-section {
     -fx-font-size: 11px;
     -fx-font-weight: bold;
-    -fx-text-fill: #5A6A80;
+    -fx-text-fill: #7A6650;
     -fx-letter-spacing: 3px;
 }
 
 .title-panel {
     -fx-font-size: 14px;
     -fx-font-weight: bold;
-    -fx-text-fill: #00E5FF;
+    -fx-text-fill: #FFB830;
 }
 
-.label-stat-name {
-    -fx-font-size: 12px;
-    -fx-text-fill: #8899AA;
-}
-
-.label-stat-value {
-    -fx-font-size: 12px;
-    -fx-font-weight: bold;
-    -fx-text-fill: #00E5FF;
-}
-
-.label-gold {
-    -fx-font-size: 13px;
-    -fx-font-weight: bold;
-    -fx-text-fill: #FFD600;
-}
-
-.label-level {
-    -fx-font-size: 13px;
-    -fx-font-weight: bold;
-    -fx-text-fill: #E0E8F0;
-}
-
-.label-dim {
-    -fx-font-size: 11px;
-    -fx-text-fill: #5A6A80;
-}
-
-.label-damage {
-    -fx-font-size: 18px;
-    -fx-font-weight: bold;
-    -fx-text-fill: #FF6B6B;
-}
-
+.label-stat-name  { -fx-font-size: 12px; -fx-text-fill: #A09080; }
+.label-stat-value { -fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #FFB830; }
+.label-gold       { -fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #FFB830; }
+.label-level      { -fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #EDE0C8; }
+.label-dim        { -fx-font-size: 11px; -fx-text-fill: #7A6650; }
+.label-damage     { -fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #FF6644; }
 .label-damage-crit {
-    -fx-font-size: 22px;
-    -fx-font-weight: bold;
-    -fx-text-fill: #FFD600;
-    -fx-effect: dropshadow(gaussian, #FFD600, 8, 0.5, 0, 0);
+    -fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #FFB830;
+    -fx-effect: dropshadow(gaussian, #C8860A, 8, 0.5, 0, 0);
 }
-
-.label-heal {
-    -fx-font-size: 16px;
-    -fx-font-weight: bold;
-    -fx-text-fill: #00E676;
-}
-
-.label-shield-absorb {
-    -fx-font-size: 14px;
-    -fx-font-weight: bold;
-    -fx-text-fill: #AA00FF;
-}
+.label-heal       { -fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #44AA44; }
+.label-shield-absorb { -fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #8855CC; }
 
 /* ── BUTTONS ─────────────────────────────────────────── */
 .btn-primary {
     -fx-background-color: transparent;
-    -fx-border-color: #00E5FF;
+    -fx-border-color: #C8860A;
     -fx-border-width: 1px;
-    -fx-text-fill: #00E5FF;
+    -fx-text-fill: #FFB830;
     -fx-font-family: "Courier New", monospace;
     -fx-font-size: 13px;
     -fx-font-weight: bold;
-    -fx-letter-spacing: 2px;
     -fx-padding: 10px 20px;
     -fx-cursor: hand;
     -fx-min-width: 200px;
 }
 .btn-primary:hover {
-    -fx-background-color: #00E5FF22;
-    -fx-effect: dropshadow(gaussian, #00E5FF, 10, 0.4, 0, 0);
+    -fx-background-color: #C8860A22;
+    -fx-effect: dropshadow(gaussian, #C8860A, 10, 0.4, 0, 0);
 }
-.btn-primary:pressed {
-    -fx-background-color: #00E5FF44;
-}
+.btn-primary:pressed { -fx-background-color: #C8860A44; }
 
 .btn-danger {
     -fx-background-color: transparent;
-    -fx-border-color: #FF1744;
+    -fx-border-color: #CC2200;
     -fx-border-width: 1px;
-    -fx-text-fill: #FF1744;
+    -fx-text-fill: #CC2200;
     -fx-font-family: "Courier New", monospace;
     -fx-font-size: 13px;
     -fx-font-weight: bold;
@@ -155,15 +108,15 @@
     -fx-cursor: hand;
 }
 .btn-danger:hover {
-    -fx-background-color: #FF174422;
-    -fx-effect: dropshadow(gaussian, #FF1744, 8, 0.4, 0, 0);
+    -fx-background-color: #CC220022;
+    -fx-effect: dropshadow(gaussian, #CC2200, 8, 0.4, 0, 0);
 }
 
 .btn-gold {
-    -fx-background-color: #FFD60022;
-    -fx-border-color: #FFD600;
+    -fx-background-color: #C8860A22;
+    -fx-border-color: #FFB830;
     -fx-border-width: 1px;
-    -fx-text-fill: #FFD600;
+    -fx-text-fill: #FFB830;
     -fx-font-family: "Courier New", monospace;
     -fx-font-size: 13px;
     -fx-font-weight: bold;
@@ -171,268 +124,162 @@
     -fx-cursor: hand;
 }
 .btn-gold:hover {
-    -fx-background-color: #FFD60044;
-    -fx-effect: dropshadow(gaussian, #FFD600, 10, 0.4, 0, 0);
+    -fx-background-color: #C8860A44;
+    -fx-effect: dropshadow(gaussian, #FFB830, 10, 0.4, 0, 0);
 }
 
 .btn-small {
     -fx-background-color: transparent;
-    -fx-border-color: #1C2E44;
+    -fx-border-color: #3A2810;
     -fx-border-width: 1px;
-    -fx-text-fill: #8899AA;
+    -fx-text-fill: #7A6650;
     -fx-font-family: "Courier New", monospace;
     -fx-font-size: 11px;
     -fx-padding: 4px 10px;
     -fx-cursor: hand;
 }
-.btn-small:hover {
-    -fx-border-color: #00E5FF;
-    -fx-text-fill: #00E5FF;
-}
+.btn-small:hover { -fx-border-color: #C8860A; -fx-text-fill: #FFB830; }
 
 .btn-nav {
     -fx-background-color: transparent;
     -fx-border-color: transparent;
-    -fx-text-fill: #5A6A80;
+    -fx-text-fill: #7A6650;
     -fx-font-family: "Courier New", monospace;
     -fx-font-size: 11px;
     -fx-padding: 4px 8px;
     -fx-cursor: hand;
 }
-.btn-nav:hover   { -fx-text-fill: #00E5FF; }
-.btn-nav-active  {
-    -fx-text-fill: #00E5FF;
-    -fx-border-color: transparent transparent #00E5FF transparent;
+.btn-nav:hover  { -fx-text-fill: #FFB830; }
+.btn-nav-active {
+    -fx-text-fill: #FFB830;
+    -fx-border-color: transparent transparent #C8860A transparent;
     -fx-border-width: 0 0 2px 0;
 }
 
 /* ── PROGRESS BARS ───────────────────────────────────── */
-/* ── PROGRESS BAR — Override JavaFX default white ───────── */
-/*
- * JavaFX ProgressBar default track = putih/abu
- * Kita override semua ProgressBar secara global agar gelap
- * Warna bar (accent) diset via inline style di UIFactory
- */
 .progress-bar {
-    -fx-min-height: 6px;
-    -fx-max-height: 6px;
-    -fx-min-width: 100px;
+    -fx-min-height: 6px; -fx-max-height: 6px; -fx-min-width: 100px;
     -fx-background-color: transparent;
 }
-.progress-bar .track {
-    -fx-background-color: #1C2E4488;
-    -fx-background-radius: 0;
-    -fx-border-radius: 0;
-}
-.progress-bar .bar {
-    -fx-background-radius: 0;
-    -fx-border-radius: 0;
-    -fx-background-insets: 0;
-}
-.progress-bar-thick    { -fx-min-height: 10px; -fx-max-height: 10px; }
-.progress-bar-thin     { -fx-min-height: 4px;  -fx-max-height: 4px; }
+.progress-bar .track { -fx-background-color: #3A281088; -fx-background-radius: 0; }
+.progress-bar .bar   { -fx-background-radius: 0; -fx-background-insets: 0; }
 
-/* Class-based bar colors */
-.bar-hp .track         { -fx-background-color: #1C0A0A; -fx-background-radius: 0; }
-.bar-hp .bar           { -fx-background-color: #FF1744; -fx-background-radius: 0; }
-.bar-hp:hover .bar     { -fx-background-color: #FF4569; }
+.bar-hp .track     { -fx-background-color: #200A04; -fx-background-radius: 0; }
+.bar-hp .bar       { -fx-background-color: #CC2200; -fx-background-radius: 0; }
+.bar-shield .track { -fx-background-color: #0F0820; -fx-background-radius: 0; }
+.bar-shield .bar   { -fx-background-color: #8855CC; -fx-background-radius: 0; }
+.bar-mp .track     { -fx-background-color: #08101C; -fx-background-radius: 0; }
+.bar-mp .bar       { -fx-background-color: #2255AA; -fx-background-radius: 0; }
+.bar-exp .track    { -fx-background-color: #1C1000; -fx-background-radius: 0; }
+.bar-exp .bar      { -fx-background-color: #C8860A; -fx-background-radius: 0; }
 
-.bar-shield .track     { -fx-background-color: #0A0A1C; -fx-background-radius: 0; }
-.bar-shield .bar       { -fx-background-color: #AA00FF; -fx-background-radius: 0; }
-
-.bar-mp .track         { -fx-background-color: #0A0A1C; -fx-background-radius: 0; }
-.bar-mp .bar           { -fx-background-color: #2979FF; -fx-background-radius: 0; }
-
-.bar-exp .track        { -fx-background-color: #1C1400; -fx-background-radius: 0; }
-.bar-exp .bar          { -fx-background-color: #FFD600; -fx-background-radius: 0; }
-
-/* ── SCROLL PANE — Fix white background ─────────────────── */
-.scroll-pane {
-    -fx-background-color: transparent;
-    -fx-background: transparent;
-}
-.scroll-pane .viewport {
-    -fx-background-color: transparent;
-}
+/* ── SCROLL PANE ─────────────────────────────────────── */
+.scroll-pane { -fx-background-color: transparent; -fx-background: transparent; }
+.scroll-pane .viewport { -fx-background-color: transparent; }
 .scroll-pane > .scroll-bar:vertical,
-.scroll-pane > .scroll-bar:horizontal {
-    -fx-background-color: #050810;
-}
+.scroll-pane > .scroll-bar:horizontal { -fx-background-color: #0A0604; }
 
 /* ── STATUS EFFECT BADGES ────────────────────────────── */
-.badge-debuff {
-    -fx-background-color: #FF174433;
-    -fx-border-color: #FF1744;
-    -fx-border-width: 1px;
-    -fx-text-fill: #FF6B6B;
-    -fx-font-size: 10px;
-    -fx-padding: 2px 6px;
-}
-
-.badge-buff {
-    -fx-background-color: #00E67633;
-    -fx-border-color: #00E676;
-    -fx-border-width: 1px;
-    -fx-text-fill: #00E676;
-    -fx-font-size: 10px;
-    -fx-padding: 2px 6px;
-}
-
-.badge-dot {
-    -fx-background-color: #FF6B0033;
-    -fx-border-color: #FF6B00;
-    -fx-border-width: 1px;
-    -fx-text-fill: #FF6B00;
-    -fx-font-size: 10px;
-    -fx-padding: 2px 6px;
-}
+.badge-debuff { -fx-background-color: #CC220033; -fx-border-color: #CC2200; -fx-border-width: 1px; -fx-text-fill: #FF6644; -fx-font-size: 10px; -fx-padding: 2px 6px; }
+.badge-buff   { -fx-background-color: #2D6A2D33; -fx-border-color: #44AA44; -fx-border-width: 1px; -fx-text-fill: #44AA44; -fx-font-size: 10px; -fx-padding: 2px 6px; }
+.badge-dot    { -fx-background-color: #AA440033; -fx-border-color: #AA4400; -fx-border-width: 1px; -fx-text-fill: #CC6622; -fx-font-size: 10px; -fx-padding: 2px 6px; }
 
 /* ── RARITY COLORS ───────────────────────────────────── */
 .rarity-common    { -fx-text-fill: #AAAAAA; }
-.rarity-uncommon  { -fx-text-fill: #44FF44; }
+.rarity-uncommon  { -fx-text-fill: #44AA44; }
 .rarity-rare      { -fx-text-fill: #4488FF; }
 .rarity-epic      { -fx-text-fill: #AA44FF; }
-.rarity-legendary { -fx-text-fill: #FFAA00; -fx-effect: dropshadow(gaussian, #FFAA00, 6, 0.3, 0, 0); }
+.rarity-legendary { -fx-text-fill: #FFB830; -fx-effect: dropshadow(gaussian, #C8860A, 6, 0.3, 0, 0); }
 
 /* ── COMBAT LOG ──────────────────────────────────────── */
 .combat-log {
-    -fx-background-color: #050810;
-    -fx-border-color: #1C2E44;
-    -fx-border-width: 1px;
-    -fx-font-family: "Courier New", monospace;
-    -fx-font-size: 11px;
-    -fx-text-fill: #8899AA;
+    -fx-background-color: #0A0604; -fx-border-color: #3A2810;
+    -fx-border-width: 1px; -fx-font-family: "Courier New", monospace;
+    -fx-font-size: 11px; -fx-text-fill: #A09080;
 }
-
-.combat-log-entry-damage  { -fx-text-fill: #FF6B6B; }
-.combat-log-entry-crit    { -fx-text-fill: #FFD600; }
-.combat-log-entry-heal    { -fx-text-fill: #00E676; }
-.combat-log-entry-shield  { -fx-text-fill: #AA00FF; }
-.combat-log-entry-status  { -fx-text-fill: #FF6B00; }
-.combat-log-entry-death   { -fx-text-fill: #FF1744; -fx-font-weight: bold; }
-.combat-log-entry-system  { -fx-text-fill: #5A6A80; }
+.combat-log-entry-damage  { -fx-text-fill: #FF6644; }
+.combat-log-entry-crit    { -fx-text-fill: #FFB830; }
+.combat-log-entry-heal    { -fx-text-fill: #44AA44; }
+.combat-log-entry-shield  { -fx-text-fill: #8855CC; }
+.combat-log-entry-status  { -fx-text-fill: #AA6622; }
+.combat-log-entry-death   { -fx-text-fill: #CC2200; -fx-font-weight: bold; }
+.combat-log-entry-system  { -fx-text-fill: #7A6650; }
 
 /* ── LIST VIEW ───────────────────────────────────────── */
-.list-view {
-    -fx-background-color: #050810;
-    -fx-border-color: #1C2E44;
-    -fx-border-width: 1px;
-}
+.list-view { -fx-background-color: #0A0604; -fx-border-color: #3A2810; -fx-border-width: 1px; }
 .list-cell {
-    -fx-background-color: transparent;
-    -fx-text-fill: #E0E8F0;
-    -fx-font-family: "Courier New", monospace;
-    -fx-padding: 8px 12px;
-    -fx-border-color: transparent transparent #0C1220 transparent;
-    -fx-border-width: 0 0 1px 0;
+    -fx-background-color: transparent; -fx-text-fill: #EDE0C8;
+    -fx-font-family: "Courier New", monospace; -fx-padding: 8px 12px;
+    -fx-border-color: transparent transparent #150E08 transparent; -fx-border-width: 0 0 1px 0;
 }
-.list-cell:hover    { -fx-background-color: #0C1220; }
-.list-cell:selected { -fx-background-color: #00E5FF22; -fx-border-color: transparent transparent #1C2E44 transparent; }
+.list-cell:hover    { -fx-background-color: #150E08; }
+.list-cell:selected { -fx-background-color: #C8860A22; }
 
 /* ── SCROLL BAR ──────────────────────────────────────── */
-.scroll-bar:vertical .track        { -fx-background-color: #050810; }
-.scroll-bar:vertical .thumb        { -fx-background-color: #1C2E44; -fx-background-radius: 0; }
-.scroll-bar:vertical .thumb:hover  { -fx-background-color: #00E5FF44; }
+.scroll-bar:vertical .track       { -fx-background-color: #0A0604; }
+.scroll-bar:vertical .thumb       { -fx-background-color: #3A2810; -fx-background-radius: 0; }
+.scroll-bar:vertical .thumb:hover { -fx-background-color: #C8860A44; }
 .scroll-bar .increment-button,
-.scroll-bar .decrement-button      { -fx-background-color: #050810; }
+.scroll-bar .decrement-button     { -fx-background-color: #0A0604; }
 
 /* ── SEPARATOR ───────────────────────────────────────── */
-.separator .line { -fx-border-color: #1C2E44; -fx-border-width: 1px; }
+.separator .line { -fx-border-color: #3A2810; -fx-border-width: 1px; }
 
-/* ── ROOM TYPE COLORS (dungeon map) ──────────────────── */
-.room-empty    { -fx-background-color: #0C1220; -fx-border-color: #1C2E44; }
-.room-enemy    { -fx-background-color: #1C0A0A; -fx-border-color: #FF1744; }
-.room-elite    { -fx-background-color: #1C0A1C; -fx-border-color: #AA00FF; }
-.room-boss     { -fx-background-color: #200505; -fx-border-color: #FF1744;
-                 -fx-effect: dropshadow(gaussian, #FF1744, 12, 0.5, 0, 0); }
-.room-loot     { -fx-background-color: #1C1400; -fx-border-color: #FFD600; }
-.room-rest     { -fx-background-color: #0A1C0A; -fx-border-color: #00E676; }
-.room-event    { -fx-background-color: #0A0A1C; -fx-border-color: #00E5FF; }
-.room-shop     { -fx-background-color: #1C1200; -fx-border-color: #FFAA00; }
-.room-trap     { -fx-background-color: #1C0A00; -fx-border-color: #FF6B00; }
-.room-current  { -fx-border-width: 2px; -fx-effect: dropshadow(gaussian, #00E5FF, 10, 0.5, 0, 0); }
-.room-cleared  { -fx-opacity: 0.4; }
+/* ── ROOM TYPE COLORS ────────────────────────────────── */
+.room-empty  { -fx-background-color: #150E08; -fx-border-color: #3A2810; }
+.room-enemy  { -fx-background-color: #1C0604; -fx-border-color: #CC2200; }
+.room-elite  { -fx-background-color: #180818; -fx-border-color: #8855CC; }
+.room-boss   { -fx-background-color: #200402; -fx-border-color: #CC2200;
+               -fx-effect: dropshadow(gaussian, #CC2200, 12, 0.5, 0, 0); }
+.room-loot   { -fx-background-color: #1C1200; -fx-border-color: #FFB830; }
+.room-rest   { -fx-background-color: #081408; -fx-border-color: #44AA44; }
+.room-event  { -fx-background-color: #081020; -fx-border-color: #C8860A; }
+.room-shop   { -fx-background-color: #181000; -fx-border-color: #C8860A; }
+.room-trap   { -fx-background-color: #1C0800; -fx-border-color: #AA4400; }
+.room-current { -fx-border-width: 2px; -fx-effect: dropshadow(gaussian, #C8860A, 10, 0.5, 0, 0); }
+.room-cleared { -fx-opacity: 0.4; }
 
 /* ── TOOLTIP ─────────────────────────────────────────── */
 .tooltip {
-    -fx-background-color: #0C1220;
-    -fx-border-color: #1C2E44;
-    -fx-border-width: 1px;
-    -fx-text-fill: #E0E8F0;
-    -fx-font-family: "Courier New", monospace;
-    -fx-font-size: 11px;
-    -fx-padding: 8px;
+    -fx-background-color: #150E08; -fx-border-color: #3A2810; -fx-border-width: 1px;
+    -fx-text-fill: #EDE0C8; -fx-font-family: "Courier New", monospace;
+    -fx-font-size: 11px; -fx-padding: 8px;
 }
 
 /* ── TAB PANE ────────────────────────────────────────── */
-.tab-pane .tab-header-area .tab-header-background { -fx-background-color: #0C1220; }
-.tab { -fx-background-color: #0C1220; -fx-border-color: transparent; }
-.tab .tab-label { -fx-text-fill: #5A6A80; -fx-font-family: "Courier New", monospace; -fx-font-size: 11px; }
-.tab:selected { -fx-background-color: #050810; -fx-border-color: transparent transparent #00E5FF transparent; -fx-border-width: 0 0 2px 0; }
-.tab:selected .tab-label { -fx-text-fill: #00E5FF; }
-
-/* ── COMBO BOX / CHOICE BOX ──────────────────────────── */
-.combo-box {
-    -fx-background-color: #0C1220;
-    -fx-border-color: #1C2E44;
-    -fx-border-width: 1px;
-    -fx-text-fill: #E0E8F0;
-}
-.combo-box .list-cell { -fx-text-fill: #E0E8F0; }
+.tab-pane .tab-header-area .tab-header-background { -fx-background-color: #150E08; }
+.tab { -fx-background-color: #150E08; -fx-border-color: transparent; }
+.tab .tab-label { -fx-text-fill: #7A6650; -fx-font-family: "Courier New", monospace; -fx-font-size: 11px; }
+.tab:selected { -fx-background-color: #0A0604; -fx-border-color: transparent transparent #C8860A transparent; -fx-border-width: 0 0 2px 0; }
+.tab:selected .tab-label { -fx-text-fill: #FFB830; }
 
 /* ── TEXT FIELD ──────────────────────────────────────── */
 .text-field {
-    -fx-background-color: #0C1220;
-    -fx-border-color: #1C2E44;
-    -fx-border-width: 1px;
-    -fx-text-fill: #E0E8F0;
-    -fx-font-family: "Courier New", monospace;
-    -fx-font-size: 13px;
-    -fx-prompt-text-fill: #5A6A80;
-    -fx-padding: 8px;
+    -fx-background-color: #150E08; -fx-border-color: #3A2810; -fx-border-width: 1px;
+    -fx-text-fill: #EDE0C8; -fx-font-family: "Courier New", monospace;
+    -fx-font-size: 13px; -fx-prompt-text-fill: #7A6650; -fx-padding: 8px;
 }
 .text-field:focused {
-    -fx-border-color: #00E5FF;
-    -fx-effect: dropshadow(gaussian, #00E5FF, 6, 0.2, 0, 0);
+    -fx-border-color: #C8860A;
+    -fx-effect: dropshadow(gaussian, #C8860A, 6, 0.2, 0, 0);
 }
 
-/* ── ALERT / DIALOG PANE — Dark cyberpunk style ─────────── */
-.dialog-pane {
-    -fx-background-color: #0C1220;
-    -fx-border-color: #1C2E44;
-    -fx-border-width: 1;
-}
-.dialog-pane .header-panel {
-    -fx-background-color: #080D18;
-}
+/* ── ALERT / DIALOG PANE ─────────────────────────────── */
+.dialog-pane { -fx-background-color: #150E08; -fx-border-color: #3A2810; -fx-border-width: 1; }
+.dialog-pane .header-panel { -fx-background-color: #0A0604; }
 .dialog-pane .header-panel .label {
-    -fx-text-fill: #00E5FF;
-    -fx-font-family: "Courier New", monospace;
-    -fx-font-weight: bold;
-    -fx-font-size: 13px;
+    -fx-text-fill: #FFB830; -fx-font-family: "Courier New", monospace;
+    -fx-font-weight: bold; -fx-font-size: 13px;
 }
 .dialog-pane .content.label {
-    -fx-text-fill: #E0E8F0;
-    -fx-font-family: "Courier New", monospace;
-    -fx-font-size: 11px;
+    -fx-text-fill: #EDE0C8; -fx-font-family: "Courier New", monospace; -fx-font-size: 11px;
 }
 .dialog-pane .button-bar .button {
-    -fx-background-color: transparent;
-    -fx-border-color: #00E5FF;
-    -fx-border-width: 1;
-    -fx-text-fill: #00E5FF;
-    -fx-font-family: "Courier New", monospace;
-    -fx-cursor: hand;
-    -fx-padding: 6 16;
+    -fx-background-color: transparent; -fx-border-color: #C8860A; -fx-border-width: 1;
+    -fx-text-fill: #FFB830; -fx-font-family: "Courier New", monospace;
+    -fx-cursor: hand; -fx-padding: 6 16;
 }
 .dialog-pane .button-bar .button:hover {
-    -fx-background-color: #00E5FF22;
-    -fx-effect: dropshadow(gaussian, #00E5FF, 6, 0.3, 0, 0);
-}
-.dialog-pane:confirmation .button-bar .button:cancel-button {
-    -fx-border-color: #FF174466;
-    -fx-text-fill: #FF6B6B;
-}
-.dialog-pane:confirmation .button-bar .button:cancel-button:hover {
-    -fx-background-color: #FF174422;
+    -fx-background-color: #C8860A22;
+    -fx-effect: dropshadow(gaussian, #C8860A, 6, 0.3, 0, 0);
 }

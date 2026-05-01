@@ -236,7 +236,7 @@ public class HubView {
         Label subtitle = new Label("ARCLIGHT CITY — SECTOR 7");
         subtitle.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
 
-        Label district = new Label("NEON SLUM DISTRICT");
+        Label district = new Label(getDistrictName(player.getDungeonDepth()));
         district.setStyle(
             "-fx-text-fill: #00E5FF;" +
             "-fx-font-family: 'Courier New', monospace;" +
@@ -318,5 +318,14 @@ public class HubView {
         }
 
         return nav;
+    }
+
+    // District name berubah berdasarkan floor terdalam yang dicapai
+    private String getDistrictName(int depth) {
+        if (depth <= 3)  return "PASAR MALAM GAIB";
+        if (depth <= 6)  return "CANDI TERLARANG";
+        if (depth <= 10) return "HUTAN ANGKER";
+        if (depth <= 15) return "GOA NAGA";
+        return "KAHYANGAN RUSAK";
     }
 }

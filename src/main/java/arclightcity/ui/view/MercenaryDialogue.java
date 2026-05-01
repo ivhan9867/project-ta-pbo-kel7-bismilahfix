@@ -50,7 +50,7 @@ public class MercenaryDialogue {
     private static final Map<MercenaryType, Map<Trigger, List<String>>> DIALOGUES = new HashMap<>();
 
     static {
-        // ── KIRA VOSS — Ghost Sniper ────────────────────────────
+        // ── SRIKANDI — Pemanah Bayangan ────────────────────────────
         addDialogues(MercenaryType.KIRA_VOSS, Trigger.HUB_IDLE,
             "...",
             "Scanning perimeter.",
@@ -118,7 +118,7 @@ public class MercenaryDialogue {
             "Priority target. Everything we have."
         );
 
-        // ── TANK-RX9 — Combat Android ───────────────────────────
+        // ── GATOT KACA — Ksatria Baja ───────────────────────────
         addDialogues(MercenaryType.TANK_RX9, Trigger.HUB_IDLE,
             "Systems nominal. Standing by.",
             "Threat assessment: 0 hostiles detected.",
@@ -173,7 +173,7 @@ public class MercenaryDialogue {
             "Structural integrity: holding. Engaging at full capacity."
         );
 
-        // ── SERA MEND — Field Medic ─────────────────────────────
+        // ── NYAI RORO — Tabib Mistis ─────────────────────────────
         addDialogues(MercenaryType.SERA_MEND, Trigger.HUB_IDLE,
             "Let me know if you need a checkup.",
             "I restocked the med-kits. We're ready.",
@@ -227,7 +227,7 @@ public class MercenaryDialogue {
             "We can't win this one. Move!"
         );
 
-        // ── VECTOR — Cyber Assassin ─────────────────────────────
+        // ── RANGGA — Pembunuh Bayaran ─────────────────────────────
         addDialogues(MercenaryType.VECTOR, Trigger.HUB_IDLE,
             "Still here. Unfortunately.",
             "Don't look at me like that.",
@@ -279,7 +279,7 @@ public class MercenaryDialogue {
             "I was bored the whole time. Just so you know."
         );
 
-        // ── MAGNUS FORGE — Heavy Gunner ──────────────────────────
+        // ── BIMA — Petarung Agung ──────────────────────────
         addDialogues(MercenaryType.MAGNUS_FORGE, Trigger.HUB_IDLE,
             "I've been cleaning my cannon. She's beautiful.",
             "Ready to blow something up. Just say the word.",
@@ -328,7 +328,7 @@ public class MercenaryDialogue {
             "Easy. What's next?"
         );
 
-        // ── ECHO NULL — Signal Jammer ────────────────────────────
+        // ── KI AGENG — Dukun Tua ────────────────────────────
         addDialogues(MercenaryType.ECHO_NULL, Trigger.HUB_IDLE,
             "Signal frequencies nominal. Awaiting disruption orders.",
             "I detected 3 surveillance nodes in this building. Already jammed them.",
@@ -367,7 +367,7 @@ public class MercenaryDialogue {
             "The static has settled."
         );
 
-        // ── LYRA BLOOM — Neon Shaman ─────────────────────────────
+        // ── DEWI SRI — Penjaga Keseimbangan ─────────────────────────────
         addDialogues(MercenaryType.LYRA_BLOOM, Trigger.HUB_IDLE,
             "The neon flows through all things. Even this dusty hub.",
             "I feel good energy today. Today will be significant.",

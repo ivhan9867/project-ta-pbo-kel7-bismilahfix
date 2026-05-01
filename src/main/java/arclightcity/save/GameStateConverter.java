@@ -1,30 +1,29 @@
 package arclightcity.save;
 
-import arclightcity.combat.CombatResult;
 import arclightcity.engine.GameEngine;
+import arclightcity.entity.EntityFactory;
 import arclightcity.entity.mercenary.Mercenary;
 import arclightcity.entity.mercenary.MercenaryType;
 import arclightcity.entity.player.Player;
 import arclightcity.entity.player.PlayerBackground;
 import arclightcity.entity.stats.StatType;
-import arclightcity.entity.EntityFactory;
 import arclightcity.item.*;
 
 import java.util.List;
+import java.util.Map;
+import java.util.EnumMap;
+import java.util.Random;
 
 /**
- * GameStateConverter — mengkonversi antara GameEngine state dan GameSaveState.
+ * GameStateConverter — konversi antara GameEngine state dan GameSaveState.
  *
  * Dua operasi utama:
- *   toSaveState(engine)    → buat snapshot dari engine sekarang
- *   restoreFromSave(state) → rebuild engine dari snapshot
- *
- * Ini layer terpisah dari SaveManager (yang hanya urusan IO).
- * Pemisahan ini memudahkan unit test dan maintenance.
+ *   toSaveState(engine)        → buat snapshot dari engine sekarang
+ *   restoreFromSave(engine, s) → rebuild engine dari snapshot
  */
 public class GameStateConverter {
 
-    // ── SAVE: Engine → SaveState ──────────────────────────────
+    // ── SAVE: Engine → SaveState ─────────────────────────────
 
     public static GameSaveState toSaveState(GameEngine engine, boolean isAutoSave) {
         GameSaveState save = GameSaveState.create(isAutoSave);
@@ -51,71 +50,55 @@ public class GameStateConverter {
         // ── Inventory ────────────────────────────────────────
         Inventory inv = engine.getInventory();
         if (inv != null) {
-            // Equipment di bag
-            for (Equipment eq : inv.getEquipmentInBag()) {
-                save.inventoryItems.add(equipmentToData(eq, null));
-            }
             // Equipment yang diequip
             if (inv.getEquippedWeapon()     != null)
-                save.inventoryItems.add(equipmentToData(inv.getEquippedWeapon(), "WEAPON"));
+                save.inventoryItems.add(equipToData(inv.getEquippedWeapon(), "WEAPON"));
             if (inv.getEquippedArmor()      != null)
-                save.inventoryItems.add(equipmentToData(inv.getEquippedArmor(), "ARMOR"));
+                save.inventoryItems.add(equipToData(inv.getEquippedArmor(), "ARMOR"));
             if (inv.getEquippedAccessory1() != null)
-                save.inventoryItems.add(equipmentToData(inv.getEquippedAccessory1(), "ACC1"));
+                save.inventoryItems.add(equipToData(inv.getEquippedAccessory1(), "ACC1"));
             if (inv.getEquippedAccessory2() != null)
-                save.inventoryItems.add(equipmentToData(inv.getEquippedAccessory2(), "ACC2"));
-            // Consumables
-            for (Consumable c : inv.getConsumables()) {
-                GameSaveState.ItemData d = new GameSaveState.ItemData();
-                d.itemId   = c.getId();
-                d.itemClass= "Consumable";
-                d.name     = c.getName();
-                d.rarity   = c.getRarity().name();
-                d.subType  = c.getConsumableType().name();
-                d.effectValue = c.getEffectValue();
-                d.quantity = c.getStackCount();
-                save.inventoryItems.add(d);
-            }
-            // Materials
-            for (Material m : inv.getMaterials()) {
-                GameSaveState.ItemData d = new GameSaveState.ItemData();
-                d.itemId   = m.getId();
-                d.itemClass= "Material";
-                d.name     = m.getName();
-                d.rarity   = m.getRarity().name();
-                d.subType  = m.getMaterialType().name();
-                d.quantity = m.getQuantity();
-                save.inventoryItems.add(d);
+                save.inventoryItems.add(equipToData(inv.getEquippedAccessory2(), "ACC2"));
+
+            // Semua item di bag (equipment + consumable + material)
+            for (Item item : inv.getAllBagItems()) {
+                if (item instanceof Equipment eq)
+                    save.inventoryItems.add(equipToData(eq, null));
+                else if (item instanceof Consumable c)
+                    save.inventoryItems.add(consumableToData(c));
+                else if (item instanceof Material m)
+                    save.inventoryItems.add(materialToData(m));
             }
         }
 
         // ── Mercenaries ──────────────────────────────────────
         for (Mercenary merc : engine.getOwnedMercs()) {
             GameSaveState.MercData md = new GameSaveState.MercData();
-            md.mercType     = merc.getMercenaryType().name();
-            md.loyaltyLevel = merc.getLoyaltyLevel();
-            md.currentHp    = merc.getCurrentHp();
-            md.currentMp    = merc.getCurrentMp();
-            md.currentShield= merc.getCurrentShield();
-            md.isActive     = engine.getActiveMercs().contains(merc);
+            md.mercType      = merc.getMercenaryType().name();
+            md.loyaltyLevel  = merc.getLoyaltyLevel();
+            md.currentHp     = merc.getCurrentHp();
+            md.currentMp     = merc.getCurrentMp();
+            md.currentShield = merc.getCurrentShield();
+            md.isActive      = engine.getActiveMercs().contains(merc);
             save.ownedMercs.add(md);
         }
 
         // ── Progress ─────────────────────────────────────────
         save.progress.deepestFloorReached = player.getDungeonDepth();
-        // Stats lain bisa ditambah seiring development
 
         return save;
     }
 
-    private static GameSaveState.ItemData equipmentToData(Equipment eq, String slot) {
+    // ── Equipment → ItemData ──────────────────────────────────
+
+    private static GameSaveState.ItemData equipToData(Equipment eq, String slot) {
         GameSaveState.ItemData d = new GameSaveState.ItemData();
-        d.itemId          = eq.getId();
-        d.name            = eq.getName();
-        d.rarity          = eq.getRarity().name();
-        d.upgradeLevel    = eq.getUpgradeLevel();
-        d.calibrationCount= eq.getCalibrationCount();
-        d.slot            = slot;
+        d.itemId           = eq.getId();
+        d.name             = eq.getName();
+        d.rarity           = eq.getRarity().name();
+        d.upgradeLevel     = eq.getUpgradeLevel();
+        d.calibrationCount = eq.getCalibrationCount();
+        d.slot             = slot;
 
         if (eq instanceof Weapon w) {
             d.itemClass = "Weapon";
@@ -132,28 +115,44 @@ public class GameStateConverter {
         return d;
     }
 
+    private static GameSaveState.ItemData consumableToData(Consumable c) {
+        GameSaveState.ItemData d = new GameSaveState.ItemData();
+        d.itemId      = c.getId();
+        d.itemClass   = "Consumable";
+        d.name        = c.getName();
+        d.rarity      = c.getRarity().name();
+        d.subType     = c.getConsumableType().name();
+        d.effectValue = c.getEffectValue();
+        d.quantity    = c.getStackCount();
+        return d;
+    }
+
+    private static GameSaveState.ItemData materialToData(Material m) {
+        GameSaveState.ItemData d = new GameSaveState.ItemData();
+        d.itemId    = m.getId();
+        d.itemClass = "Material";
+        d.name      = m.getName();
+        d.rarity    = m.getRarity().name();
+        d.subType   = m.getMaterialType().name();
+        d.quantity  = m.getQuantity();
+        return d;
+    }
+
     // ── LOAD: SaveState → Engine ──────────────────────────────
 
-    /**
-     * Rebuild GameEngine state dari save.
-     * Dipanggil setelah SaveManager.loadLatest() berhasil.
-     */
     public static void restoreFromSave(GameEngine engine, GameSaveState save) {
         if (save == null || save.player == null) return;
 
-        // 1. Buat Player baru dari background tersimpan
         PlayerBackground bg = PlayerBackground.valueOf(save.player.background);
         engine.createCharacterFromSave(save.player.name, bg, save.player);
 
-        // 2. Restore inventory
         restoreInventory(engine, save);
-
-        // 3. Restore mercenaries
         restoreMercenaries(engine, save);
 
-        // 4. Engine sudah di-set ke HUB state oleh createCharacterFromSave
         System.out.println("[Converter] Restore complete: " + save.getSummary());
     }
+
+    // ── Inventory restore ─────────────────────────────────────
 
     private static void restoreInventory(GameEngine engine, GameSaveState save) {
         Inventory inv = engine.getInventory();
@@ -164,27 +163,24 @@ public class GameStateConverter {
                 Item item = dataToItem(d);
                 if (item == null) continue;
 
-                if (d.slot != null) {
-                    // Equip langsung ke slot
-                    if (item instanceof Equipment eq) {
-                        switch (d.slot) {
-                            case "WEAPON" -> inv.forceEquipWeapon(eq);
-                            case "ARMOR"  -> inv.forceEquipArmor(eq);
-                            case "ACC1"   -> inv.forceEquipAccessory1(eq);
-                            case "ACC2"   -> inv.forceEquipAccessory2(eq);
-                        }
+                if (d.slot != null && item instanceof Equipment eq) {
+                    switch (d.slot) {
+                        case "WEAPON" -> inv.forceEquipWeapon(eq);
+                        case "ARMOR"  -> inv.forceEquipArmor(eq);
+                        case "ACC1"   -> inv.forceEquipAccessory1(eq);
+                        case "ACC2"   -> inv.forceEquipAccessory2(eq);
                     }
                 } else {
                     inv.addItem(item);
                 }
             } catch (Exception e) {
-                System.err.println("[Converter] Failed to restore item: " + d.name + " — " + e.getMessage());
+                System.err.println("[Converter] Skip item: " + d.name + " — " + e.getMessage());
             }
         }
     }
 
     private static Item dataToItem(GameSaveState.ItemData d) {
-        if (d == null) return null;
+        if (d == null || d.itemClass == null) return null;
         Item.Rarity rarity = Item.Rarity.valueOf(d.rarity);
 
         return switch (d.itemClass) {
@@ -192,26 +188,25 @@ public class GameStateConverter {
                 var stats = parseStats(d.baseStats);
                 var w = new Weapon(d.name, "", rarity,
                         Weapon.WeaponType.valueOf(d.subType), stats);
-                applyEquipmentData(w, d);
+                applyEquipData(w, d);
                 yield w;
             }
             case "Armor" -> {
                 var stats = parseStats(d.baseStats);
                 var a = new Armor(d.name, "", rarity,
                         Armor.ArmorType.valueOf(d.subType), stats);
-                applyEquipmentData(a, d);
+                applyEquipData(a, d);
                 yield a;
             }
             case "Accessory" -> {
                 var stats = parseStats(d.baseStats);
                 var acc = new Accessory(d.name, "", rarity, stats);
-                applyEquipmentData(acc, d);
+                applyEquipData(acc, d);
                 yield acc;
             }
             case "Consumable" -> {
                 var c = new Consumable(d.name, "", rarity,
                         Consumable.ConsumableType.valueOf(d.subType), d.effectValue);
-                // Stack
                 for (int i = 1; i < d.quantity; i++) c.addStack();
                 yield c;
             }
@@ -225,45 +220,50 @@ public class GameStateConverter {
         };
     }
 
-    private static void applyEquipmentData(Equipment eq, GameSaveState.ItemData d) {
-        // Restore upgrade level
+    private static void applyEquipData(Equipment eq, GameSaveState.ItemData d) {
         for (int i = 0; i < d.upgradeLevel; i++) eq.applyUpgrade();
-        // Restore bonus stats (calibration result)
-        var rng = new java.util.Random();
-        for (int i = 0; i < d.calibrationCount; i++) eq.calibrate(rng);
-        // Override bonus stats dengan yang tersimpan
+        // Restore bonus stats langsung (deterministic)
         eq.getBonusStats().clear();
         parseStats(d.bonusStats).forEach((k, v) -> eq.getBonusStats().put(k, v));
     }
 
-    private static java.util.Map<StatType, Double> parseStats(
-            java.util.Map<String, Double> raw) {
-        var result = new java.util.EnumMap<StatType, Double>(StatType.class);
+    private static Map<StatType, Double> parseStats(Map<String, Double> raw) {
+        var result = new EnumMap<StatType, Double>(StatType.class);
         if (raw == null) return result;
         raw.forEach((k, v) -> {
             try { result.put(StatType.valueOf(k), v); }
-            catch (IllegalArgumentException ignored) { }
+            catch (IllegalArgumentException ignored) {}
         });
         return result;
     }
 
+    // ── Mercenary restore ─────────────────────────────────────
+
     private static void restoreMercenaries(GameEngine engine, GameSaveState save) {
         engine.clearMercsForLoad();
+
         for (GameSaveState.MercData md : save.ownedMercs) {
             try {
                 MercenaryType type = MercenaryType.valueOf(md.mercType);
-                Mercenary merc    = EntityFactory.createMercenary(type);
-                // Restore loyalty
-                for (int i = 0; i < md.loyaltyLevel; i++) merc.gainLoyalty(1);
-                // Restore HP/MP/Shield
-                if (md.currentHp    < merc.getCurrentHp())    merc.setHpDirect(md.currentHp);
-                if (md.currentMp    < merc.getCurrentMp())    merc.setMpDirect(md.currentMp);
-                if (md.currentShield< merc.getCurrentShield())merc.setShieldDirect(md.currentShield);
+                Mercenary merc     = EntityFactory.createMercenary(type);
+
+                // Restore loyalty — set langsung ke field (tidak ada gainLoyalty)
+                merc.setLoyaltyDirect(md.loyaltyLevel);
+
+                // Restore vitals — gunakan receiveHeal/restoreMp setelah entity dibuat
+                // Entity dimulai dengan HP/MP penuh, kurangi sesuai save jika perlu
+                double maxHp     = merc.getStats().get(StatType.MAX_HP);
+                double maxMp     = merc.getStats().get(StatType.MAX_MP);
+                double maxShield = merc.getStats().get(StatType.MAX_SHIELD);
+
+                // Set langsung via protected field accessor di Mercenary
+                merc.restoreVitals(md.currentHp, md.currentMp, md.currentShield);
 
                 engine.addOwnedMercForLoad(merc);
                 if (md.isActive) engine.addActiveMercForLoad(merc);
+
             } catch (Exception e) {
-                System.err.println("[Converter] Failed to restore merc: " + md.mercType);
+                System.err.println("[Converter] Skip merc: " + md.mercType + " — " + e.getMessage());
             }
         }
     }

@@ -20,7 +20,7 @@ import arclightcity.ui.util.UIFactory;
  *   ┌─────────────────────────┐
  *   │   [SCAN LINES bg]       │
  *   │                         │
- *   │   ARCLIGHT CITY         │  ← glowing title
+ *   │   MYTHIC ITEM OBTAINED         │  ← glowing title
  *   │   ─── CYBERPUNK RPG ─── │
  *   │                         │
  *   │   [ENTER ARCLIGHT]      │  ← NEW GAME
@@ -119,7 +119,7 @@ public class MainMenuView {
         buttons.setAlignment(Pos.CENTER);
         buttons.setPadding(new Insets(40, 0, 20, 0));
 
-        Button newGame = UIFactory.btnPrimary("[ ENTER ARCLIGHT CITY ]");
+        Button newGame = UIFactory.btnPrimary("[ ENTER MYTHIC ITEM OBTAINED ]");
         newGame.setOnAction(e -> router.showCharacterCreate());
 
         // CONTINUE — aktif jika ada save
