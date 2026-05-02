@@ -190,6 +190,7 @@ public class Inventory {
             case RARE      -> new int[]{6*(lvl+1), 2*(lvl+1), 1*(lvl+1)};
             case EPIC      -> new int[]{8*(lvl+1), 4*(lvl+1), 2*(lvl+1)};
             case LEGENDARY -> new int[]{10*(lvl+1),6*(lvl+1), 4*(lvl+1)};
+            case MYTHIC    -> new int[]{15*(lvl+1),10*(lvl+1),8*(lvl+1)}; // Mythic: biaya tertinggi
         };
 
         var result = UpgradeSystem.upgrade(eq, scrapMetal, cyberChips, neonCrystals);

@@ -60,8 +60,8 @@ public class MercChatPanel extends VBox {
         setMaxWidth(WIDTH);
         setPrefHeight(ArclightApp.SCREEN_HEIGHT);
         setStyle(
-            "-fx-background-color: #080D18;" +
-            "-fx-border-color: #1C2E44;" +
+            "-fx-background-color: #080604;" +
+            "-fx-border-color: #2A1A08;" +
             "-fx-border-width: 0 0 0 1;"
         );
 
@@ -69,10 +69,10 @@ public class MercChatPanel extends VBox {
         HBox header = new HBox(8);
         header.setPadding(new Insets(12, 14, 12, 14));
         header.setAlignment(Pos.CENTER_LEFT);
-        header.setStyle("-fx-border-color: #1C2E44; -fx-border-width: 0 0 1 0;");
+        header.setStyle("-fx-background-color: #0F0A06; -fx-border-color: #2A1A08; -fx-border-width: 0 0 1 0;");
 
         // Pulsing dot indicator
-        Circle dot = new Circle(4, Color.web("#00E676"));
+        Circle dot = new Circle(4, Color.web("#C8860A"));
         Timeline pulse = new Timeline(
             new KeyFrame(Duration.ZERO,       new KeyValue(dot.opacityProperty(), 1.0)),
             new KeyFrame(Duration.millis(800), new KeyValue(dot.opacityProperty(), 0.3)),
@@ -83,7 +83,7 @@ public class MercChatPanel extends VBox {
 
         Label headerLabel = new Label("BISIK KAWULA");
         headerLabel.setStyle(
-            "-fx-text-fill: #5A6A80;" +
+            "-fx-text-fill: #6A5840;" +
             "-fx-font-family: 'Courier New';" +
             "-fx-font-size: 11px;" +
             "-fx-font-weight: bold;" +
@@ -93,7 +93,7 @@ public class MercChatPanel extends VBox {
 
         Label channelLabel = new Label("CH.1");
         channelLabel.setStyle(
-            "-fx-text-fill: #2A3A50;" +
+            "-fx-text-fill: #3A2810;" +
             "-fx-font-family: 'Courier New';" +
             "-fx-font-size: 11px;"
         );
@@ -110,8 +110,8 @@ public class MercChatPanel extends VBox {
         scrollPane.setFitToWidth(true);
         scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollPane.setStyle(
-            "-fx-background-color: #080D18;" +
-            "-fx-background: #080D18;" +
+            "-fx-background-color: #080604;" +
+            "-fx-background: #080604;" +
             "-fx-border-color: transparent;"
         );
         VBox.setVgrow(scrollPane, Priority.ALWAYS);
@@ -158,7 +158,7 @@ public class MercChatPanel extends VBox {
             sysMsg.setMaxWidth(Double.MAX_VALUE);
             sysMsg.setAlignment(Pos.CENTER);
             sysMsg.setStyle(
-                "-fx-text-fill: #2A3A50;" +
+                "-fx-text-fill: #3A2810;" +
                 "-fx-font-family: 'Courier New';" +
                 "-fx-font-size: 11px;" +
                 "-fx-padding: 4 0;"
@@ -225,7 +225,7 @@ public class MercChatPanel extends VBox {
 
         Label timeLabel = new Label(getCurrentTime());
         timeLabel.setStyle(
-            "-fx-text-fill: #2A3A50;" +
+            "-fx-text-fill: #3A2810;" +
             "-fx-font-family: 'Courier New';" +
             "-fx-font-size: 8px;"
         );
@@ -238,7 +238,7 @@ public class MercChatPanel extends VBox {
         textLabel.setWrapText(true);
         textLabel.setMaxWidth(Double.MAX_VALUE);
         textLabel.setStyle(
-            "-fx-text-fill: #8899AA;" +
+            "-fx-text-fill: #A09070;" +
             "-fx-font-family: 'Courier New';" +
             "-fx-font-size: 11px;" +
             "-fx-padding: 0 0 0 10;"

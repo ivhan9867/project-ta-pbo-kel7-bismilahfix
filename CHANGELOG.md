@@ -429,3 +429,188 @@ mvn javafx:run
 **Poin 3: Hub district name dinamis berdasarkan floor depth**
 - Floor 0-3: Pasar Malam Gaib | 4-6: Candi Terlarang | 7-10: Hutan Angker
 - 11-15: Goa Naga | 16+: Kahyangan Rusak
+
+---
+
+## [v0.4.1] — 2026-05-01
+
+### Added
+
+**[CONTENT] 15 Enemy Baru (total 20 enemy + 5 boss)**
+
+Standard enemies baru (Floor 1-6):
+- **Tuyul Pencuri** — SPIRIT, steal gold saat hit, evasion 20%
+- **Wewe Gombel** — SPIRIT, steal buff dari player, medium threat
+- **Pocong Listrik** — SPIRIT, shock + AoE shockwave saat desperate
+- **Banaspati** — SPIRIT, burn DOT AoE setiap giliran
+- **Babi Ngepet** — BEAST, HP tinggi 150, gold reward 80 (tertinggi standard)
+
+Elite enemies baru (Floor 5-17):
+- **Rangda Merah** — DEMON, Physical DEF 50 (praktis kebal fisik)
+- **Barong Rusak** — BEAST, toggle ATK/DEF mode setiap turn
+- **Leyak Api** — SPIRIT, AoE burn setiap giliran, evasion 15%
+- **Garuda Korup** — BEAST, evasion 25%, crit tinggi, dive AoE
+- **Detya Wesi** — GIANT, armor stacking +8 DEF per turn, HP 280
+
+Boss baru (milestone floors):
+- **Nyi Roro Kidul** — Floor 8, DIVINE, AoE Energy + debuff kurse (HP 800)
+- **Rangda Agung** — Floor 12, DEMON, Null Field + AoE curse (HP 1100)
+- **Garuda Mahaguru** — Floor 16, DIVINE, 4 fase, evasion 30%, crit 25% (HP 1600)
+- **Semar Pamungkas** — Floor 20, DIVINE, FINAL BOSS, HP 3000, random skill setiap turn,
+  HP regen 20/turn, guaranteed Mythic Fragment ×2
+
+**[SYSTEM] EnemyRace baru — SPIRIT, GIANT, DEMON, DIVINE**
+
+**[SYSTEM] Enemy helper methods baru (Enemy.java)**
+- `getHighestAtkTarget()` — target dengan ATK tertinggi
+- `getFastestTarget()` — target dengan SPEED tertinggi
+
+**[SYSTEM] Encounter generation per floor range**
+- Floor 1-3: Leak Pengembara, Tuyul Pencuri, Naga Basuki
+- Floor 4-6: Wewe Gombel, Banaspati, Pocong Listrik
+- Floor 7-10: Babi Ngepet, Barong Rusak, Leyak Api
+- Floor 11-15: Garuda Korup, Detya Wesi, Rangda Merah
+- Floor 16+: Garuda Korup, Detya Wesi (hard), Garuda Mahaguru
+
+**[SYSTEM] Boss per floor milestone**
+- Floor ≤5: Batara Kala | ≤8: Nyi Roro Kidul | ≤12: Rangda Agung
+- ≤16: Garuda Mahaguru | ≥20: Semar Pamungkas
+
+**[FEATURE] Tier MYTHIC — Rarity ke-6 (Item.java)**
+- Warna: `#FF6B00` (oranye api)
+- Stat multiplier: 5.0× (vs Legendary 3.0×)
+- Upgrade slots: 25 (vs Legendary 15)
+- **TIDAK bisa drop dari loot biasa** — hanya dari boss/craft/trade
+
+**[FEATURE] Mythic Weapon System (LootManager.java)**
+- 10 Mythic weapon unik dengan stat jauh di atas Legendary
+- Keris Naga Raja, Cakra Wisnu, Tombak Inti Bumi, Kujang Bintang,
+  Golok Roh Purba, Trisula Samudra, Panah Angin Sakti, Cemeti Kilat,
+  Mandau Dayak Agung, Pedang Surya
+- `generateMythicDrop()` — pilih random 1 dari 10
+- `generateMythicFragment()` — material untuk craft
+
+**[FEATURE] Mythic Fragment Craft System (GameEngine.java)**
+- Setiap boss dikalahkan → guaranteed 1 Mythic Fragment masuk inventory
+- Kumpulkan 3 Fragment → auto-craft 1 Mythic weapon random
+
+**[FEATURE] Material.MaterialType.MYTHIC_FRAGMENT**
+
+**[CONTENT] Nama weapon dikonversi ke Nusantara (LootManager.java)**
+- Physical: Keris Pamor, Golok Siluman, Tombak Rajawali, Kujang Sakti, Mandau Dayak
+- Cyber: Santet Kristal, Rajah Perusak, Ilmu Hitam Runcing, Keris Cyber, Tombak Roh Data
+- Energy: Cakra Neon, Panah Petir, Trisula Energi, Lembing Surya, Cahaya Kahyangan
+
+---
+
+## [v0.3.7d] — 2026-05-01
+
+### Fixed — Critical
+
+**[BUG ROOT CAUSE] MercChatPanel tidak pernah tertrigger sejak versi pertama (SceneRouter.java)**
+
+Root cause ditemukan setelah audit mendalam:
+
+Setiap kali navigasi antar screen, `setSceneWithChat()` membuat `new HBox()` baru dan `new Scene()` baru, lalu menambahkan `chatPanel` ke HBox tersebut.
+
+Di JavaFX, sebuah Node hanya boleh memiliki satu parent. Ketika `chatPanel` ditambahkan ke HBox baru, JavaFX **otomatis melepaskan `chatPanel` dari parent lamanya**. Akibatnya:
+- `messageContainer` (VBox internal chatPanel) kehilangan parent-nya
+- Semua pesan yang dikirim via `addMercMessage()` diterima tapi tidak pernah ter-render ke screen yang tampil
+- Panel terlihat kosong atau hanya menampilkan welcome message awal
+
+Fix definitif — **arsitektur Single Persistent Scene**:
+- `persistentLayout` (HBox): dibuat SEKALI di constructor, tidak pernah diganti
+- `gameArea` (StackPane): hanya isinya yang diganti saat navigasi, bukan container-nya
+- `chatPanel`: selalu ada di `persistentLayout`, tidak pernah dipindahkan
+- Scene dibuat SEKALI di constructor SceneRouter, `stage.setScene()` tidak pernah dipanggil lagi
+- `showWithChat()`: ganti `gameArea.getChildren().setAll(content)` — bukan buat scene baru
+- `showFullWidth()`: sembunyikan chatPanel via `setVisible(false)` untuk main menu
+- Semua `emitChat()` dan `addSystemChat()` dibungkus `Platform.runLater()` agar eksekusi setelah JavaFX render selesai
+
+### Fixed — Poin 1-8
+
+**[POIN 1] Inkonsistensi tema Nusantara — consumable names**
+- Health Pack → **Jamu Kunyit** (heal HP)
+- MP Injector → **Tirta Mahkota** (restore MP)
+- Antidote → **Daun Suruh Sakti** (cleanse DOT)
+- Stim Pack → **Sesajen Kekuatan** (buff item)
+
+**[POIN 1] Inkonsistensi tema Nusantara — armor & accessory names**
+- Armor: Baju Zirah Majapahit, Tameng Naga, Kain Batik Pelindung, Rompi Rajah, Zirah Gaib, Perisai Garuda, Baju Besi Empu
+- Accessory: Gelang Rajah, Kalung Garuda, Cincin Semar, Jimat Naga, Amulet Kahyangan, Gelang Kala, Cincin Pamor, Keris Mini
+
+**[POIN 1] DungeonEvent narratives dikonversi ke Nusantara**
+- "Calibration Terminal / MegaCorp" → "Altar Kalibrasi kuno"
+- "Neon Fountain / cairan neon" → "Sumber Mata Air Gaib"
+- "Data Cache / modul memori" → "Gulungan Ilmu Kuno / rontal"
+- "Electric Trap" → "Jebakan Petir Raksasa / rajah"
+- "Security Alarm / korporat" → "Gong Peringatan / pasukan gaib"
+- "Neon Burn / pipa energi neon" → "Api Banaspati"
+- "Mystery Container" → "Peti Misterius"
+- "Wandering Merchant" → "Pedagang Gaib"
+- "Corrupted Cache / virus digital" → "Harta Terkutuk / kutukan"
+
+**[POIN 2] Skill descriptions dikonversi ke Nusantara (CombatView.SkillInfo)**
+- Power Strike → Pukulan Harimau
+- Execute → Tebasan Pamungkas
+- Deep Hack → Santet Digital
+- Virus Upload → Upload Santet
+- Phantom Shot → Panah Bayangan
+- Shadow Step → Langkah Gaib
+- Iron Shield → Tameng Baja
+- Shockwave → Gempa Bumi
+- Energy Drain → Serap Tenaga
+- Bio Irradiate → Racun Semesta
+- EMP Burst → Ledakan Petir
+- Field Barrier → Rajah Pelindung
+
+**[POIN 5] Mythic visual eksklusif di inventory (ViewsBundle.java)**
+- Item Mythic: nama dengan glow oranye `dropshadow(gaussian, #FF6B00, 8, 0.5, 0, 0)`
+- Badge `✦ MYTHIC ✦` dengan glow menggantikan `[Mythic]` biasa
+
+**[POIN 6] Mythic Fragment counter di Hub (HubView.java)**
+- Counter `✦ X/3` di header bar player
+- Oranye jika ada fragment, redup jika belum
+- Tooltip: info cara craft + status fragment saat ini
+
+**[POIN 7] Semar Pamungkas balance (SemarPamungkas.java)**
+- HP regen: 20/turn → 8/turn (masih challenge tapi tidak impossible)
+- Shield regen: 15/turn → 5/turn
+
+---
+
+## [v0.4.2] — 2026-05-01
+
+### Fixed — Critical
+
+**[BUG] Gold & EXP double-apply setelah combat**
+
+Root cause: `CombatManager.buildVictoryResult()` sudah memanggil `player.gainExp()` dan `player.gainGold()` secara langsung. Tapi `GameEngine.setCombatEndListener` juga memanggil `player.gainExp()` dan `player.addGold()` lagi dari `result.getTotalExpGained/GoldGained()`.
+
+Akibatnya: setiap kali menang combat, player mendapat EXP dan Gold **dua kali lipat** dari seharusnya.
+
+Fix: Hapus pemanggilan `gainExp()` dan `addGold()` dari `GameEngine.setCombatEndListener`. Engine sekarang hanya handle: loot drop, level up notification, dan Mythic fragment. EXP dan Gold tetap diapply oleh CombatManager (satu-satunya tempat yang benar).
+
+**[BUG] gameArea width tidak di-reset setelah showFullWidth (SceneRouter.java)**
+
+`showFullWidth()` mengubah `gameArea.setPrefWidth(SCREEN_WIDTH)` untuk tampilkan main menu/char create full width, tapi `showWithChat()` tidak me-reset width kembali ke `GAME_WIDTH`. Akibatnya, saat player masuk Hub setelah char create, game area masih 860px dan chat panel ter-push keluar layar.
+
+Fix: `showWithChat()` sekarang reset `gameArea.setPrefSize(GAME_WIDTH, SCREEN_HEIGHT)` dan `setMaxWidth/setMinWidth(GAME_WIDTH)` sebelum set konten.
+
+**[BUG] Boss baru tidak implement `onPhaseTransition()` (abstract method di Boss.java)**
+
+Keempat boss baru (NyiRoroKidul, RangdaAgung, GarudaMahaguru, SemarPamungkas) tidak mengimplementasikan `onPhaseTransition(int, int)` yang abstract di `Boss.java`. Ini akan menyebabkan compile error.
+
+Fix: Tambahkan `@Override protected void onPhaseTransition(int fromPhase, int toPhase) {}` ke semua boss baru.
+
+### Changed
+
+**CombatResult — tambah `levelsGained` field**
+- `levelsGained` field baru (mutable, default 0)
+- `getLevelsGained()` dan `setLevelsGained(int)` getter/setter baru
+- `CombatManager.buildVictoryResult()` sekarang set `result.setLevelsGained(n)` setelah `player.gainExp()`
+- `GameEngine` menggunakan `result.getLevelsGained()` untuk trigger level up notification
+
+**DungeonStateEvent — tambah `mythicCraft()` factory**
+- Notification khusus saat 3 Mythic Fragment berhasil di-craft
+- Pakai Type.LEVEL_UP untuk tampil sebagai notifikasi di DungeonMapView

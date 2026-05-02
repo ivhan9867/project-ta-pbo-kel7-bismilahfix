@@ -17,6 +17,7 @@ public class CombatResult {
     private final int           turnsElapsed;
     private final double        totalExpGained;
     private final long          totalGoldGained;
+    private int                 levelsGained = 0; // set oleh CombatManager setelah gainExp()
     private final List<String>  lootItemIds;       // item yang di-drop enemy
     private final List<String>  combatLog;         // ringkasan event combat
     private final List<Enemy>   defeatedEnemies;
@@ -60,6 +61,8 @@ public class CombatResult {
     public int           getTurnsElapsed()     { return turnsElapsed; }
     public double        getTotalExpGained()   { return totalExpGained; }
     public long          getTotalGoldGained()  { return totalGoldGained; }
+    public int           getLevelsGained()     { return levelsGained; }
+    public void          setLevelsGained(int n){ this.levelsGained = n; }
     public List<String>  getLootItemIds()      { return lootItemIds; }
     public List<String>  getCombatLog()        { return combatLog; }
     public List<Enemy>   getDefeatedEnemies()  { return defeatedEnemies; }

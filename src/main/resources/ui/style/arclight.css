@@ -1,285 +1,666 @@
-/* ═══════════════════════════════════════════════════════════
-   MYTHIC ITEM OBTAINED — GLOBAL STYLESHEET
-   Tema: Nusantara Dark — Gold, Merah Bata, Hijau Tua
-   Font: Monospace (Courier New / system monospace)
+/* ═══════════════════════════════════════════════════════════════════
+   MYTHIC ITEM OBTAINED — Master Stylesheet v2.0
+   
+   Design Language: "Nusantara Dark Gold"
+   Inspirasi: Wayang kulit, keris pamor, batik malam, kahyangan
+   
    Palette:
-     --bg-deep    : #0A0604  (latar hitam hangat)
-     --bg-panel   : #150E08  (panel / card)
-     --gold-main  : #C8860A  (aksen utama — emas batik)
-     --gold-bright: #FFB830  (highlight gold)
-     --merah      : #CC2200  (HP / bahaya)
-     --hijau-tua  : #2D6A2D  (buff / sukses)
-     --text-main  : #EDE0C8  (teks utama — kertas tua)
-     --text-dim   : #7A6650  (teks redup)
-     --border     : #3A2810  (garis pembatas)
-══════════════════════════════════════════════════════════ */
+     --ink         #0A0604   latar tinta hitam hangat
+     --parchment   #1A1008   panel — seperti kulit wayang tua
+     --parchment2  #241510   card hover / accent bg
+     --gold-main   #C8860A   gold batik utama
+     --gold-bright #FFB830   gold highlight / teks penting
+     --gold-dim    #7A5205   gold redup / border
+     --ember       #CC3300   merah api / HP / bahaya
+     --ember-dim   #661800   merah redup
+     --jade        #2D7A45   hijau giok / buff / sukses
+     --midnight    #0F0A1E   ungu gelap / shield / mystis
+     --amethyst    #7755BB   ungu mistis
+     --sapphire    #1E3A6E   biru tua / cyber
+     --parchment-text  #EDE0C8   teks — kertas tua
+     --parchment-dim   #A09070   teks redup
+     --parchment-dark  #6A5840   teks sangat redup
+     --border-warm #3A2810   border utama
+     --border-gold #5A3A10   border gold redup
+═══════════════════════════════════════════════════════════════════ */
 
-/* ── ROOT ─────────────────────────────────────────────── */
+/* ════════════════════════════════════════════════════════
+   ROOT & BASE
+════════════════════════════════════════════════════════ */
 .root {
     -fx-background-color: #0A0604;
-    -fx-font-family: "Courier New", "Courier", monospace;
-    -fx-font-size: 14px;
+    -fx-font-family: "Courier New", "Lucida Console", monospace;
+    -fx-font-size: 13px;
     -fx-text-fill: #EDE0C8;
 }
 
-/* ── SCREEN CONTAINER ────────────────────────────────── */
+/* ════════════════════════════════════════════════════════
+   LAYOUT CONTAINERS
+════════════════════════════════════════════════════════ */
 .screen-root {
     -fx-background-color: #0A0604;
 }
 
-/* ── PANEL / CARD ────────────────────────────────────── */
 .panel {
-    -fx-background-color: #150E08;
+    -fx-background-color: #1A1008;
     -fx-border-color: #3A2810;
-    -fx-border-width: 1px;
-    -fx-padding: 12px;
+    -fx-border-width: 1;
+    -fx-padding: 12;
 }
 
-.panel-highlight {
-    -fx-background-color: #150E08;
+.panel-gold {
+    -fx-background-color: #1A1008;
     -fx-border-color: #C8860A;
-    -fx-border-width: 1px 1px 1px 3px;
-    -fx-padding: 12px;
+    -fx-border-width: 1 1 1 3;
+    -fx-padding: 12;
 }
 
-/* ── TYPOGRAPHY ──────────────────────────────────────── */
+.panel-dark {
+    -fx-background-color: #0F0A06;
+    -fx-border-color: #3A2810;
+    -fx-border-width: 1;
+    -fx-padding: 8;
+}
+
+.section-divider {
+    -fx-background-color: #3A2810;
+    -fx-min-height: 1;
+    -fx-max-height: 1;
+    -fx-pref-height: 1;
+}
+
+/* ════════════════════════════════════════════════════════
+   TYPOGRAPHY
+════════════════════════════════════════════════════════ */
+
+/* Screen title — judul besar dengan efek gold glow */
 .title-screen {
     -fx-font-family: "Courier New", monospace;
-    -fx-font-size: 32px;
+    -fx-font-size: 28px;
     -fx-font-weight: bold;
     -fx-text-fill: #FFB830;
-    -fx-effect: dropshadow(gaussian, #C8860A, 15, 0.6, 0, 0);
+    -fx-effect: dropshadow(gaussian, #C8860A, 20, 0.7, 0, 0)
+              , dropshadow(gaussian, #FFB830, 8, 0.4, 0, 0);
 }
 
-.title-section {
+/* Sub-title / nama screen */
+.title-sub {
     -fx-font-size: 11px;
     -fx-font-weight: bold;
-    -fx-text-fill: #7A6650;
-    -fx-letter-spacing: 3px;
+    -fx-text-fill: #7A5205;
+    -fx-letter-spacing: 4;
 }
 
+/* Section headers */
+.title-section {
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #6A5840;
+    -fx-letter-spacing: 3;
+}
+
+/* Panel title */
 .title-panel {
-    -fx-font-size: 14px;
+    -fx-font-size: 13px;
     -fx-font-weight: bold;
     -fx-text-fill: #FFB830;
 }
 
-.label-stat-name  { -fx-font-size: 12px; -fx-text-fill: #A09080; }
-.label-stat-value { -fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #FFB830; }
-.label-gold       { -fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #FFB830; }
-.label-level      { -fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #EDE0C8; }
-.label-dim        { -fx-font-size: 11px; -fx-text-fill: #7A6650; }
-.label-damage     { -fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #FF6644; }
+/* Stat labels */
+.label-stat-name  {
+    -fx-font-size: 12px;
+    -fx-text-fill: #A09070;
+}
+.label-stat-value {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #FFB830;
+}
+
+/* Resource labels */
+.label-gold {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #FFB830;
+    -fx-effect: dropshadow(gaussian, #C8860A, 6, 0.3, 0, 0);
+}
+.label-level {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #EDE0C8;
+}
+.label-floor {
+    -fx-font-size: 11px;
+    -fx-text-fill: #7A5205;
+}
+
+/* Dim / secondary text */
+.label-dim      { -fx-font-size: 11px; -fx-text-fill: #6A5840; }
+.label-disabled { -fx-text-fill: #3A2810; }
+
+/* Floating damage numbers */
+.label-damage      { -fx-font-size: 17px; -fx-font-weight: bold; -fx-text-fill: #FF5533; }
 .label-damage-crit {
     -fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #FFB830;
-    -fx-effect: dropshadow(gaussian, #C8860A, 8, 0.5, 0, 0);
+    -fx-effect: dropshadow(gaussian, #C8860A, 10, 0.6, 0, 0);
 }
-.label-heal       { -fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #44AA44; }
-.label-shield-absorb { -fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #8855CC; }
+.label-heal        { -fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #44BB66; }
+.label-shield-absorb { -fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #9966DD; }
 
-/* ── BUTTONS ─────────────────────────────────────────── */
+/* ════════════════════════════════════════════════════════
+   BUTTONS — empat varian utama
+════════════════════════════════════════════════════════ */
+
+/* Primary — gold bordered */
 .btn-primary {
     -fx-background-color: transparent;
     -fx-border-color: #C8860A;
-    -fx-border-width: 1px;
+    -fx-border-width: 1;
     -fx-text-fill: #FFB830;
     -fx-font-family: "Courier New", monospace;
     -fx-font-size: 13px;
     -fx-font-weight: bold;
-    -fx-padding: 10px 20px;
+    -fx-padding: 10 20;
     -fx-cursor: hand;
-    -fx-min-width: 200px;
+    -fx-min-width: 200;
+    -fx-alignment: CENTER;
 }
 .btn-primary:hover {
-    -fx-background-color: #C8860A22;
-    -fx-effect: dropshadow(gaussian, #C8860A, 10, 0.4, 0, 0);
+    -fx-background-color: #C8860A1A;
+    -fx-border-color: #FFB830;
+    -fx-effect: dropshadow(gaussian, #C8860A, 12, 0.4, 0, 0);
 }
-.btn-primary:pressed { -fx-background-color: #C8860A44; }
-
-.btn-danger {
-    -fx-background-color: transparent;
-    -fx-border-color: #CC2200;
-    -fx-border-width: 1px;
-    -fx-text-fill: #CC2200;
-    -fx-font-family: "Courier New", monospace;
-    -fx-font-size: 13px;
-    -fx-font-weight: bold;
-    -fx-padding: 10px 20px;
-    -fx-cursor: hand;
-}
-.btn-danger:hover {
-    -fx-background-color: #CC220022;
-    -fx-effect: dropshadow(gaussian, #CC2200, 8, 0.4, 0, 0);
+.btn-primary:pressed { -fx-background-color: #C8860A33; }
+.btn-primary:disabled {
+    -fx-border-color: #3A2810;
+    -fx-text-fill: #3A2810;
+    -fx-cursor: default;
 }
 
+/* Gold — filled glow untuk CTA utama */
 .btn-gold {
     -fx-background-color: #C8860A22;
     -fx-border-color: #FFB830;
-    -fx-border-width: 1px;
+    -fx-border-width: 1;
     -fx-text-fill: #FFB830;
     -fx-font-family: "Courier New", monospace;
     -fx-font-size: 13px;
     -fx-font-weight: bold;
-    -fx-padding: 10px 20px;
+    -fx-padding: 10 20;
     -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, #C8860A, 8, 0.3, 0, 0);
 }
 .btn-gold:hover {
     -fx-background-color: #C8860A44;
-    -fx-effect: dropshadow(gaussian, #FFB830, 10, 0.4, 0, 0);
+    -fx-effect: dropshadow(gaussian, #FFB830, 16, 0.5, 0, 0);
+}
+.btn-gold:pressed { -fx-background-color: #C8860A66; }
+
+/* Danger — merah untuk tindakan destruktif */
+.btn-danger {
+    -fx-background-color: transparent;
+    -fx-border-color: #CC3300;
+    -fx-border-width: 1;
+    -fx-text-fill: #FF5533;
+    -fx-font-family: "Courier New", monospace;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 10 20;
+    -fx-cursor: hand;
+}
+.btn-danger:hover {
+    -fx-background-color: #CC330022;
+    -fx-effect: dropshadow(gaussian, #CC3300, 10, 0.4, 0, 0);
 }
 
+/* Small utility button */
 .btn-small {
     -fx-background-color: transparent;
     -fx-border-color: #3A2810;
-    -fx-border-width: 1px;
-    -fx-text-fill: #7A6650;
+    -fx-border-width: 1;
+    -fx-text-fill: #6A5840;
     -fx-font-family: "Courier New", monospace;
     -fx-font-size: 11px;
-    -fx-padding: 4px 10px;
+    -fx-padding: 4 10;
     -fx-cursor: hand;
 }
-.btn-small:hover { -fx-border-color: #C8860A; -fx-text-fill: #FFB830; }
+.btn-small:hover {
+    -fx-border-color: #C8860A;
+    -fx-text-fill: #FFB830;
+}
 
+/* Nav button (tab-style) */
 .btn-nav {
     -fx-background-color: transparent;
     -fx-border-color: transparent;
-    -fx-text-fill: #7A6650;
+    -fx-text-fill: #6A5840;
     -fx-font-family: "Courier New", monospace;
     -fx-font-size: 11px;
-    -fx-padding: 4px 8px;
+    -fx-padding: 8 16;
     -fx-cursor: hand;
 }
 .btn-nav:hover  { -fx-text-fill: #FFB830; }
 .btn-nav-active {
     -fx-text-fill: #FFB830;
     -fx-border-color: transparent transparent #C8860A transparent;
-    -fx-border-width: 0 0 2px 0;
+    -fx-border-width: 0 0 2 0;
 }
 
-/* ── PROGRESS BARS ───────────────────────────────────── */
+/* ════════════════════════════════════════════════════════
+   PROGRESS BARS
+════════════════════════════════════════════════════════ */
 .progress-bar {
-    -fx-min-height: 6px; -fx-max-height: 6px; -fx-min-width: 100px;
+    -fx-min-height: 6;
+    -fx-max-height: 6;
     -fx-background-color: transparent;
 }
-.progress-bar .track { -fx-background-color: #3A281088; -fx-background-radius: 0; }
+.progress-bar .track { -fx-background-color: #1A1008; -fx-background-radius: 0; }
 .progress-bar .bar   { -fx-background-radius: 0; -fx-background-insets: 0; }
 
-.bar-hp .track     { -fx-background-color: #200A04; -fx-background-radius: 0; }
-.bar-hp .bar       { -fx-background-color: #CC2200; -fx-background-radius: 0; }
-.bar-shield .track { -fx-background-color: #0F0820; -fx-background-radius: 0; }
-.bar-shield .bar   { -fx-background-color: #8855CC; -fx-background-radius: 0; }
-.bar-mp .track     { -fx-background-color: #08101C; -fx-background-radius: 0; }
-.bar-mp .bar       { -fx-background-color: #2255AA; -fx-background-radius: 0; }
-.bar-exp .track    { -fx-background-color: #1C1000; -fx-background-radius: 0; }
-.bar-exp .bar      { -fx-background-color: #C8860A; -fx-background-radius: 0; }
+/* HP bar — merah api */
+.bar-hp .track { -fx-background-color: #200A04; }
+.bar-hp .bar   { -fx-background-color: linear-gradient(to right, #AA1100, #CC3300); }
 
-/* ── SCROLL PANE ─────────────────────────────────────── */
-.scroll-pane { -fx-background-color: transparent; -fx-background: transparent; }
-.scroll-pane .viewport { -fx-background-color: transparent; }
-.scroll-pane > .scroll-bar:vertical,
-.scroll-pane > .scroll-bar:horizontal { -fx-background-color: #0A0604; }
+/* Shield bar — amethyst */
+.bar-shield .track { -fx-background-color: #0F0A1E; }
+.bar-shield .bar   { -fx-background-color: linear-gradient(to right, #5533AA, #7755BB); }
 
-/* ── STATUS EFFECT BADGES ────────────────────────────── */
-.badge-debuff { -fx-background-color: #CC220033; -fx-border-color: #CC2200; -fx-border-width: 1px; -fx-text-fill: #FF6644; -fx-font-size: 10px; -fx-padding: 2px 6px; }
-.badge-buff   { -fx-background-color: #2D6A2D33; -fx-border-color: #44AA44; -fx-border-width: 1px; -fx-text-fill: #44AA44; -fx-font-size: 10px; -fx-padding: 2px 6px; }
-.badge-dot    { -fx-background-color: #AA440033; -fx-border-color: #AA4400; -fx-border-width: 1px; -fx-text-fill: #CC6622; -fx-font-size: 10px; -fx-padding: 2px 6px; }
+/* MP/Energy bar — sapphire */
+.bar-mp .track { -fx-background-color: #080E1C; }
+.bar-mp .bar   { -fx-background-color: linear-gradient(to right, #112255, #1E3A6E); }
 
-/* ── RARITY COLORS ───────────────────────────────────── */
-.rarity-common    { -fx-text-fill: #AAAAAA; }
-.rarity-uncommon  { -fx-text-fill: #44AA44; }
-.rarity-rare      { -fx-text-fill: #4488FF; }
-.rarity-epic      { -fx-text-fill: #AA44FF; }
-.rarity-legendary { -fx-text-fill: #FFB830; -fx-effect: dropshadow(gaussian, #C8860A, 6, 0.3, 0, 0); }
+/* EXP bar — gold */
+.bar-exp .track { -fx-background-color: #1A1000; }
+.bar-exp .bar   { -fx-background-color: linear-gradient(to right, #7A5205, #C8860A); }
 
-/* ── COMBAT LOG ──────────────────────────────────────── */
-.combat-log {
-    -fx-background-color: #0A0604; -fx-border-color: #3A2810;
-    -fx-border-width: 1px; -fx-font-family: "Courier New", monospace;
-    -fx-font-size: 11px; -fx-text-fill: #A09080;
+/* ════════════════════════════════════════════════════════
+   SCROLL PANE
+════════════════════════════════════════════════════════ */
+.scroll-pane {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+    -fx-border-color: transparent;
 }
-.combat-log-entry-damage  { -fx-text-fill: #FF6644; }
-.combat-log-entry-crit    { -fx-text-fill: #FFB830; }
-.combat-log-entry-heal    { -fx-text-fill: #44AA44; }
-.combat-log-entry-shield  { -fx-text-fill: #8855CC; }
-.combat-log-entry-status  { -fx-text-fill: #AA6622; }
-.combat-log-entry-death   { -fx-text-fill: #CC2200; -fx-font-weight: bold; }
-.combat-log-entry-system  { -fx-text-fill: #7A6650; }
-
-/* ── LIST VIEW ───────────────────────────────────────── */
-.list-view { -fx-background-color: #0A0604; -fx-border-color: #3A2810; -fx-border-width: 1px; }
-.list-cell {
-    -fx-background-color: transparent; -fx-text-fill: #EDE0C8;
-    -fx-font-family: "Courier New", monospace; -fx-padding: 8px 12px;
-    -fx-border-color: transparent transparent #150E08 transparent; -fx-border-width: 0 0 1px 0;
+.scroll-pane .viewport         { -fx-background-color: transparent; }
+.scroll-pane .corner           { -fx-background-color: #0A0604; }
+.scroll-bar:vertical           { -fx-background-color: #0A0604; -fx-pref-width: 6; }
+.scroll-bar:vertical .track    { -fx-background-color: #1A1008; -fx-background-radius: 0; }
+.scroll-bar:vertical .thumb    {
+    -fx-background-color: #3A2810;
+    -fx-background-radius: 3;
 }
-.list-cell:hover    { -fx-background-color: #150E08; }
-.list-cell:selected { -fx-background-color: #C8860A22; }
-
-/* ── SCROLL BAR ──────────────────────────────────────── */
-.scroll-bar:vertical .track       { -fx-background-color: #0A0604; }
-.scroll-bar:vertical .thumb       { -fx-background-color: #3A2810; -fx-background-radius: 0; }
-.scroll-bar:vertical .thumb:hover { -fx-background-color: #C8860A44; }
+.scroll-bar:vertical .thumb:hover { -fx-background-color: #C8860A; }
+.scroll-bar:horizontal         { -fx-background-color: #0A0604; -fx-pref-height: 6; }
+.scroll-bar:horizontal .track  { -fx-background-color: #1A1008; }
+.scroll-bar:horizontal .thumb  { -fx-background-color: #3A2810; -fx-background-radius: 3; }
 .scroll-bar .increment-button,
-.scroll-bar .decrement-button     { -fx-background-color: #0A0604; }
+.scroll-bar .decrement-button  { -fx-background-color: #0A0604; -fx-padding: 0; }
+.scroll-bar .increment-arrow,
+.scroll-bar .decrement-arrow   { -fx-shape: " "; -fx-padding: 0; }
 
-/* ── SEPARATOR ───────────────────────────────────────── */
-.separator .line { -fx-border-color: #3A2810; -fx-border-width: 1px; }
-
-/* ── ROOM TYPE COLORS ────────────────────────────────── */
-.room-empty  { -fx-background-color: #150E08; -fx-border-color: #3A2810; }
-.room-enemy  { -fx-background-color: #1C0604; -fx-border-color: #CC2200; }
-.room-elite  { -fx-background-color: #180818; -fx-border-color: #8855CC; }
-.room-boss   { -fx-background-color: #200402; -fx-border-color: #CC2200;
-               -fx-effect: dropshadow(gaussian, #CC2200, 12, 0.5, 0, 0); }
-.room-loot   { -fx-background-color: #1C1200; -fx-border-color: #FFB830; }
-.room-rest   { -fx-background-color: #081408; -fx-border-color: #44AA44; }
-.room-event  { -fx-background-color: #081020; -fx-border-color: #C8860A; }
-.room-shop   { -fx-background-color: #181000; -fx-border-color: #C8860A; }
-.room-trap   { -fx-background-color: #1C0800; -fx-border-color: #AA4400; }
-.room-current { -fx-border-width: 2px; -fx-effect: dropshadow(gaussian, #C8860A, 10, 0.5, 0, 0); }
-.room-cleared { -fx-opacity: 0.4; }
-
-/* ── TOOLTIP ─────────────────────────────────────────── */
-.tooltip {
-    -fx-background-color: #150E08; -fx-border-color: #3A2810; -fx-border-width: 1px;
-    -fx-text-fill: #EDE0C8; -fx-font-family: "Courier New", monospace;
-    -fx-font-size: 11px; -fx-padding: 8px;
+/* ════════════════════════════════════════════════════════
+   LIST VIEW
+════════════════════════════════════════════════════════ */
+.list-view {
+    -fx-background-color: #0A0604;
+    -fx-border-color: #3A2810;
+    -fx-border-width: 1;
 }
+.list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: #EDE0C8;
+    -fx-font-family: "Courier New", monospace;
+    -fx-padding: 8 12;
+    -fx-border-color: transparent transparent #1A1008 transparent;
+    -fx-border-width: 0 0 1 0;
+}
+.list-cell:hover    { -fx-background-color: #1A1008; }
+.list-cell:selected { -fx-background-color: #C8860A1A; -fx-border-color: transparent transparent #C8860A transparent; }
 
-/* ── TAB PANE ────────────────────────────────────────── */
-.tab-pane .tab-header-area .tab-header-background { -fx-background-color: #150E08; }
-.tab { -fx-background-color: #150E08; -fx-border-color: transparent; }
-.tab .tab-label { -fx-text-fill: #7A6650; -fx-font-family: "Courier New", monospace; -fx-font-size: 11px; }
-.tab:selected { -fx-background-color: #0A0604; -fx-border-color: transparent transparent #C8860A transparent; -fx-border-width: 0 0 2px 0; }
-.tab:selected .tab-label { -fx-text-fill: #FFB830; }
-
-/* ── TEXT FIELD ──────────────────────────────────────── */
+/* ════════════════════════════════════════════════════════
+   TEXT FIELD
+════════════════════════════════════════════════════════ */
 .text-field {
-    -fx-background-color: #150E08; -fx-border-color: #3A2810; -fx-border-width: 1px;
-    -fx-text-fill: #EDE0C8; -fx-font-family: "Courier New", monospace;
-    -fx-font-size: 13px; -fx-prompt-text-fill: #7A6650; -fx-padding: 8px;
+    -fx-background-color: #1A1008;
+    -fx-border-color: #3A2810;
+    -fx-border-width: 1;
+    -fx-border-radius: 0;
+    -fx-background-radius: 0;
+    -fx-text-fill: #EDE0C8;
+    -fx-font-family: "Courier New", monospace;
+    -fx-font-size: 13px;
+    -fx-prompt-text-fill: #4A3820;
+    -fx-padding: 8 12;
+    -fx-highlight-fill: #C8860A44;
+    -fx-highlight-text-fill: #FFB830;
 }
 .text-field:focused {
     -fx-border-color: #C8860A;
-    -fx-effect: dropshadow(gaussian, #C8860A, 6, 0.2, 0, 0);
+    -fx-effect: dropshadow(gaussian, #C8860A, 8, 0.25, 0, 0);
 }
 
-/* ── ALERT / DIALOG PANE ─────────────────────────────── */
-.dialog-pane { -fx-background-color: #150E08; -fx-border-color: #3A2810; -fx-border-width: 1; }
-.dialog-pane .header-panel { -fx-background-color: #0A0604; }
+/* ════════════════════════════════════════════════════════
+   SEPARATOR
+════════════════════════════════════════════════════════ */
+.separator .line { -fx-border-color: #3A2810; -fx-border-width: 1; }
+
+/* ════════════════════════════════════════════════════════
+   TOOLTIP
+════════════════════════════════════════════════════════ */
+.tooltip {
+    -fx-background-color: #0F0A06;
+    -fx-border-color: #3A2810;
+    -fx-border-width: 1;
+    -fx-text-fill: #A09070;
+    -fx-font-family: "Courier New", monospace;
+    -fx-font-size: 11px;
+    -fx-padding: 8;
+    -fx-effect: dropshadow(gaussian, #000000, 12, 0.5, 0, 2);
+}
+
+/* ════════════════════════════════════════════════════════
+   ALERT / DIALOG
+════════════════════════════════════════════════════════ */
+.dialog-pane {
+    -fx-background-color: #1A1008;
+    -fx-border-color: #3A2810;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, #000000, 20, 0.7, 0, 4);
+}
+.dialog-pane .header-panel {
+    -fx-background-color: #0F0A06;
+    -fx-border-color: transparent transparent #3A2810 transparent;
+    -fx-border-width: 0 0 1 0;
+}
 .dialog-pane .header-panel .label {
-    -fx-text-fill: #FFB830; -fx-font-family: "Courier New", monospace;
-    -fx-font-weight: bold; -fx-font-size: 13px;
+    -fx-text-fill: #FFB830;
+    -fx-font-family: "Courier New", monospace;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
 }
 .dialog-pane .content.label {
-    -fx-text-fill: #EDE0C8; -fx-font-family: "Courier New", monospace; -fx-font-size: 11px;
+    -fx-text-fill: #A09070;
+    -fx-font-family: "Courier New", monospace;
+    -fx-font-size: 12px;
 }
+.dialog-pane .button-bar { -fx-background-color: #0F0A06; }
 .dialog-pane .button-bar .button {
-    -fx-background-color: transparent; -fx-border-color: #C8860A; -fx-border-width: 1;
-    -fx-text-fill: #FFB830; -fx-font-family: "Courier New", monospace;
-    -fx-cursor: hand; -fx-padding: 6 16;
+    -fx-background-color: transparent;
+    -fx-border-color: #C8860A;
+    -fx-border-width: 1;
+    -fx-text-fill: #FFB830;
+    -fx-font-family: "Courier New", monospace;
+    -fx-font-size: 12px;
+    -fx-padding: 6 16;
+    -fx-cursor: hand;
 }
 .dialog-pane .button-bar .button:hover {
     -fx-background-color: #C8860A22;
+    -fx-effect: dropshadow(gaussian, #C8860A, 8, 0.3, 0, 0);
+}
+
+/* ════════════════════════════════════════════════════════
+   STATUS EFFECT BADGES
+════════════════════════════════════════════════════════ */
+.badge-buff {
+    -fx-background-color: #2D7A4522;
+    -fx-border-color: #2D7A45;
+    -fx-border-width: 1;
+    -fx-text-fill: #44BB66;
+    -fx-font-size: 10;
+    -fx-padding: 2 6;
+    -fx-font-family: "Courier New", monospace;
+}
+.badge-debuff {
+    -fx-background-color: #CC330022;
+    -fx-border-color: #CC3300;
+    -fx-border-width: 1;
+    -fx-text-fill: #FF5533;
+    -fx-font-size: 10;
+    -fx-padding: 2 6;
+    -fx-font-family: "Courier New", monospace;
+}
+.badge-dot {
+    -fx-background-color: #AA550022;
+    -fx-border-color: #AA5500;
+    -fx-border-width: 1;
+    -fx-text-fill: #CC7722;
+    -fx-font-size: 10;
+    -fx-padding: 2 6;
+    -fx-font-family: "Courier New", monospace;
+}
+.badge-mythic {
+    -fx-background-color: #AA330022;
+    -fx-border-color: #FF6B00;
+    -fx-border-width: 1;
+    -fx-text-fill: #FF8833;
+    -fx-font-size: 10;
+    -fx-padding: 2 6;
+    -fx-font-family: "Courier New", monospace;
+    -fx-effect: dropshadow(gaussian, #FF6B00, 6, 0.4, 0, 0);
+}
+
+/* ════════════════════════════════════════════════════════
+   RARITY CLASSES
+════════════════════════════════════════════════════════ */
+.rarity-common    { -fx-text-fill: #999999; }
+.rarity-uncommon  { -fx-text-fill: #44BB66; }
+.rarity-rare      { -fx-text-fill: #4488EE; }
+.rarity-epic      { -fx-text-fill: #9966DD; }
+.rarity-legendary {
+    -fx-text-fill: #FFB830;
     -fx-effect: dropshadow(gaussian, #C8860A, 6, 0.3, 0, 0);
+}
+.rarity-mythic {
+    -fx-text-fill: #FF8833;
+    -fx-effect: dropshadow(gaussian, #FF6B00, 10, 0.6, 0, 0)
+              , dropshadow(gaussian, #FF6B00, 4, 0.4, 0, 0);
+}
+
+/* ════════════════════════════════════════════════════════
+   COMBAT LOG
+════════════════════════════════════════════════════════ */
+.combat-log {
+    -fx-background-color: #0A0604;
+    -fx-border-color: #3A2810;
+    -fx-border-width: 1;
+}
+.combat-log-entry-damage  { -fx-text-fill: #FF5533; -fx-font-size: 11; }
+.combat-log-entry-crit    { -fx-text-fill: #FFB830; -fx-font-size: 11; -fx-font-weight: bold; }
+.combat-log-entry-heal    { -fx-text-fill: #44BB66; -fx-font-size: 11; }
+.combat-log-entry-shield  { -fx-text-fill: #9966DD; -fx-font-size: 11; }
+.combat-log-entry-status  { -fx-text-fill: #AA7733; -fx-font-size: 11; }
+.combat-log-entry-death   { -fx-text-fill: #CC3300; -fx-font-size: 11; -fx-font-weight: bold; }
+.combat-log-entry-system  { -fx-text-fill: #4A3820; -fx-font-size: 11; }
+.combat-log-entry-boss    {
+    -fx-text-fill: #FF8833; -fx-font-size: 11; -fx-font-weight: bold;
+    -fx-effect: dropshadow(gaussian, #FF6B00, 4, 0.3, 0, 0);
+}
+
+/* ════════════════════════════════════════════════════════
+   ROOM TYPE CLASSES (dungeon map)
+════════════════════════════════════════════════════════ */
+.room-current {
+    -fx-border-width: 2;
+    -fx-effect: dropshadow(gaussian, #C8860A, 14, 0.6, 0, 0);
+}
+.room-cleared  { -fx-opacity: 0.35; }
+.room-boss {
+    -fx-effect: dropshadow(gaussian, #CC3300, 16, 0.7, 0, 0);
+}
+
+/* ════════════════════════════════════════════════════════
+   TAB PANE
+════════════════════════════════════════════════════════ */
+.tab-pane .tab-header-area .tab-header-background {
+    -fx-background-color: #0F0A06;
+    -fx-border-color: transparent transparent #3A2810 transparent;
+    -fx-border-width: 0 0 1 0;
+}
+.tab { -fx-background-color: #0F0A06; }
+.tab .tab-label {
+    -fx-text-fill: #6A5840;
+    -fx-font-family: "Courier New", monospace;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+.tab:hover .tab-label { -fx-text-fill: #A09070; }
+.tab:selected {
+    -fx-background-color: #0A0604;
+    -fx-border-color: transparent transparent #C8860A transparent;
+    -fx-border-width: 0 0 2 0;
+}
+.tab:selected .tab-label { -fx-text-fill: #FFB830; }
+
+/* ════════════════════════════════════════════════════════
+   SPECIAL EFFECTS CLASSES
+════════════════════════════════════════════════════════ */
+
+/* Gold shimmer untuk item Mythic */
+.mythic-glow {
+    -fx-effect: dropshadow(gaussian, #FF6B00, 16, 0.7, 0, 0)
+              , dropshadow(gaussian, #FFB830, 6, 0.4, 0, 0);
+}
+
+/* Boss encounter border flash */
+.boss-alert {
+    -fx-border-color: #CC3300;
+    -fx-border-width: 2;
+    -fx-effect: dropshadow(gaussian, #CC3300, 20, 0.8, 0, 0);
+}
+
+/* Victory celebration */
+.victory-glow {
+    -fx-effect: dropshadow(gaussian, #C8860A, 24, 0.8, 0, 0)
+              , dropshadow(gaussian, #FFB830, 10, 0.5, 0, 0);
+}
+
+/* Item card — normal */
+.item-card {
+    -fx-background-color: #1A1008;
+    -fx-border-color: #3A2810;
+    -fx-border-width: 1;
+    -fx-padding: 10;
+}
+.item-card:hover {
+    -fx-background-color: #241510;
+    -fx-border-color: #5A3A10;
+}
+
+/* Item card — mythic special */
+.item-card-mythic {
+    -fx-background-color: #1A0A04;
+    -fx-border-color: #FF6B00;
+    -fx-border-width: 1 1 1 3;
+    -fx-padding: 10;
+    -fx-effect: dropshadow(gaussian, #FF6B00, 12, 0.4, 0, 0);
+}
+
+/* Header bar */
+.header-bar {
+    -fx-background-color: #0F0A06;
+    -fx-border-color: transparent transparent #3A2810 transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 10 16;
+}
+
+/* Bottom nav bar */
+.bottom-nav {
+    -fx-background-color: #0F0A06;
+    -fx-border-color: #3A2810 transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+    -fx-padding: 8 16;
+}
+
+/* Chat panel */
+.chat-panel {
+    -fx-background-color: #080604;
+    -fx-border-color: transparent transparent transparent #2A1A08;
+    -fx-border-width: 0 0 0 1;
+}
+
+/* Enemy / Entity card */
+.entity-card {
+    -fx-background-color: #0F0A06;
+    -fx-border-color: #3A2810;
+    -fx-border-width: 1 1 1 2;
+    -fx-padding: 8;
+}
+.entity-card-player {
+    -fx-background-color: #0D1008;
+    -fx-border-color: #2D7A45;
+    -fx-border-width: 1 1 1 2;
+    -fx-padding: 8;
+}
+.entity-card-target {
+    -fx-background-color: #1A0F00;
+    -fx-border-color: #FFB830;
+    -fx-border-width: 2;
+    -fx-effect: dropshadow(gaussian, #FFB830, 12, 0.5, 0, 0);
+    -fx-cursor: hand;
+}
+
+/* Turn order bar token */
+.turn-token-player {
+    -fx-background-color: #0D1A0D;
+    -fx-border-color: #2D7A45;
+    -fx-border-width: 1;
+    -fx-padding: 4 8;
+}
+.turn-token-enemy {
+    -fx-background-color: #1A0804;
+    -fx-border-color: #CC3300;
+    -fx-border-width: 1;
+    -fx-padding: 4 8;
+}
+.turn-token-active {
+    -fx-effect: dropshadow(gaussian, #FFB830, 10, 0.5, 0, 0);
+    -fx-border-color: #FFB830;
+}
+
+/* Skill slot */
+.skill-slot {
+    -fx-background-color: #1A1008;
+    -fx-border-color: #3A2810;
+    -fx-border-width: 1;
+    -fx-padding: 8;
+    -fx-alignment: CENTER;
+    -fx-cursor: hand;
+}
+.skill-slot:hover {
+    -fx-border-color: #C8860A;
+    -fx-background-color: #241510;
+}
+.skill-slot-ready {
+    -fx-border-color: #C8860A;
+    -fx-background-color: #1A1008;
+}
+.skill-slot-cooldown {
+    -fx-border-color: #3A2810;
+    -fx-background-color: #0F0A06;
+    -fx-opacity: 0.5;
+}
+.skill-slot-selected {
+    -fx-border-color: #FFB830;
+    -fx-background-color: #C8860A22;
+    -fx-effect: dropshadow(gaussian, #FFB830, 10, 0.4, 0, 0);
+}
+
+/* Character create background card */
+.bg-card {
+    -fx-background-color: #1A1008;
+    -fx-border-color: #3A2810;
+    -fx-border-width: 1 1 1 3;
+    -fx-padding: 12;
+    -fx-cursor: hand;
+}
+.bg-card:hover {
+    -fx-border-color: #C8860A;
+    -fx-background-color: #241510;
+    -fx-effect: dropshadow(gaussian, #C8860A, 8, 0.3, 0, 0);
+}
+.bg-card-selected {
+    -fx-border-color: #FFB830;
+    -fx-background-color: #C8860A1A;
+    -fx-effect: dropshadow(gaussian, #FFB830, 12, 0.5, 0, 0);
 }

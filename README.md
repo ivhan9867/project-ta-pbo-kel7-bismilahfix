@@ -1,6 +1,6 @@
 # ⚡ MYTHIC ITEM OBTAINED
 
-![Version](https://img.shields.io/badge/version-v0.4.0-00E5FF?style=flat-square)
+![Version](https://img.shields.io/badge/version-v0.4.2-00E5FF?style=flat-square)
 ![Java](https://img.shields.io/badge/Java-25-orange?style=flat-square)
 ![JavaFX](https://img.shields.io/badge/JavaFX-25-blue?style=flat-square)
 ![Build](https://img.shields.io/badge/build-Maven-AA00FF?style=flat-square)

@@ -165,7 +165,20 @@ public class HubView {
         gold.setStyle("-fx-text-fill: #FFD600; -fx-font-family: 'Courier New'; -fx-font-size: 13px; -fx-font-weight: bold;");
         HBox.setHgrow(nameLabel, Priority.ALWAYS);
 
-        nameRow.getChildren().addAll(levelBadge, nameLabel, gold);
+        // Mythic Fragment counter
+        long fragments = getMythicFragmentCount();
+        Label fragLabel = new Label("✦ " + fragments + "/3");
+        fragLabel.setStyle(
+            "-fx-text-fill: " + (fragments > 0 ? "#FF6B00" : "#3A2810") + ";" +
+            "-fx-font-family: 'Courier New'; -fx-font-size: 11px; -fx-font-weight: bold;"
+        );
+        fragLabel.setTooltip(new javafx.scene.control.Tooltip(
+            "Pecahan Mitik: " + fragments + "/3\n" +
+            (fragments >= 3 ? "SIAP CRAFT! Masuk dungeon dan kalahkan boss."
+                           : "Kalahkan boss untuk dapat Pecahan Mitik.\nKumpulkan 3 → auto craft Senjata Mythic!")
+        ));
+
+        nameRow.getChildren().addAll(levelBadge, nameLabel, fragLabel, gold);
 
         // EXP bar
         HBox expRow = new HBox(8);
@@ -327,5 +340,13 @@ public class HubView {
         if (depth <= 10) return "HUTAN ANGKER";
         if (depth <= 15) return "GOA NAGA";
         return "KAHYANGAN RUSAK";
+    }
+
+    // Hitung Mythic Fragment di inventory
+    private long getMythicFragmentCount() {
+        return engine.getInventory().getAllBagItems().stream()
+            .filter(i -> i instanceof arclightcity.item.Material m
+                      && m.getMaterialType() == arclightcity.item.Material.MaterialType.MYTHIC_FRAGMENT)
+            .count();
     }
 }

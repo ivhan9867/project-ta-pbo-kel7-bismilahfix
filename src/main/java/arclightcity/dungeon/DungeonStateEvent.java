@@ -207,4 +207,12 @@ public class DungeonStateEvent {
                 .intValue(newLevel)
                 .build();
     }
+
+    /** Event saat 3 Mythic Fragment berhasil di-craft jadi Mythic weapon */
+    public static DungeonStateEvent mythicCraft(String weaponName) {
+        return new Builder(Type.LEVEL_UP) // reuse LEVEL_UP type for notification
+                .message("✦ MYTHIC CRAFTED! " + weaponName)
+                .intValue(0)
+                .build();
+    }
 }

@@ -12,7 +12,12 @@ public enum EnemyRace {
     SPECTER     ("Specter",     "Entitas digital yang bocor ke dunia nyata. Kebal Physical."),
     BEAST       ("Beast",       "Binatang yang bermutasi di kota. Agresif dan cepat."),
     CORPORATE   ("Corporate",   "Punya backup dan gadget mahal. Bisa summon bala bantuan."),
-    ANOMALY     ("Anomaly",     "Sesuatu yang tidak seharusnya ada. Mechanic tidak terduga.");
+    ANOMALY     ("Anomaly",     "Sesuatu yang tidak seharusnya ada. Mechanic tidak terduga."),
+    // ── Nusantara races ──────────────────────────────────────
+    SPIRIT      ("Spirit",      "Makhluk halus Nusantara. Sebagian kebal serangan fisik."),
+    GIANT       ("Giant",       "Raksasa mitologi. HP sangat tinggi, serangan AoE."),
+    DEMON       ("Demon",       "Iblis Nusantara. Bisa merefleksikan damage dan debuff."),
+    DIVINE      ("Divine",      "Entitas kahyangan yang terkorupsi. Mechanic berubah per fase.");
 
     public final String displayName;
     public final String description;

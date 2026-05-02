@@ -13,7 +13,8 @@ public abstract class Item {
         UNCOMMON  ("Uncommon",  "#44FF44", 1.3,  5),
         RARE      ("Rare",      "#4488FF", 1.7,  7),
         EPIC      ("Epic",      "#AA44FF", 2.2, 10),
-        LEGENDARY ("Legendary", "#FFAA00", 3.0, 15);
+        LEGENDARY ("Legendary", "#FFAA00", 3.0, 15),
+        MYTHIC    ("✦ Mythic",  "#FF6B00", 5.0, 25); // Eksklusif — tidak bisa drop biasa
 
         public final String displayName;
         public final String hexColor;

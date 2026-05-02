@@ -14,6 +14,7 @@ public class CalibrationSystem {
             case RARE      -> 0.65;
             case EPIC      -> 0.50;
             case LEGENDARY -> 0.35;
+            case MYTHIC    -> 0.20; // Mythic — sangat sulit kalibrasi, tapi worth it
         };
         return Math.min(0.95, base + (Math.min(kitCount - 1, 2) * 0.10));
     }

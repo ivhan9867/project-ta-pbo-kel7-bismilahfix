@@ -146,22 +146,54 @@ public class GameEngine {
 
         dungeonManager.setCombatEndListener(result -> {
             if (result.isVictory()) {
-                // ── Terapkan reward ke player ─────────────────
-                int levelsGained = player.gainExp(result.getTotalExpGained());
-                player.addGold(result.getTotalGoldGained());
+                // EXP dan Gold sudah diapply oleh CombatManager.buildVictoryResult()
+                // Di sini hanya handle: loot drop, level up notification, loyalty, Mythic fragment
+
+                // Loot drops dari loot table
                 result.getLootItemIds().forEach(tableId -> {
                     List<Item> drops = LootManager.generateLoot(
                             tableId, dungeonManager.getCurrentFloorNumber());
                     drops.forEach(inventory::addItem);
                 });
-                // Level up notification
-                if (levelsGained > 0 && onDungeonEvent != null) {
+
+                // Level up notification (CombatManager sudah apply exp,
+                // kita tinggal cek apakah level player naik)
+                if (result.getLevelsGained() > 0 && onDungeonEvent != null) {
                     onDungeonEvent.accept(
                         arclightcity.dungeon.DungeonStateEvent.levelUp(
                             player.getLevel(), player.getSkillPoints()));
                 }
-                // POIN 2: Loyalty mercenary naik setelah setiap combat victory
-                activeMercs.forEach(m -> m.completeMission());
+
+                // Loyalty merc naik setelah victory
+                // (CombatManager sudah panggil completeMission, skip duplikat)
+
+                // Mythic Fragment drop saat boss dikalahkan
+                boolean bossDefeated = result.getDefeatedEnemies().stream()
+                        .anyMatch(e -> e instanceof arclightcity.entity.enemy.Boss);
+                if (bossDefeated) {
+                    inventory.addItem(LootManager.generateMythicFragment());
+                    // Cek apakah sudah punya 3 fragment → auto-craft Mythic weapon
+                    long fragmentCount = inventory.getAllBagItems().stream()
+                            .filter(i -> i instanceof arclightcity.item.Material m
+                                      && m.getMaterialType() == arclightcity.item.Material.MaterialType.MYTHIC_FRAGMENT)
+                            .count();
+                    if (fragmentCount >= 3) {
+                        int removed = 0;
+                        for (arclightcity.item.Item item : new java.util.ArrayList<>(inventory.getAllBagItems())) {
+                            if (removed >= 3) break;
+                            if (item instanceof arclightcity.item.Material mat
+                                    && mat.getMaterialType() == arclightcity.item.Material.MaterialType.MYTHIC_FRAGMENT) {
+                                inventory.removeItem(item.getId());
+                                removed++;
+                            }
+                        }
+                        LootManager.generateMythicDrop().forEach(inventory::addItem);
+                        if (onDungeonEvent != null)
+                            onDungeonEvent.accept(
+                                arclightcity.dungeon.DungeonStateEvent.mythicCraft(
+                                    "Senjata Mythic berhasil di-craft dari 3 Pecahan Mitik!"));
+                    }
+                }
             }
             if (onCombatEnd != null) onCombatEnd.accept(result);
             transitionTo(GameState.DUNGEON);

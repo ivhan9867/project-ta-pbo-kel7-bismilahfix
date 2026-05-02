@@ -58,12 +58,29 @@ public class EntityFactory {
 
     public static Enemy createEnemy(EnemySpawnType type, int floor) {
         Enemy enemy = switch (type) {
-            case STREET_THUG  -> new StreetThug();
-            case NEON_SERPENT -> new NeonSerpent();
-            case GLITCH_DRONE -> new GlitchDrone();
-            case IRON_CLAD    -> new IronClad();
-            case VOID_SPECTER -> new VoidSpecter();
-            case NULL_KING    -> new NullKing();
+            // Standard
+            case STREET_THUG    -> new StreetThug();
+            case NEON_SERPENT   -> new NeonSerpent();
+            case GLITCH_DRONE   -> new GlitchDrone();
+            case TUYUL_PENCURI  -> new TuyulPencuri();
+            case WEWE_GOMBEL    -> new WeweGombel();
+            case POCONG_LISTRIK -> new PocongListrik();
+            case BANASPATI      -> new Banaspati();
+            case BABI_NGEPET    -> new BabiNgepet();
+            // Elite
+            case IRON_CLAD      -> new IronClad();
+            case VOID_SPECTER   -> new VoidSpecter();
+            case RANGDA_MERAH   -> new RangdaMerah();
+            case BARONG_RUSAK   -> new BarongRusak();
+            case LEYAK_API      -> new LeyakApi();
+            case GARUDA_KORUP   -> new GarudaKorup();
+            case DETYA_WESI     -> new DetyaWesi();
+            // Boss
+            case NULL_KING          -> new NullKing();
+            case NYI_RORO_KIDUL     -> new NyiRoroKidul();
+            case RANGDA_AGUNG       -> new RangdaAgung();
+            case GARUDA_MAHAGURU    -> new GarudaMahaguru();
+            case SEMAR_PAMUNGKAS    -> new SemarPamungkas();
         };
         enemy.scaleToFloor(floor);
         return enemy;
@@ -90,79 +107,83 @@ public class EntityFactory {
     }
 
     private static List<Enemy> generateEasyEncounter(int floor) {
-        // 1-2 musuh lemah
-        if (floor <= 5) {
-            return RNG.nextBoolean()
-                    ? List.of(spawn(EnemySpawnType.STREET_THUG, floor))
-                    : List.of(spawn(EnemySpawnType.STREET_THUG, floor),
-                              spawn(EnemySpawnType.GLITCH_DRONE, floor));
-        }
-        return List.of(spawn(EnemySpawnType.NEON_SERPENT, floor));
+        if (floor <= 3)  return List.of(spawn(EnemySpawnType.STREET_THUG, floor));
+        if (floor <= 6)  return List.of(spawn(EnemySpawnType.TUYUL_PENCURI, floor));
+        if (floor <= 9)  return List.of(spawn(EnemySpawnType.WEWE_GOMBEL, floor));
+        if (floor <= 13) return List.of(spawn(EnemySpawnType.POCONG_LISTRIK, floor));
+        if (floor <= 17) return List.of(spawn(EnemySpawnType.BANASPATI, floor));
+        return List.of(spawn(EnemySpawnType.BABI_NGEPET, floor));
     }
 
     private static List<Enemy> generateNormalEncounter(int floor) {
-        // 2-3 musuh standar
-        if (floor <= 5) {
-            return List.of(
-                    spawn(EnemySpawnType.STREET_THUG, floor),
-                    spawn(EnemySpawnType.GLITCH_DRONE, floor)
-            );
-        }
-        if (floor <= 10) {
-            int roll = RNG.nextInt(3);
-            return switch (roll) {
-                case 0 -> List.of(
-                        spawn(EnemySpawnType.NEON_SERPENT, floor),
-                        spawn(EnemySpawnType.GLITCH_DRONE, floor));
-                case 1 -> List.of(
-                        spawn(EnemySpawnType.STREET_THUG, floor),
-                        spawn(EnemySpawnType.STREET_THUG, floor),
-                        spawn(EnemySpawnType.NEON_SERPENT, floor));
-                default -> List.of(
-                        spawn(EnemySpawnType.GLITCH_DRONE, floor),
-                        spawn(EnemySpawnType.GLITCH_DRONE, floor));
-            };
-        }
-        return List.of(
-                spawn(EnemySpawnType.NEON_SERPENT, floor),
-                spawn(EnemySpawnType.VOID_SPECTER, floor)
-        );
+        int roll = RNG.nextInt(3);
+        if (floor <= 3) return switch(roll) {
+            case 0 -> List.of(spawn(EnemySpawnType.STREET_THUG,floor), spawn(EnemySpawnType.GLITCH_DRONE,floor));
+            case 1 -> List.of(spawn(EnemySpawnType.TUYUL_PENCURI,floor), spawn(EnemySpawnType.STREET_THUG,floor));
+            default-> List.of(spawn(EnemySpawnType.NEON_SERPENT,floor));
+        };
+        if (floor <= 6) return switch(roll) {
+            case 0 -> List.of(spawn(EnemySpawnType.WEWE_GOMBEL,floor), spawn(EnemySpawnType.TUYUL_PENCURI,floor));
+            case 1 -> List.of(spawn(EnemySpawnType.BANASPATI,floor), spawn(EnemySpawnType.GLITCH_DRONE,floor));
+            default-> List.of(spawn(EnemySpawnType.POCONG_LISTRIK,floor), spawn(EnemySpawnType.NEON_SERPENT,floor));
+        };
+        if (floor <= 10) return switch(roll) {
+            case 0 -> List.of(spawn(EnemySpawnType.BABI_NGEPET,floor), spawn(EnemySpawnType.BANASPATI,floor));
+            case 1 -> List.of(spawn(EnemySpawnType.WEWE_GOMBEL,floor), spawn(EnemySpawnType.POCONG_LISTRIK,floor));
+            default-> List.of(spawn(EnemySpawnType.BANASPATI,floor), spawn(EnemySpawnType.BANASPATI,floor));
+        };
+        if (floor <= 15) return switch(roll) {
+            case 0 -> List.of(spawn(EnemySpawnType.BABI_NGEPET,floor), spawn(EnemySpawnType.WEWE_GOMBEL,floor));
+            case 1 -> List.of(spawn(EnemySpawnType.POCONG_LISTRIK,floor), spawn(EnemySpawnType.TUYUL_PENCURI,floor), spawn(EnemySpawnType.BANASPATI,floor));
+            default-> List.of(spawn(EnemySpawnType.NEON_SERPENT,floor), spawn(EnemySpawnType.GARUDA_KORUP,floor));
+        };
+        return List.of(spawn(EnemySpawnType.GARUDA_KORUP,floor), spawn(EnemySpawnType.BANASPATI,floor));
     }
 
     private static List<Enemy> generateHardEncounter(int floor) {
-        // 3 musuh atau 1 elite
-        if (floor <= 8) {
-            return List.of(
-                    spawn(EnemySpawnType.STREET_THUG, floor),
-                    spawn(EnemySpawnType.NEON_SERPENT, floor),
-                    spawn(EnemySpawnType.GLITCH_DRONE, floor)
-            );
-        }
-        return List.of(
-                spawn(EnemySpawnType.IRON_CLAD, floor),
-                spawn(EnemySpawnType.GLITCH_DRONE, floor)
-        );
+        int roll = RNG.nextInt(3);
+        if (floor <= 5) return List.of(
+            spawn(EnemySpawnType.STREET_THUG,floor), spawn(EnemySpawnType.NEON_SERPENT,floor), spawn(EnemySpawnType.TUYUL_PENCURI,floor));
+        if (floor <= 8) return switch(roll) {
+            case 0 -> List.of(spawn(EnemySpawnType.WEWE_GOMBEL,floor), spawn(EnemySpawnType.POCONG_LISTRIK,floor), spawn(EnemySpawnType.BANASPATI,floor));
+            case 1 -> List.of(spawn(EnemySpawnType.BABI_NGEPET,floor), spawn(EnemySpawnType.TUYUL_PENCURI,floor));
+            default-> List.of(spawn(EnemySpawnType.IRON_CLAD,floor), spawn(EnemySpawnType.GLITCH_DRONE,floor));
+        };
+        if (floor <= 12) return switch(roll) {
+            case 0 -> List.of(spawn(EnemySpawnType.RANGDA_MERAH,floor));
+            case 1 -> List.of(spawn(EnemySpawnType.BARONG_RUSAK,floor));
+            default-> List.of(spawn(EnemySpawnType.LEYAK_API,floor), spawn(EnemySpawnType.BANASPATI,floor));
+        };
+        if (floor <= 17) return switch(roll) {
+            case 0 -> List.of(spawn(EnemySpawnType.GARUDA_KORUP,floor));
+            case 1 -> List.of(spawn(EnemySpawnType.DETYA_WESI,floor));
+            default-> List.of(spawn(EnemySpawnType.LEYAK_API,floor), spawn(EnemySpawnType.GARUDA_KORUP,floor));
+        };
+        return List.of(spawn(EnemySpawnType.DETYA_WESI,floor), spawn(EnemySpawnType.GARUDA_KORUP,floor));
     }
 
     private static List<Enemy> generateEliteEncounter(int floor) {
-        // 1 elite atau 1 elite + support
-        if (floor <= 8) {
-            return List.of(spawn(EnemySpawnType.IRON_CLAD, floor));
-        }
-        return List.of(
-                spawn(EnemySpawnType.VOID_SPECTER, floor),
-                spawn(EnemySpawnType.GLITCH_DRONE, floor)
-        );
+        if (floor <= 5)  return List.of(spawn(EnemySpawnType.IRON_CLAD, floor));
+        if (floor <= 8)  return List.of(spawn(EnemySpawnType.RANGDA_MERAH, floor));
+        if (floor <= 12) return List.of(spawn(EnemySpawnType.BARONG_RUSAK, floor), spawn(EnemySpawnType.BANASPATI, floor));
+        if (floor <= 16) return List.of(spawn(EnemySpawnType.GARUDA_KORUP, floor), spawn(EnemySpawnType.LEYAK_API, floor));
+        return List.of(spawn(EnemySpawnType.DETYA_WESI, floor));
     }
 
     /**
      * Generate Boss untuk floor milestone.
      */
     public static Enemy generateBoss(int floor) {
-        // Floor 10: Null King
-        if (floor == 10) return spawn(EnemySpawnType.NULL_KING, floor);
-        // Fallback: scaled Iron Clad sebagai mini-boss
-        return spawn(EnemySpawnType.IRON_CLAD, floor);
+        // Setiap milestone floor punya boss unik
+        if (floor <= 5)  return spawn(EnemySpawnType.NULL_KING,         floor);
+        if (floor <= 8)  return spawn(EnemySpawnType.NYI_RORO_KIDUL,    floor);
+        if (floor <= 12) return spawn(EnemySpawnType.RANGDA_AGUNG,       floor);
+        if (floor <= 16) return spawn(EnemySpawnType.GARUDA_MAHAGURU,    floor);
+        if (floor >= 20) return spawn(EnemySpawnType.SEMAR_PAMUNGKAS,    floor);
+        // Antara milestone: elite sebagai mini-boss
+        if (floor <= 10) return spawn(EnemySpawnType.DETYA_WESI,         floor);
+        if (floor <= 14) return spawn(EnemySpawnType.GARUDA_KORUP,       floor);
+        return spawn(EnemySpawnType.RANGDA_MERAH, floor);
     }
 
     // ── Helper ───────────────────────────────────────────────
@@ -174,11 +195,13 @@ public class EntityFactory {
     // ── Enum Spawn Types ─────────────────────────────────────
 
     public enum EnemySpawnType {
-        STREET_THUG,
-        NEON_SERPENT,
-        GLITCH_DRONE,
-        IRON_CLAD,
-        VOID_SPECTER,
-        NULL_KING
+        // Standard
+        STREET_THUG, NEON_SERPENT, GLITCH_DRONE,
+        TUYUL_PENCURI, WEWE_GOMBEL, POCONG_LISTRIK, BANASPATI, BABI_NGEPET,
+        // Elite
+        IRON_CLAD, VOID_SPECTER,
+        RANGDA_MERAH, BARONG_RUSAK, LEYAK_API, GARUDA_KORUP, DETYA_WESI,
+        // Boss
+        NULL_KING, NYI_RORO_KIDUL, RANGDA_AGUNG, GARUDA_MAHAGURU, SEMAR_PAMUNGKAS
     }
 }

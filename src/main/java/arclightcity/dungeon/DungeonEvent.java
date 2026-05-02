@@ -48,9 +48,9 @@ public class DungeonEvent {
 
             case "EVENT_CALIBRATION" -> new DungeonEvent(
                 eventId,
-                "🔧 Calibration Terminal",
-                "Kamu menemukan terminal kalibrasi MegaCorp yang masih berfungsi. " +
-                "Layarnya berkedip, tapi opsinya masih bisa diakses.",
+                "🔮 Altar Kalibrasi",
+                "Kamu menemukan altar kalibrasi kuno yang masih memancarkan energi. " +
+                "Ukirannya asing, tapi mekanismenya masih bisa diakses.",
                 EventCategory.POSITIVE,
                 new EventChoice[]{
                     new EventChoice("Kalibrasi item terbaik",
@@ -62,9 +62,9 @@ public class DungeonEvent {
 
             case "EVENT_NEON_FOUNTAIN" -> new DungeonEvent(
                 eventId,
-                "💜 Neon Fountain",
-                "Sebuah genangan cairan neon bersinar di sudut ruangan. " +
-                "Anehnya, udara di sekitarnya terasa... menyehatkan.",
+                "💧 Sumber Mata Air Gaib",
+                "Sebuah sumber mata air tersembunyi memancarkan cahaya kebiruan. " +
+                "Aromanya harum seperti bunga surga — airnya tampak menyembuhkan.",
                 EventCategory.POSITIVE,
                 new EventChoice[]{
                     new EventChoice("Minum dari fountain (+30% HP max)",
@@ -82,18 +82,18 @@ public class DungeonEvent {
 
             case "EVENT_DATA_CACHE" -> new DungeonEvent(
                 eventId,
-                "💾 Data Cache",
+                "📜 Gulungan Ilmu Kuno",
                 "Sebuah modul memori tua terjatuh dari dinding yang retak. " +
                 "Masih menyimpan data berharga yang bisa dikonversi jadi pengalaman tempur.",
                 EventCategory.POSITIVE,
                 new EventChoice[]{
-                    new EventChoice("Download data (+EXP besar)",
+                    new EventChoice("Pelajari gulungan (+EXP besar)",
                         p -> {
                             double exp = 80 + p.getLevel() * 20;
                             p.gainExp(exp);
                             return EventResult.exp((int) exp);
                         }),
-                    new EventChoice("Jual data (+Gold besar)",
+                    new EventChoice("Jual ke kolektor (+Gold besar)",
                         p -> {
                             long gold = 100 + p.getLevel() * 30L;
                             p.gainGold(gold);
@@ -106,7 +106,7 @@ public class DungeonEvent {
 
             case "TRAP_ELECTRIC" -> new DungeonEvent(
                 eventId,
-                "⚡ Electric Trap",
+                "⚡ Jebakan Petir Raksasa",
                 "Lantai berubah jadi grid konduktor. Sengatan listrik menghantam " +
                 "sebelum kamu bisa bereaksi.",
                 EventCategory.NEGATIVE,
@@ -115,7 +115,7 @@ public class DungeonEvent {
 
             case "TRAP_CORRODE" -> new DungeonEvent(
                 eventId,
-                "🧪 Corrode Mist",
+                "🌿 Kabut Racun Hutan",
                 "Kabut asam menyembur dari ventilasi tersembunyi. " +
                 "Armor-mu mulai tergerus oleh zat korosif.",
                 EventCategory.NEGATIVE,
@@ -124,7 +124,7 @@ public class DungeonEvent {
 
             case "TRAP_ALARM" -> new DungeonEvent(
                 eventId,
-                "🚨 Security Alarm",
+                "🥁 Gong Peringatan",
                 "Sensor keamanan aktif. Alarm meraung, dan bala bantuan korporat " +
                 "segera dipanggil ke lokasi.",
                 EventCategory.NEGATIVE,
@@ -133,7 +133,7 @@ public class DungeonEvent {
 
             case "TRAP_FREEZE" -> new DungeonEvent(
                 eventId,
-                "❄️ Cryo Trap",
+                "🧊 Kutukan Beku",
                 "Sistem cryo darurat aktif. Cairan nitrogen cair menyemprot " +
                 "dari langit-langit, membekukan gerakanmu sesaat.",
                 EventCategory.NEGATIVE,
@@ -142,7 +142,7 @@ public class DungeonEvent {
 
             case "TRAP_NEON_BURN" -> new DungeonEvent(
                 eventId,
-                "🔥 Neon Burn",
+                "🔥 Api Banaspati",
                 "Pipa energi neon retak dan menyemprot langsung ke arahmu. " +
                 "Rasanya seperti dibakar dari dalam.",
                 EventCategory.NEGATIVE,
@@ -153,7 +153,7 @@ public class DungeonEvent {
 
             case "EVENT_MYSTERY_BOX" -> new DungeonEvent(
                 eventId,
-                "📦 Mystery Container",
+                "🎁 Peti Misterius",
                 "Sebuah kontainer tersegel tergeletak di tengah ruangan. " +
                 "Tidak ada label. Tidak ada tanda. Tapi ada sesuatu di dalamnya.",
                 EventCategory.CHOICE,
@@ -178,7 +178,7 @@ public class DungeonEvent {
 
             case "EVENT_MERCHANT" -> new DungeonEvent(
                 eventId,
-                "🛒 Wandering Merchant",
+                "🧙 Pedagang Gaib",
                 "Seorang pedagang misterius duduk di sudut ruangan, " +
                 "dikelilingi koper-koper penuh barang dagangan.",
                 EventCategory.NEUTRAL,
@@ -194,12 +194,12 @@ public class DungeonEvent {
 
             case "EVENT_CORRUPTED_LOOT" -> new DungeonEvent(
                 eventId,
-                "☣️ Corrupted Cache",
+                "🗡️ Harta Terkutuk",
                 "Tumpukan loot terlihat bagus dari jauh, tapi dekat-dekat " +
-                "kamu mencium bau khas virus digital.",
+                "kamu mencium bau kutukan yang sudah terlalu familiar.",
                 EventCategory.CHOICE,
                 new EventChoice[]{
-                    new EventChoice("Ambil semua (risiko terkena VIRUS)",
+                    new EventChoice("Ambil semua (risiko kena KUTUKAN)",
                         p -> {
                             if (Math.random() < 0.55) {
                                 p.applyEffect(new StatusEffect(
@@ -210,7 +210,7 @@ public class DungeonEvent {
                         }),
                     new EventChoice("Ambil yang bersih saja (loot biasa)",
                         p -> EventResult.commonLoot()),
-                    new EventChoice("Bakar semuanya (aman, tidak dapat apa-apa)",
+                    new EventChoice("Berdoa dan tinggalkan (aman, tidak dapat apa-apa)",
                         p -> EventResult.nothing())
                 }
             );

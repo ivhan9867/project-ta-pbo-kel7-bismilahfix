@@ -22,17 +22,17 @@ import javafx.util.Duration;
 public class UIFactory {
 
     // ── Color Constants ───────────────────────────────────
-    // ── Color Constants — Nusantara Theme ────────────────────
-    public static final String CYAN    = "#C8860A";   // gold utama
-    public static final String YELLOW  = "#FFB830";   // gold terang
-    public static final String RED     = "#CC2200";   // merah bata
-    public static final String PURPLE  = "#8855CC";   // ungu mistis
-    public static final String GREEN   = "#44AA44";   // hijau tua
-    public static final String ORANGE  = "#AA5500";   // coklat oranye
-    public static final String DIM     = "#7A6650";   // teks redup
-    public static final String TEXT    = "#EDE0C8";   // teks kertas tua
-    public static final String BG_DEEP = "#0A0604";   // latar hitam hangat
-    public static final String BG_PANEL= "#150E08";   // panel gelap
+    // ── Color Constants — Nusantara Dark Gold Palette ────────
+    public static final String CYAN    = "#C8860A";   // gold batik utama
+    public static final String YELLOW  = "#FFB830";   // gold terang / teks penting
+    public static final String RED     = "#CC3300";   // merah api / HP / bahaya
+    public static final String PURPLE  = "#7755BB";   // amethyst / shield / mistis
+    public static final String GREEN   = "#2D7A45";   // jade / buff / sukses
+    public static final String ORANGE  = "#AA5500";   // ember dim
+    public static final String DIM     = "#6A5840";   // teks sangat redup
+    public static final String TEXT    = "#EDE0C8";   // parchment — kertas tua
+    public static final String BG_DEEP = "#0A0604";   // tinta hitam hangat
+    public static final String BG_PANEL= "#1A1008";   // panel parchment
     public static final String BORDER  = "#3A2810";   // border kayu
 
     // ══════════════════════════════════════════════════════

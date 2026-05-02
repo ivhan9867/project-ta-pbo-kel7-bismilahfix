@@ -1,34 +1,22 @@
 package arclightcity.ui.view;
 
 import arclightcity.engine.GameEngine;
+import arclightcity.ui.ArclightApp;
+import arclightcity.ui.controller.SceneRouter;
+import arclightcity.ui.util.UIFactory;
 import javafx.animation.*;
 import javafx.geometry.*;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
-import arclightcity.ui.controller.SceneRouter;
-import arclightcity.ui.ArclightApp;
-import arclightcity.ui.util.UIFactory;
 
 /**
- * MainMenuView — screen awal game.
- *
- * Layout:
- *   ┌─────────────────────────┐
- *   │   [SCAN LINES bg]       │
- *   │                         │
- *   │   MYTHIC ITEM OBTAINED         │  ← glowing title
- *   │   ─── CYBERPUNK RPG ─── │
- *   │                         │
- *   │   [ENTER ARCLIGHT]      │  ← NEW GAME
- *   │   [CONTINUE]            │  ← future save
- *   │   [SETTINGS]            │
- *   │                         │
- *   │   v0.1 ALPHA            │
- *   └─────────────────────────┘
+ * MainMenuView — Layar utama Mythic Item Obtained.
+ * Tema: Nusantara Dark Gold — ornamen batik, keris, kahyangan.
  */
 public class MainMenuView {
 
@@ -41,189 +29,273 @@ public class MainMenuView {
     }
 
     public Parent build() {
-        // ── Root ─────────────────────────────────────────
         StackPane root = new StackPane();
         root.setPrefSize(ArclightApp.SCREEN_WIDTH, ArclightApp.SCREEN_HEIGHT);
-        root.setStyle("-fx-background-color: #050810;");
+        root.setStyle("-fx-background-color: #0A0604;");
 
-        // ── Background grid lines ─────────────────────────
-        Pane gridBg = buildGridBackground();
-        root.getChildren().add(gridBg);
+        // ── Background dekoratif ───────────────────────────
+        root.getChildren().add(buildBackground());
 
-        // ── Scan line overlay ─────────────────────────────
-        Pane scanlines = buildScanlines();
-        root.getChildren().add(scanlines);
-
-        // ── Content ───────────────────────────────────────
+        // ── Konten utama ───────────────────────────────────
         VBox content = new VBox(0);
         content.setAlignment(Pos.CENTER);
-        content.setPadding(new Insets(60, 40, 60, 40));
+        content.setPrefSize(ArclightApp.SCREEN_WIDTH, ArclightApp.SCREEN_HEIGHT);
 
-        // City skyline ASCII (decorative)
-        Label skyline = new Label(
-            "█▀▀▄▄▀▀████▄▄▀▀▀▀██████▀▀▄▄\n" +
-            "█  ██  ████  ██  ██████  ██\n" +
-            "▀  ▀▀  ▀▀▀▀  ▀▀  ▀▀▀▀▀  ▀▀"
+        // Ornamen atas
+        content.getChildren().add(buildTopOrnament());
+
+        // Spacer
+        Region spacer1 = new Region(); spacer1.setPrefHeight(30);
+        content.getChildren().add(spacer1);
+
+        // Title block
+        content.getChildren().add(buildTitleBlock());
+
+        Region spacer2 = new Region(); spacer2.setPrefHeight(40);
+        content.getChildren().add(spacer2);
+
+        // Menu buttons
+        content.getChildren().add(buildMenuButtons());
+
+        Region spacer3 = new Region(); spacer3.setPrefHeight(30);
+        content.getChildren().add(spacer3);
+
+        // Footer
+        content.getChildren().add(buildFooter());
+
+        root.getChildren().add(content);
+
+        UIFactory.fadeIn(root, 800);
+        return root;
+    }
+
+    // ── Background ────────────────────────────────────────
+
+    private StackPane buildBackground() {
+        StackPane bg = new StackPane();
+        bg.setPrefSize(ArclightApp.SCREEN_WIDTH, ArclightApp.SCREEN_HEIGHT);
+
+        // Garis ornamen vertikal kiri & kanan (batik style)
+        VBox leftBar = new VBox();
+        leftBar.setPrefWidth(3);
+        leftBar.setPrefHeight(ArclightApp.SCREEN_HEIGHT);
+        leftBar.setStyle("-fx-background-color: linear-gradient(to bottom, transparent, #C8860A55, #C8860A, #C8860A55, transparent);");
+        StackPane.setAlignment(leftBar, Pos.CENTER_LEFT);
+        StackPane.setMargin(leftBar, new Insets(0, 0, 0, 40));
+
+        VBox rightBar = new VBox();
+        rightBar.setPrefWidth(3);
+        rightBar.setPrefHeight(ArclightApp.SCREEN_HEIGHT);
+        rightBar.setStyle("-fx-background-color: linear-gradient(to bottom, transparent, #C8860A55, #C8860A, #C8860A55, transparent);");
+        StackPane.setAlignment(rightBar, Pos.CENTER_RIGHT);
+        StackPane.setMargin(rightBar, new Insets(0, 40, 0, 0));
+
+        // Titik-titik ornamen di pojok (batik diamond)
+        for (Pos pos : new Pos[]{Pos.TOP_LEFT, Pos.TOP_RIGHT, Pos.BOTTOM_LEFT, Pos.BOTTOM_RIGHT}) {
+            Label diamond = new Label("◆");
+            diamond.setStyle("-fx-text-fill: #3A2810; -fx-font-size: 24px;");
+            StackPane.setAlignment(diamond, pos);
+            StackPane.setMargin(diamond, new Insets(20));
+            bg.getChildren().add(diamond);
+        }
+
+        bg.getChildren().addAll(leftBar, rightBar);
+        return bg;
+    }
+
+    // ── Top ornament ──────────────────────────────────────
+
+    private VBox buildTopOrnament() {
+        VBox box = new VBox(8);
+        box.setAlignment(Pos.CENTER);
+
+        // Keris ornament divider
+        HBox divider = new HBox(12);
+        divider.setAlignment(Pos.CENTER);
+        Label left = new Label("─────  ✦  ─────");
+        left.setStyle("-fx-text-fill: #5A3A10; -fx-font-family: 'Courier New'; -fx-font-size: 13px;");
+        divider.getChildren().add(left);
+
+        // Sub-label
+        Label sub = new Label("✦  MASUKI DUNIA GAIB NUSANTARA  ✦");
+        sub.setStyle(
+            "-fx-text-fill: #5A3A10;" +
+            "-fx-font-family: 'Courier New';" +
+            "-fx-font-size: 10px;" +
+            "-fx-letter-spacing: 3;"
         );
-        skyline.setStyle(
-            "-fx-text-fill: #1C2E44;" +
-            "-fx-font-family: 'Courier New', monospace;" +
-            "-fx-font-size: 9px;"
-        );
-        skyline.setAlignment(Pos.CENTER);
 
-        // ── Title ─────────────────────────────────────────
-        VBox titleBlock = new VBox(4);
-        titleBlock.setAlignment(Pos.CENTER);
+        box.getChildren().addAll(divider, sub);
+        return box;
+    }
 
-        Label arc = new Label("ARCLIGHT");
-        arc.setStyle(
-            "-fx-text-fill: #00E5FF;" +
+    // ── Title block ───────────────────────────────────────
+
+    private VBox buildTitleBlock() {
+        VBox block = new VBox(8);
+        block.setAlignment(Pos.CENTER);
+
+        // Main title - MYTHIC
+        Label mythic = new Label("MYTHIC");
+        mythic.setStyle(
             "-fx-font-family: 'Courier New', monospace;" +
-            "-fx-font-size: 44px;" +
+            "-fx-font-size: 52px;" +
             "-fx-font-weight: bold;" +
-            // Reduced glow: radius 8 spread 0.4 — readable but still glows
-            "-fx-effect: dropshadow(gaussian, #00E5FF, 8, 0.4, 0, 0);"
+            "-fx-text-fill: #FFB830;" +
+            "-fx-effect: dropshadow(gaussian, #C8860A, 30, 0.8, 0, 0)" +
+            "          , dropshadow(gaussian, #FF8800, 10, 0.5, 0, 0);"
         );
 
-        Label city = new Label("C I T Y");
-        city.setStyle(
-            "-fx-text-fill: #E0E8F0;" +
+        // ITEM OBTAINED
+        Label item = new Label("ITEM  OBTAINED");
+        item.setStyle(
             "-fx-font-family: 'Courier New', monospace;" +
-            "-fx-font-size: 22px;" +
+            "-fx-font-size: 28px;" +
             "-fx-font-weight: bold;" +
-            "-fx-letter-spacing: 8px;"
+            "-fx-text-fill: #C8860A;" +
+            "-fx-effect: dropshadow(gaussian, #C8860A, 12, 0.4, 0, 0);" +
+            "-fx-letter-spacing: 8;"
         );
 
-        Label separator = new Label("──────── CYBERPUNK RPG ────────");
-        separator.setStyle(
-            "-fx-text-fill: #1C2E44;" +
-            "-fx-font-family: 'Courier New', monospace;" +
-            "-fx-font-size: 10px;"
+        // Ornamen bawah judul
+        HBox ornamen = new HBox(8);
+        ornamen.setAlignment(Pos.CENTER);
+        Label orn = new Label("◈ ─── ROGUELITE  RPG  NUSANTARA ─── ◈");
+        orn.setStyle(
+            "-fx-text-fill: #5A3A10;" +
+            "-fx-font-family: 'Courier New';" +
+            "-fx-font-size: 11px;" +
+            "-fx-letter-spacing: 2;"
         );
+        ornamen.getChildren().add(orn);
 
-        titleBlock.getChildren().addAll(arc, city, separator);
+        // Animasi pulse pada judul
+        ScaleTransition pulse = new ScaleTransition(Duration.millis(2000), mythic);
+        pulse.setFromX(1.0); pulse.setFromY(1.0);
+        pulse.setToX(1.02);  pulse.setToY(1.02);
+        pulse.setAutoReverse(true);
+        pulse.setCycleCount(Animation.INDEFINITE);
+        pulse.play();
 
-        // ── Blinking cursor ───────────────────────────────
-        Label cursor = new Label("█");
-        cursor.setStyle("-fx-text-fill: #00E5FF; -fx-font-family: 'Courier New'; -fx-font-size: 16px;");
-        Timeline blink = new Timeline(
-            new KeyFrame(Duration.millis(500),  e -> cursor.setVisible(true)),
-            new KeyFrame(Duration.millis(1000), e -> cursor.setVisible(false))
-        );
-        blink.setCycleCount(Timeline.INDEFINITE);
-        blink.play();
+        block.getChildren().addAll(mythic, item, ornamen);
+        return block;
+    }
 
-        // ── Buttons ───────────────────────────────────────
-        VBox buttons = new VBox(12);
+    // ── Menu buttons ──────────────────────────────────────
+
+    private VBox buildMenuButtons() {
+        VBox buttons = new VBox(10);
         buttons.setAlignment(Pos.CENTER);
-        buttons.setPadding(new Insets(40, 0, 20, 0));
+        buttons.setMaxWidth(320);
 
-        Button newGame = UIFactory.btnPrimary("[ ENTER MYTHIC ITEM OBTAINED ]");
+        // ── MULAI PETUALANGAN (New Game) ──────────────────
+        Button newGame = createMenuButton("▶  MULAI PETUALANGAN", true);
         newGame.setOnAction(e -> router.showCharacterCreate());
 
-        // CONTINUE — aktif jika ada save
+        // ── LANJUTKAN (Continue) ──────────────────────────
         boolean hasSave = engine.hasSave();
-        String saveInfo = hasSave ? engine.getSaveSummary() : "No save data";
-
-        Button continueBtn = new Button("[ CONTINUE ]");
-        continueBtn.setMaxWidth(Double.MAX_VALUE);
+        Button continueBtn = createMenuButton("◈  LANJUTKAN", false);
         continueBtn.setDisable(!hasSave);
-        continueBtn.setStyle(
-            "-fx-background-color: " + (hasSave ? "#00E5FF11" : "transparent") + ";" +
-            "-fx-border-color: " + (hasSave ? "#00E5FF" : "#5A6A80") + ";" +
-            "-fx-border-width: 1;" +
-            "-fx-text-fill: " + (hasSave ? "#00E5FF" : "#5A6A80") + ";" +
-            "-fx-font-family: 'Courier New', monospace;" +
-            "-fx-font-size: 13px;" +
-            "-fx-padding: 10 20;" +
-            "-fx-cursor: " + (hasSave ? "hand" : "default") + ";"
-        );
+        if (!hasSave) {
+            continueBtn.setStyle(continueBtn.getStyle() +
+                "-fx-opacity: 0.3; -fx-cursor: default;");
+        }
         continueBtn.setOnAction(e -> {
             if (engine.loadGame()) router.showHub();
         });
 
-        // Save info label
-        Label saveLabel = new Label(saveInfo);
-        saveLabel.setStyle(
-            "-fx-text-fill: " + (hasSave ? "#5A6A80" : "#2A3A50") + ";" +
-            "-fx-font-family: 'Courier New'; -fx-font-size: 10px;"
-        );
-
-        buttons.getChildren().addAll(newGame, continueBtn, saveLabel);
-
-        // ── Version info ──────────────────────────────────
-        Label version = new Label("v0.1 ALPHA  ·  TUGAS AKHIR OOP");
-        version.setStyle(
-            "-fx-text-fill: #2A3A50;" +
-            "-fx-font-family: 'Courier New', monospace;" +
+        // Save info
+        Label saveInfo = new Label(hasSave
+            ? "✦ " + engine.getSaveSummary()
+            : "── Belum ada data simpanan ──");
+        saveInfo.setStyle(
+            "-fx-text-fill: " + (hasSave ? "#5A3A10" : "#2A1808") + ";" +
+            "-fx-font-family: 'Courier New';" +
             "-fx-font-size: 10px;"
         );
 
-        content.getChildren().addAll(
-            skyline,
-            UIFactory.spacer(),
-            titleBlock,
-            cursor,
-            buttons,
-            UIFactory.spacer(),
-            version
+        // Divider
+        Label div = new Label("─────────────────────────────");
+        div.setStyle("-fx-text-fill: #2A1808; -fx-font-family: 'Courier New';");
+
+        // ── KELUAR ────────────────────────────────────────
+        Button exitBtn = createDangerButton("✕  KELUAR");
+        exitBtn.setOnAction(e -> javafx.application.Platform.exit());
+
+        buttons.getChildren().addAll(newGame, continueBtn, saveInfo, div, exitBtn);
+        return buttons;
+    }
+
+    private Button createMenuButton(String text, boolean isPrimary) {
+        Button btn = new Button(text);
+        btn.setMaxWidth(Double.MAX_VALUE);
+        btn.setPrefWidth(320);
+        btn.setStyle(
+            "-fx-background-color: " + (isPrimary ? "#C8860A22" : "transparent") + ";" +
+            "-fx-border-color: " + (isPrimary ? "#FFB830" : "#5A3A10") + ";" +
+            "-fx-border-width: 1;" +
+            "-fx-text-fill: " + (isPrimary ? "#FFB830" : "#A09070") + ";" +
+            "-fx-font-family: 'Courier New', monospace;" +
+            "-fx-font-size: 14px;" +
+            "-fx-font-weight: bold;" +
+            "-fx-padding: 12 24;" +
+            "-fx-cursor: hand;" +
+            (isPrimary ? "-fx-effect: dropshadow(gaussian, #C8860A, 8, 0.3, 0, 0);" : "")
+        );
+        // Hover effect
+        String base = btn.getStyle();
+        btn.setOnMouseEntered(ev -> btn.setStyle(base +
+            "-fx-background-color: #C8860A33;" +
+            "-fx-border-color: #FFB830;" +
+            "-fx-text-fill: #FFB830;" +
+            "-fx-effect: dropshadow(gaussian, #C8860A, 14, 0.5, 0, 0);"));
+        btn.setOnMouseExited(ev -> btn.setStyle(base));
+        return btn;
+    }
+
+    private Button createDangerButton(String text) {
+        Button btn = new Button(text);
+        btn.setMaxWidth(Double.MAX_VALUE);
+        btn.setPrefWidth(320);
+        btn.setStyle(
+            "-fx-background-color: transparent;" +
+            "-fx-border-color: #3A1808;" +
+            "-fx-border-width: 1;" +
+            "-fx-text-fill: #5A2808;" +
+            "-fx-font-family: 'Courier New', monospace;" +
+            "-fx-font-size: 12px;" +
+            "-fx-padding: 8 24;" +
+            "-fx-cursor: hand;"
+        );
+        btn.setOnMouseEntered(ev -> btn.setStyle(
+            "-fx-background-color: #CC330011;" +
+            "-fx-border-color: #CC3300;" +
+            "-fx-border-width: 1;" +
+            "-fx-text-fill: #CC3300;" +
+            "-fx-font-family: 'Courier New'; -fx-font-size: 12px; -fx-padding: 8 24; -fx-cursor: hand;"));
+        btn.setOnMouseExited(ev -> btn.setStyle(
+            "-fx-background-color: transparent;" +
+            "-fx-border-color: #3A1808; -fx-border-width: 1;" +
+            "-fx-text-fill: #5A2808;" +
+            "-fx-font-family: 'Courier New'; -fx-font-size: 12px; -fx-padding: 8 24; -fx-cursor: hand;"));
+        return btn;
+    }
+
+    // ── Footer ────────────────────────────────────────────
+
+    private HBox buildFooter() {
+        HBox footer = new HBox();
+        footer.setAlignment(Pos.CENTER);
+        footer.setPadding(new Insets(0, 40, 0, 40));
+
+        Label version = new Label("v0.4.3  ✦  ALPHA  ✦  Tugas Akhir PBO 2026");
+        version.setStyle(
+            "-fx-text-fill: #2A1808;" +
+            "-fx-font-family: 'Courier New';" +
+            "-fx-font-size: 10px;"
         );
 
-        root.getChildren().add(content);
-
-        // ── Animate in ────────────────────────────────────
-        UIFactory.fadeIn(titleBlock, 800);
-        UIFactory.fadeIn(buttons, 1200);
-
-        // Glow pulse di title
-        UIFactory.glowPulse(arc, "#00E5FF");
-
-        return root;
-    }
-
-    // ── Background grid (cyberpunk city grid aesthetic) ───
-
-    private Pane buildGridBackground() {
-        Pane pane = new Pane();
-        pane.setPrefSize(ArclightApp.SCREEN_WIDTH, ArclightApp.SCREEN_HEIGHT);
-
-        // Horizontal grid lines (setiap 40px)
-        for (int y = 0; y < (int)ArclightApp.SCREEN_HEIGHT; y += 40) {
-            Rectangle line = new Rectangle(0, y, (int)ArclightApp.SCREEN_WIDTH, 1);
-            line.setFill(Color.web("#1C2E44", 0.15));
-            pane.getChildren().add(line);
-        }
-        // Vertical grid lines
-        for (int x = 0; x < (int)ArclightApp.SCREEN_WIDTH; x += 40) {
-            Rectangle line = new Rectangle(x, 0, 1, (int)ArclightApp.SCREEN_HEIGHT);
-            line.setFill(Color.web("#1C2E44", 0.15));
-            pane.getChildren().add(line);
-        }
-
-        // Perspective lines dari bawah (cyberpunk city look)
-        int cx = (int)(ArclightApp.SCREEN_WIDTH / 2);
-        for (int x = 0; x <= (int)ArclightApp.SCREEN_WIDTH; x += 60) {
-            javafx.scene.shape.Line perspLine = new javafx.scene.shape.Line(cx, (int)ArclightApp.SCREEN_HEIGHT, x, 300);
-            perspLine.setStroke(Color.web("#00E5FF", 0.04));
-            perspLine.setStrokeWidth(1);
-            pane.getChildren().add(perspLine);
-        }
-
-        return pane;
-    }
-
-    private Pane buildScanlines() {
-        Pane pane = new Pane();
-        pane.setPrefSize(ArclightApp.SCREEN_WIDTH, ArclightApp.SCREEN_HEIGHT);
-        pane.setStyle("-fx-background-color: transparent;");
-        // Scanlines horizontal tipis (setiap 2px)
-        for (int y = 0; y < (int)ArclightApp.SCREEN_HEIGHT; y += 3) {
-            Rectangle line = new Rectangle(0, y, (int)ArclightApp.SCREEN_WIDTH, 1);
-            line.setFill(Color.web("#000000", 0.08));
-            pane.getChildren().add(line);
-        }
-        pane.setMouseTransparent(true);
-        return pane;
+        footer.getChildren().add(version);
+        return footer;
     }
 }

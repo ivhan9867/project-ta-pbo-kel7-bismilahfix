@@ -2,41 +2,26 @@ package arclightcity.ui.view;
 
 import arclightcity.engine.GameEngine;
 import arclightcity.entity.player.PlayerBackground;
+import arclightcity.ui.ArclightApp;
+import arclightcity.ui.controller.SceneRouter;
+import arclightcity.ui.util.UIFactory;
 import javafx.geometry.*;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
-import arclightcity.ui.controller.SceneRouter;
-import arclightcity.ui.util.UIFactory;
+import javafx.animation.*;
+import javafx.util.Duration;
 
 /**
- * CharacterCreateView — screen pembuatan karakter.
- *
- * Layout:
- *   ┌─────────────────────────┐
- *   │  ← BACK    CREATE CHAR  │
- *   ├─────────────────────────┤
- *   │  ENTER NAME             │
- *   │  [________________]     │
- *   ├─────────────────────────┤
- *   │  SELECT BACKGROUND      │
- *   │  ┌──────────────────┐   │
- *   │  │ STREET BRAWLER   │   │  ← selected highlight
- *   │  │ desc...          │   │
- *   │  │ ATK+12 HP+30...  │   │
- *   │  └──────────────────┘   │
- *   │  (scroll list)          │
- *   ├─────────────────────────┤
- *   │  [ BEGIN ]              │
- *   └─────────────────────────┘
+ * CharacterCreateView — Pilih asal usul dan nama karakter.
+ * Tema: Prasasti kuno Nusantara — pilih jalan hidupmu.
  */
 public class CharacterCreateView {
 
     private final GameEngine  engine;
     private final SceneRouter router;
-
-    private PlayerBackground selectedBg  = PlayerBackground.STREET_BRAWLER;
-    private TextField        nameField;
+    private PlayerBackground  selectedBg = PlayerBackground.STREET_BRAWLER;
+    private TextField         nameField;
 
     public CharacterCreateView(GameEngine engine, SceneRouter router) {
         this.engine = engine;
@@ -44,176 +29,245 @@ public class CharacterCreateView {
     }
 
     public Parent build() {
-        VBox root = UIFactory.screenRoot();
+        BorderPane root = UIFactory.screenRootBorder();
 
-        // Header
-        root.getChildren().add(UIFactory.headerBar("CREATE CHARACTER",
-                () -> router.showMainMenu()));
+        // ── TOP: header ───────────────────────────────────
+        VBox header = buildHeader();
+        root.setTop(header);
 
-        // Name input
-        VBox nameSection = new VBox(8);
-        nameSection.setPadding(new Insets(16, 16, 8, 16));
-        nameSection.getChildren().add(UIFactory.sectionTitle("CALLSIGN"));
+        // ── CENTER: scrollable content ────────────────────
+        VBox content = new VBox(16);
+        content.setPadding(new Insets(16));
 
-        nameField = new TextField();
-        nameField.setPromptText("Enter your name...");
-        nameField.setText("Runner");
-        nameField.setStyle(
-            "-fx-background-color: #0C1220;" +
-            "-fx-border-color: #1C2E44;" +
-            "-fx-border-width: 1;" +
-            "-fx-text-fill: #E0E8F0;" +
-            "-fx-font-family: 'Courier New', monospace;" +
-            "-fx-font-size: 14px;" +
-            "-fx-padding: 10;" +
-            "-fx-prompt-text-fill: #5A6A80;"
-        );
-        nameField.focusedProperty().addListener((obs, old, focused) -> {
-            if (focused) {
-                nameField.setStyle(nameField.getStyle().replace(
-                        "-fx-border-color: #1C2E44;", "-fx-border-color: #00E5FF;"));
-            } else {
-                nameField.setStyle(nameField.getStyle().replace(
-                        "-fx-border-color: #00E5FF;", "-fx-border-color: #1C2E44;"));
-            }
-        });
-        nameSection.getChildren().add(nameField);
-        root.getChildren().add(nameSection);
+        // Nama karakter
+        content.getChildren().add(buildNameSection());
 
-        // Divider
-        root.getChildren().add(UIFactory.divider());
+        // Pilih asal usul
+        Label bgTitle = new Label("── PILIH ASAL USUL ──");
+        bgTitle.setStyle("-fx-text-fill: #5A3A10; -fx-font-family: 'Courier New';" +
+                         "-fx-font-size: 10px; -fx-font-weight: bold; -fx-letter-spacing: 2;");
+        content.getChildren().add(bgTitle);
 
-        // Background section
-        Label bgTitle = UIFactory.sectionTitle("SELECT BACKGROUND");
-        bgTitle.setPadding(new Insets(12, 16, 4, 16));
-        root.getChildren().add(bgTitle);
+        // Grid background cards
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setMaxWidth(Double.MAX_VALUE);
 
-        // Background list (scrollable)
-        ScrollPane scroll = new ScrollPane();
+        PlayerBackground[] bgs = PlayerBackground.values();
+        for (int i = 0; i < bgs.length; i++) {
+            VBox card = buildBgCard(bgs[i]);
+            grid.add(card, i % 2, i / 2);
+            GridPane.setHgrow(card, Priority.ALWAYS);
+        }
+        content.getChildren().add(grid);
+
+        ScrollPane scroll = new ScrollPane(content);
         scroll.setFitToWidth(true);
         scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scroll.setStyle("-fx-background-color: #050810; -fx-background: #050810; -fx-border-color: transparent;");
+        scroll.setStyle("-fx-background-color: #0A0604; -fx-background: #0A0604;" +
+                        "-fx-border-color: transparent;");
+        root.setCenter(scroll);
 
-        VBox bgList = new VBox(8);
-        bgList.setPadding(new Insets(8, 16, 8, 16));
-        VBox.setVgrow(scroll, Priority.ALWAYS);
-
-        // Render semua background
-        for (PlayerBackground bg : PlayerBackground.values()) {
-            VBox card = buildBgCard(bg, bgList);
-            bgList.getChildren().add(card);
-        }
-
-        scroll.setContent(bgList);
-        root.getChildren().add(scroll);
-
-        // Divider + Begin button
-        root.getChildren().add(UIFactory.divider());
-
-        VBox bottomBar = new VBox(0);
-        bottomBar.setPadding(new Insets(12, 16, 16, 16));
-        Button begin = UIFactory.btnGold("[ BEGIN — " + selectedBg.name + " ]");
-        begin.setOnAction(e -> {
-            String name = nameField.getText().trim();
-            if (name.isEmpty()) {
-                nameField.setStyle(nameField.getStyle().replace(
-                        "-fx-border-color: #1C2E44;", "-fx-border-color: #FF1744;"));
-                return;
-            }
-            engine.createCharacter(name, selectedBg);
-            router.showHub();
-        });
-        bottomBar.getChildren().add(begin);
-        root.getChildren().add(bottomBar);
+        // ── BOTTOM: confirm button ────────────────────────
+        root.setBottom(buildBottomAction());
 
         UIFactory.fadeIn(root, 400);
         return root;
     }
 
-    private VBox buildBgCard(PlayerBackground bg, VBox bgList) {
+    private VBox buildHeader() {
+        VBox hdr = new VBox(4);
+        hdr.setPadding(new Insets(14, 16, 14, 16));
+        hdr.setStyle("-fx-background-color: #0F0A06;" +
+                     "-fx-border-color: #3A2810; -fx-border-width: 0 0 1 0;");
+
+        HBox row = new HBox(12);
+        row.setAlignment(Pos.CENTER_LEFT);
+
+        Button back = new Button("← KEMBALI");
+        back.setStyle("-fx-background-color: transparent; -fx-border-color: #3A2810;" +
+                      "-fx-border-width: 1; -fx-text-fill: #6A5840;" +
+                      "-fx-font-family: 'Courier New'; -fx-font-size: 11px;" +
+                      "-fx-padding: 4 10; -fx-cursor: hand;");
+        back.setOnAction(e -> router.showMainMenu());
+        back.setOnMouseEntered(ev -> back.setStyle(
+            "-fx-background-color: transparent; -fx-border-color: #C8860A;" +
+            "-fx-border-width: 1; -fx-text-fill: #FFB830;" +
+            "-fx-font-family: 'Courier New'; -fx-font-size: 11px; -fx-padding: 4 10; -fx-cursor: hand;"));
+        back.setOnMouseExited(ev -> back.setStyle(
+            "-fx-background-color: transparent; -fx-border-color: #3A2810;" +
+            "-fx-border-width: 1; -fx-text-fill: #6A5840;" +
+            "-fx-font-family: 'Courier New'; -fx-font-size: 11px; -fx-padding: 4 10; -fx-cursor: hand;"));
+
+        Label title = new Label("✦  PILIH JALANMU  ✦");
+        title.setStyle("-fx-text-fill: #FFB830; -fx-font-family: 'Courier New';" +
+                       "-fx-font-size: 15px; -fx-font-weight: bold;" +
+                       "-fx-effect: dropshadow(gaussian, #C8860A, 8, 0.3, 0, 0);");
+        HBox.setHgrow(title, Priority.ALWAYS);
+
+        row.getChildren().addAll(back, title);
+
+        Label sub = new Label("Setiap asal usul menentukan skill awal dan takdir petualanganmu");
+        sub.setStyle("-fx-text-fill: #4A3820; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
+
+        hdr.getChildren().addAll(row, sub);
+        return hdr;
+    }
+
+    private VBox buildNameSection() {
+        VBox sec = new VBox(6);
+        sec.setPadding(new Insets(12, 0, 4, 0));
+
+        Label lbl = new Label("── NAMA PENDEKAR ──");
+        lbl.setStyle("-fx-text-fill: #5A3A10; -fx-font-family: 'Courier New';" +
+                     "-fx-font-size: 10px; -fx-font-weight: bold; -fx-letter-spacing: 2;");
+
+        nameField = new TextField();
+        nameField.setPromptText("Masukkan nama karaktermu...");
+        nameField.setMaxWidth(Double.MAX_VALUE);
+        nameField.setStyle(
+            "-fx-background-color: #1A1008;" +
+            "-fx-border-color: #3A2810;" +
+            "-fx-border-width: 1;" +
+            "-fx-text-fill: #EDE0C8;" +
+            "-fx-font-family: 'Courier New';" +
+            "-fx-font-size: 14px;" +
+            "-fx-prompt-text-fill: #3A2810;" +
+            "-fx-padding: 10 12;"
+        );
+        nameField.focusedProperty().addListener((obs, old, focused) ->
+            nameField.setStyle(nameField.getStyle() +
+                (focused ? "-fx-border-color: #C8860A;" : "-fx-border-color: #3A2810;"))
+        );
+
+        sec.getChildren().addAll(lbl, nameField);
+        return sec;
+    }
+
+    private VBox buildBgCard(PlayerBackground bg) {
+        boolean isSelected = bg == selectedBg;
+
         VBox card = new VBox(6);
         card.setPadding(new Insets(12));
         card.setCursor(javafx.scene.Cursor.HAND);
-        updateCardStyle(card, bg == selectedBg);
+        card.setStyle(
+            "-fx-background-color: " + (isSelected ? "#C8860A1A" : "#1A1008") + ";" +
+            "-fx-border-color: " + (isSelected ? "#FFB830" : "#3A2810") + ";" +
+            "-fx-border-width: " + (isSelected ? "1 1 1 3" : "1") + ";" +
+            (isSelected ? "-fx-effect: dropshadow(gaussian, #C8860A, 10, 0.3, 0, 0);" : "")
+        );
 
-        // Name
-        Label nameLabel = new Label(bg.name.toUpperCase());
-        nameLabel.setStyle(
-            "-fx-text-fill: " + (bg == selectedBg ? UIFactory.CYAN : UIFactory.TEXT) + ";" +
-            "-fx-font-family: 'Courier New', monospace;" +
-            "-fx-font-size: 13px;" +
+        // Header: ikon + nama
+        HBox nameRow = new HBox(8);
+        nameRow.setAlignment(Pos.CENTER_LEFT);
+
+        String icon = switch (bg) {
+            case STREET_BRAWLER  -> "🥊";
+            case NETRUNNER       -> "💻";
+            case VETERAN_SOLDIER -> "🪖";
+            case ENERGY_ADEPT    -> "⚡";
+            case GHOST_OPERATIVE -> "👻";
+            case TECHWRIGHT      -> "🔧";
+        };
+
+        Label iconLbl = new Label(icon);
+        iconLbl.setStyle("-fx-font-size: 18px;");
+
+        Label nameLbl = new Label(bg.name.toUpperCase());
+        nameLbl.setStyle(
+            "-fx-text-fill: " + (isSelected ? "#FFB830" : "#A09070") + ";" +
+            "-fx-font-family: 'Courier New';" +
+            "-fx-font-size: 12px;" +
             "-fx-font-weight: bold;"
         );
 
-        // Lore
-        Label loreLabel = new Label(bg.lore);
-        loreLabel.setWrapText(true);
-        loreLabel.setStyle(
-            "-fx-text-fill: #8899AA;" +
-            "-fx-font-family: 'Courier New', monospace;" +
-            "-fx-font-size: 12px;"
-        );
+        if (isSelected) {
+            Label sel = new Label("✦");
+            sel.setStyle("-fx-text-fill: #FFB830; -fx-font-size: 10px;");
+            HBox.setHgrow(nameLbl, Priority.ALWAYS);
+            nameRow.getChildren().addAll(iconLbl, nameLbl, sel);
+        } else {
+            nameRow.getChildren().addAll(iconLbl, nameLbl);
+        }
 
-        // Bonus preview (hardcoded display dari background)
-        Label bonusLabel = new Label(getBonusPreview(bg));
-        bonusLabel.setWrapText(true);
-        bonusLabel.setStyle(
-            "-fx-text-fill: " + UIFactory.GREEN + ";" +
-            "-fx-font-family: 'Courier New', monospace;" +
-            "-fx-font-size: 12px;"
-        );
+        // Lore text
+        Label lore = new Label(bg.lore);
+        lore.setWrapText(true);
+        lore.setStyle("-fx-text-fill: #6A5840; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
 
-        card.getChildren().addAll(nameLabel, loreLabel, bonusLabel);
+        // Starter skills
+        String skills = switch (bg) {
+            case STREET_BRAWLER  -> "Pukulan Harimau + Tebasan";
+            case NETRUNNER       -> "Santet Digital + Upload Santet";
+            case VETERAN_SOLDIER -> "Tameng Baja + Gempa Bumi";
+            case ENERGY_ADEPT    -> "Serap Tenaga + Racun Semesta";
+            case GHOST_OPERATIVE -> "Panah Bayangan + Langkah Gaib";
+            case TECHWRIGHT      -> "Ledakan Petir + Rajah Pelindung";
+        };
+        Label skillLbl = new Label("⚔ " + skills);
+        skillLbl.setStyle("-fx-text-fill: #5A3A10; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
 
-        // Click handler
+        card.getChildren().addAll(nameRow, lore, skillLbl);
+
+        // Click handler — rebuild view dengan bg baru dipilih
         card.setOnMouseClicked(e -> {
             selectedBg = bg;
-            // Reset semua card style
-            bgList.getChildren().forEach(child -> {
-                if (child instanceof VBox c) {
-                    PlayerBackground cbg = (PlayerBackground) c.getUserData();
-                    if (cbg != null) {
-                        updateCardStyle(c, cbg == selectedBg);
-                        Label nl = (Label) c.getChildren().get(0);
-                        nl.setStyle(nl.getStyle().replace(
-                                "-fx-text-fill: #E0E8F0;", "-fx-text-fill: " + UIFactory.CYAN + ";").replace(
-                                "-fx-text-fill: " + UIFactory.CYAN + ";", "-fx-text-fill: " + (cbg == selectedBg ? UIFactory.CYAN : UIFactory.TEXT) + ";"));
-                    }
-                }
-            });
-            updateCardStyle(card, true);
-            nameLabel.setStyle(nameLabel.getStyle().replace(
-                    UIFactory.TEXT, UIFactory.CYAN));
+            router.showCharacterCreateWith(selectedBg, nameField.getText());
         });
-        card.setUserData(bg);
 
         return card;
     }
 
-    private void updateCardStyle(VBox card, boolean selected) {
-        if (selected) {
-            card.setStyle(
-                "-fx-background-color: #00E5FF11;" +
-                "-fx-border-color: #00E5FF;" +
-                "-fx-border-width: 1 1 1 3;"
-            );
-        } else {
-            card.setStyle(
-                "-fx-background-color: #0C1220;" +
-                "-fx-border-color: #1C2E44;" +
-                "-fx-border-width: 1;"
-            );
-        }
+    private HBox buildBottomAction() {
+        HBox bottom = new HBox(12);
+        bottom.setPadding(new Insets(12, 16, 14, 16));
+        bottom.setAlignment(Pos.CENTER_RIGHT);
+        bottom.setStyle("-fx-background-color: #0F0A06;" +
+                        "-fx-border-color: #3A2810; -fx-border-width: 1 0 0 0;");
+
+        // Asal usul yang dipilih
+        Label chosen = new Label("Asal Usul: " + selectedBg.name);
+        chosen.setStyle("-fx-text-fill: #C8860A; -fx-font-family: 'Courier New'; -fx-font-size: 12px;");
+        HBox.setHgrow(chosen, Priority.ALWAYS);
+
+        Button start = new Button("MULAI PETUALANGAN  ▶");
+        start.setStyle(
+            "-fx-background-color: #C8860A22;" +
+            "-fx-border-color: #FFB830;" +
+            "-fx-border-width: 1;" +
+            "-fx-text-fill: #FFB830;" +
+            "-fx-font-family: 'Courier New';" +
+            "-fx-font-size: 13px;" +
+            "-fx-font-weight: bold;" +
+            "-fx-padding: 10 20;" +
+            "-fx-cursor: hand;" +
+            "-fx-effect: dropshadow(gaussian, #C8860A, 8, 0.3, 0, 0);"
+        );
+        start.setOnMouseEntered(ev -> start.setStyle(
+            "-fx-background-color: #C8860A44; -fx-border-color: #FFB830; -fx-border-width: 1;" +
+            "-fx-text-fill: #FFB830; -fx-font-family: 'Courier New'; -fx-font-size: 13px;" +
+            "-fx-font-weight: bold; -fx-padding: 10 20; -fx-cursor: hand;" +
+            "-fx-effect: dropshadow(gaussian, #FFB830, 16, 0.5, 0, 0);"));
+        start.setOnMouseExited(ev -> start.setStyle(
+            "-fx-background-color: #C8860A22; -fx-border-color: #FFB830; -fx-border-width: 1;" +
+            "-fx-text-fill: #FFB830; -fx-font-family: 'Courier New'; -fx-font-size: 13px;" +
+            "-fx-font-weight: bold; -fx-padding: 10 20; -fx-cursor: hand;" +
+            "-fx-effect: dropshadow(gaussian, #C8860A, 8, 0.3, 0, 0);"));
+        start.setOnAction(e -> {
+            String name = nameField != null ? nameField.getText().trim() : "";
+            if (name.isEmpty()) name = selectedBg.name;
+            engine.createCharacter(name, selectedBg);
+            router.showHub();
+        });
+
+        bottom.getChildren().addAll(chosen, start);
+        return bottom;
     }
 
-    private String getBonusPreview(PlayerBackground bg) {
-        return switch (bg) {
-            case STREET_BRAWLER   -> "+ PHYS ATK +12  HP +30  SPEED +3  CRIT +5%  DMG MULT +5%";
-            case NETRUNNER        -> "+ CYBER ATK +15  MAX MP +25  SKILL POWER +15%  CDR +10%  DMG MULT +8%";
-            case VETERAN_SOLDIER  -> "+ PHYS DEF +15  HP +50  SHIELD +60  SHIELD REGEN +3  BLOCK +8%";
-            case ENERGY_ADEPT     -> "+ ENERGY ATK +18  ENERGY DEF +12  SKILL POWER +20%  LIFESTEAL +5%  DMG MULT +10%";
-            case GHOST_OPERATIVE  -> "+ EVASION +10%  SPEED +6  CRIT +10%  CRIT DMG +30%  PIERCE +15%  DMG MULT +12%";
-            case TECHWRIGHT       -> "+ CYBER ATK +10  PIERCE +12%  SHIELD +30  SHIELD REGEN +5  SYNC RATE +15%";
-        };
+    /** Dipanggil saat bg card diklik — rebuild dengan state terbaru */
+    public void setSelectedBg(PlayerBackground bg) { this.selectedBg = bg; }
+    public void setNameText(String name) {
+        if (nameField != null) nameField.setText(name);
     }
 }

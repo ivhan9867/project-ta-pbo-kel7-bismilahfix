@@ -184,10 +184,10 @@ public class LootManager {
             stats.put(StatType.SHIELD_MULT, 0.20 + RNG.nextDouble() * 0.20); // legendary: shield besar
         }
 
-        String[] names = {"Neon Jacket", "Combat Vest", "Exoplate", "Shadow Coat",
-                          "Titanium Shell", "Void Cloak", "Synth Armor"};
+        String[] names = {"Baju Zirah Majapahit", "Tameng Naga", "Kain Batik Pelindung",
+                          "Rompi Rajah", "Zirah Gaib", "Perisai Garuda", "Baju Besi Empu"};
         return new Armor(names[RNG.nextInt(names.length)],
-                "Generated armor — " + rarity.displayName,
+                "Perlengkapan pelindung Nusantara — " + rarity.displayName,
                 rarity, Armor.ArmorType.MEDIUM, stats);
     }
 
@@ -224,8 +224,8 @@ public class LootManager {
             }
         }
 
-        String[] names = {"Neon Ring", "Cyber Implant", "Signal Booster", "Ghost Chip",
-                          "Void Lens", "Resonance Core", "Overclock Module", "Shield Cell"};
+        String[] names = {"Gelang Rajah", "Kalung Garuda", "Cincin Semar",
+                          "Jimat Naga", "Amulet Kahyangan", "Gelang Kala", "Cincin Pamor", "Keris Mini"};
         return new Accessory(names[RNG.nextInt(names.length)],
                 "Generated accessory — " + rarity.displayName, rarity, stats);
     }
@@ -269,16 +269,18 @@ public class LootManager {
         int roll    = RNG.nextInt(4);
 
         return switch (roll) {
-            case 0 -> new Consumable("Health Pack",
-                    "Restores HP", rarity, Consumable.ConsumableType.HEALTH_PACK,
-                    50 + 20 * mult);
-            case 1 -> new Consumable("MP Injector",
-                    "Restores MP", rarity, Consumable.ConsumableType.MP_PACK,
-                    30 + 15 * mult);
-            case 2 -> new Consumable("Antidote",
-                    "Cleanses DOT effects", rarity, Consumable.ConsumableType.ANTIDOTE, 0);
-            default -> new Consumable("Stim Pack",
-                    "Buffs next attack", rarity, Consumable.ConsumableType.BUFF_ITEM, mult);
+            case 0 -> new Consumable("Jamu Kunyit",
+                    "Ramuan tradisional pemulih tenaga — menyembuhkan luka fisik.", rarity,
+                    Consumable.ConsumableType.HEALTH_PACK, 50 + 20 * mult);
+            case 1 -> new Consumable("Tirta Mahkota",
+                    "Air suci dari sumber tersembunyi — memulihkan kekuatan batin.", rarity,
+                    Consumable.ConsumableType.MP_PACK, 30 + 15 * mult);
+            case 2 -> new Consumable("Daun Suruh Sakti",
+                    "Daun suruh yang dimanterai — menetralisir racun dan kutukan.", rarity,
+                    Consumable.ConsumableType.ANTIDOTE, 0);
+            default -> new Consumable("Sesajen Kekuatan",
+                    "Persembahan ritual — membangkitkan kekuatan gaib dalam serangan.", rarity,
+                    Consumable.ConsumableType.BUFF_ITEM, mult);
         };
     }
 
@@ -286,12 +288,103 @@ public class LootManager {
 
     private static String[] getWeaponNames(String bias) {
         return switch (bias) {
-            case "CYBER"  -> new String[]{"Virus Blade", "Hack Injector", "Data Lance",
-                                          "Neural Spike", "Code Disruptor"};
-            case "ENERGY" -> new String[]{"Neon Emitter", "Plasma Rod", "Void Pulse",
-                                          "Arc Wand", "Resonance Gun"};
-            default       -> new String[]{"Street Blade", "Chrome Pistol", "Heavy Revolver",
-                                          "Shredder Knife", "Combat Shotgun"};
+            case "CYBER"  -> new String[]{"Santet Kristal", "Rajah Perusak", "Ilmu Hitam Runcing",
+                                          "Keris Cyber", "Tombak Roh Data"};
+            case "ENERGY" -> new String[]{"Cakra Neon", "Panah Petir", "Trisula Energi",
+                                          "Lembing Surya", "Cahaya Kahyangan"};
+            default       -> new String[]{"Keris Pamor", "Golok Siluman", "Tombak Rajawali",
+                                          "Kujang Sakti", "Mandau Dayak"};
         };
+    }
+
+    // ── MYTHIC WEAPON GENERATOR ─────────────────────────────
+    // Mythic tidak bisa drop dari generateLoot biasa.
+    // Hanya didapat via: boss kill fragment, floor 20 clear, atau Pasar Gaib trade.
+
+    public static List<Item> generateMythicDrop() {
+        // Pilih random 1 dari 10 Mythic weapon
+        String[] mythicWeapons = {
+            "Keris Naga Raja", "Cakra Wisnu", "Tombak Inti Bumi",
+            "Kujang Bintang", "Golok Roh Purba", "Trisula Samudra",
+            "Panah Angin Sakti", "Cemeti Kilat", "Mandau Dayak Agung", "Pedang Surya"
+        };
+        Weapon.WeaponType[] wTypes = {
+            Weapon.WeaponType.BLADE,         // Keris Naga Raja
+            Weapon.WeaponType.ENERGY_EMITTER,// Cakra Wisnu
+            Weapon.WeaponType.HEAVY,         // Tombak Inti Bumi
+            Weapon.WeaponType.CYBER_TOOL,    // Kujang Bintang
+            Weapon.WeaponType.BLADE,         // Golok Roh Purba
+            Weapon.WeaponType.ENERGY_EMITTER,// Trisula Samudra
+            Weapon.WeaponType.GUN,           // Panah Angin Sakti
+            Weapon.WeaponType.CYBER_TOOL,    // Cemeti Kilat
+            Weapon.WeaponType.BLADE,         // Mandau Dayak Agung
+            Weapon.WeaponType.ENERGY_EMITTER // Pedang Surya
+        };
+
+        int idx = RNG.nextInt(mythicWeapons.length);
+        var stats = new java.util.EnumMap<StatType, Double>(StatType.class);
+
+        // Stats Mythic jauh di atas Legendary
+        switch (idx) {
+            case 0 -> { // Keris Naga Raja — ATK + lifesteal per kill (simulated via high lifesteal)
+                stats.put(StatType.PHYSICAL_ATK, 85.0); stats.put(StatType.CRIT_CHANCE, 0.25);
+                stats.put(StatType.LIFESTEAL, 0.20); stats.put(StatType.DAMAGE_MULT, 0.30);
+            }
+            case 1 -> { // Cakra Wisnu — Energy chain
+                stats.put(StatType.ENERGY_ATK, 90.0); stats.put(StatType.SKILL_POWER, 0.50);
+                stats.put(StatType.ARMOR_PIERCE, 0.30); stats.put(StatType.DAMAGE_MULT, 0.25);
+            }
+            case 2 -> { // Tombak Inti Bumi — ignore armor, no crit
+                stats.put(StatType.PHYSICAL_ATK, 100.0); stats.put(StatType.ARMOR_PIERCE, 1.0);
+                stats.put(StatType.PHYSICAL_DEF, 20.0); stats.put(StatType.DAMAGE_MULT, 0.20);
+            }
+            case 3 -> { // Kujang Bintang — auto skill every 5 hits (simulated via CDR)
+                stats.put(StatType.CYBER_ATK, 75.0); stats.put(StatType.COOLDOWN_REDUCE, 0.50);
+                stats.put(StatType.SKILL_POWER, 0.40); stats.put(StatType.ACCURACY, 0.30);
+            }
+            case 4 -> { // Golok Roh Purba — lifesteal kill heal
+                stats.put(StatType.PHYSICAL_ATK, 80.0); stats.put(StatType.LIFESTEAL, 0.35);
+                stats.put(StatType.HP_REGEN, 15.0); stats.put(StatType.DAMAGE_MULT, 0.25);
+            }
+            case 5 -> { // Trisula Samudra — AoE passive (via skill power)
+                stats.put(StatType.ENERGY_ATK, 70.0); stats.put(StatType.SKILL_POWER, 0.60);
+                stats.put(StatType.MAX_MP, 50.0); stats.put(StatType.MP_REGEN, 10.0);
+            }
+            case 6 -> { // Panah Angin Sakti — first strike via speed
+                stats.put(StatType.PHYSICAL_ATK, 78.0); stats.put(StatType.SPEED, 25.0);
+                stats.put(StatType.INITIATIVE, 30.0); stats.put(StatType.CRIT_DAMAGE, 1.0);
+            }
+            case 7 -> { // Cemeti Kilat — stun (via cyber)
+                stats.put(StatType.CYBER_ATK, 85.0); stats.put(StatType.ACCURACY, 0.50);
+                stats.put(StatType.CRIT_CHANCE, 0.30); stats.put(StatType.DAMAGE_MULT, 0.20);
+            }
+            case 8 -> { // Mandau Dayak Agung — double attack (via crit + speed)
+                stats.put(StatType.PHYSICAL_ATK, 72.0); stats.put(StatType.SPEED, 18.0);
+                stats.put(StatType.CRIT_CHANCE, 0.40); stats.put(StatType.ARMOR_PIERCE, 0.25);
+            }
+            default -> { // Pedang Surya — burn permanent
+                stats.put(StatType.ENERGY_ATK, 82.0); stats.put(StatType.DAMAGE_MULT, 0.35);
+                stats.put(StatType.SKILL_POWER, 0.30); stats.put(StatType.CRIT_DAMAGE, 0.75);
+            }
+        }
+
+        Weapon w = new Weapon(
+            mythicWeapons[idx],
+            "Senjata Mythic — hanya yang terpilih dapat menggunakannya.",
+            Item.Rarity.MYTHIC,
+            wTypes[idx],
+            stats
+        );
+        return List.of(w);
+    }
+
+    /** Generate Mythic Fragment (material untuk craft Mythic) */
+    public static Material generateMythicFragment() {
+        return new Material(
+            "✦ Pecahan Mitik",
+            "Serpihan kekuatan dari boss yang dikalahkan. Kumpulkan 3 untuk hasilkan senjata Mythic.",
+            Item.Rarity.MYTHIC,
+            Material.MaterialType.MYTHIC_FRAGMENT
+        );
     }
 }

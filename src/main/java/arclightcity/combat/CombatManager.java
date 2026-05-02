@@ -435,7 +435,9 @@ public class CombatManager {
             if (m.isAlive()) m.completeMission();
         }
 
-        return CombatResult.victory(totalTurns, totalExp, totalGold, loot, collectLog(), defeated);
+        CombatResult result = CombatResult.victory(totalTurns, totalExp, totalGold, loot, collectLog(), defeated);
+        result.setLevelsGained(levelsGained);
+        return result;
     }
 
     // ════════════════════════════════════════════════════════

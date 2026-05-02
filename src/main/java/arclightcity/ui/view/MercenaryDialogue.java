@@ -50,384 +50,552 @@ public class MercenaryDialogue {
     private static final Map<MercenaryType, Map<Trigger, List<String>>> DIALOGUES = new HashMap<>();
 
     static {
-        // ── SRIKANDI — Pemanah Bayangan ────────────────────────────
+        // ── SRIKANDI — Pemanah Bayangan (dingin, presisi, sedikit kata) ──
         addDialogues(MercenaryType.KIRA_VOSS, Trigger.HUB_IDLE,
             "...",
-            "Scanning perimeter.",
-            "Keep your guard up.",
-            "I've seen runners get comfortable. They don't last.",
-            "Every second idle is a second wasted."
+            "Waspada.",
+            "Diam adalah senjata terbaik.",
+            "Aku sudah pantau perimeter. Aman, untuk sekarang.",
+            "Setiap detik tenang adalah persiapan untuk badai berikutnya."
         );
         addDialogues(MercenaryType.KIRA_VOSS, Trigger.HUB_ENTER_DUNGEON,
-            "Finally.",
-            "Moving out.",
-            "Stay behind me.",
-            "Target zone confirmed."
+            "Akhirnya.",
+            "Bergerak.",
+            "Tetap di belakangku.",
+            "Target dikonfirmasi."
         );
         addDialogues(MercenaryType.KIRA_VOSS, Trigger.DUNGEON_ENTER_ENEMY,
-            "Contact.",
-            "Target acquired.",
-            "Hostiles inbound.",
-            "I'll take point."
+            "Kontak.",
+            "Target terdeteksi.",
+            "Musuh mendekat.",
+            "Aku ambil posisi depan."
         );
         addDialogues(MercenaryType.KIRA_VOSS, Trigger.DUNGEON_ENTER_BOSS,
-            "High value target. Don't get in my line of fire.",
-            "This one's different. Stay sharp.",
-            "I've seen what these things do. Focus."
+            "Target prioritas. Jangan halangi bidikanku.",
+            "Ini berbeda dari yang lain. Fokus.",
+            "Aku pernah lihat apa yang makhluk ini bisa lakukan. Jangan lengah."
         );
         addDialogues(MercenaryType.KIRA_VOSS, Trigger.DUNGEON_ENTER_LOOT,
-            "Check for traps first.",
-            "Don't touch anything I haven't cleared.",
-            "Loot fast. We're exposed."
+            "Cek jebakan dulu.",
+            "Jangan sentuh apapun sebelum aku bersihkan.",
+            "Ambil cepat. Kita terlalu terbuka di sini."
         );
         addDialogues(MercenaryType.KIRA_VOSS, Trigger.DUNGEON_ENTER_REST,
-            "Two minutes. Not more.",
-            "Rest. I'll keep watch.",
-            "Don't get comfortable."
+            "Dua menit. Tidak lebih.",
+            "Istirahat. Aku jaga.",
+            "Jangan terlalu nyaman."
         );
         addDialogues(MercenaryType.KIRA_VOSS, Trigger.COMBAT_START,
-            "Initiating.",
-            "Engaging.",
-            "On my mark.",
-            "Suppressing fire."
+            "Mulai.",
+            "Menyerang.",
+            "Ikuti tandaku.",
+            "Panah sudah siap."
         );
         addDialogues(MercenaryType.KIRA_VOSS, Trigger.COMBAT_PLAYER_LOW_HP,
-            "You're bleeding. Pull back.",
-            "Stay alive. I can't carry a corpse.",
-            "Don't die yet. We're not done."
+            "Kau berdarah. Mundur.",
+            "Tetap hidup. Aku tidak bisa membawa mayat.",
+            "Jangan mati dulu. Kita belum selesai."
         );
         addDialogues(MercenaryType.KIRA_VOSS, Trigger.COMBAT_ENEMY_DIES,
-            "Target down.",
-            "Neutralized.",
-            "Clean.",
-            "Next."
+            "Target jatuh.",
+            "Bersih.",
+            "Berikutnya.",
+            "Tepat sasaran."
         );
         addDialogues(MercenaryType.KIRA_VOSS, Trigger.COMBAT_VICTORY,
-            "Area clear.",
-            "Efficient.",
-            "That's how it's done."
+            "Area bersih.",
+            "Efisien.",
+            "Begitulah caranya."
         );
         addDialogues(MercenaryType.KIRA_VOSS, Trigger.COMBAT_DEFEAT,
-            "Fall back. Now.",
-            "Tactical withdrawal.",
-            "We underestimated them."
+            "Mundur. Sekarang.",
+            "Kita perlu recalibrate.",
+            "Kita meremehkan mereka."
         );
         addDialogues(MercenaryType.KIRA_VOSS, Trigger.COMBAT_BOSS_START,
-            "Full suppression. Go.",
-            "Don't give it a chance to breathe.",
-            "Priority target. Everything we have."
+            "Tembakan penuh. Maju.",
+            "Jangan beri dia kesempatan bernapas.",
+            "Target prioritas. Semua yang kita punya."
+        );
+        addDialogues(MercenaryType.KIRA_VOSS, Trigger.DUNGEON_BOSS_CLEARED,
+            "Boss jatuh. Lanjut.",
+            "Satu ancaman teratasi.",
+            "Hmm. Lebih mudah dari yang kubayangkan."
+        );
+        addDialogues(MercenaryType.KIRA_VOSS, Trigger.DUNGEON_ENTER_FLOOR,
+            "Lantai baru. Tetap waspada.",
+            "Lebih dalam, lebih berbahaya.",
+            "Kita terus."
         );
 
-        // ── GATOT KACA — Ksatria Baja ───────────────────────────
+        // ── GATOT KACA — Ksatria Baja (formal, logis, android) ──────────
         addDialogues(MercenaryType.TANK_RX9, Trigger.HUB_IDLE,
-            "Systems nominal. Standing by.",
-            "Threat assessment: 0 hostiles detected.",
-            "Power cells at 98%. Ready for deployment.",
-            "Maintenance protocols complete.",
-            "Calculating optimal combat parameters."
+            "Sistem normal. Siap siaga.",
+            "Tidak ada ancaman terdeteksi.",
+            "Sel energi 98%. Siap deploy.",
+            "Protokol pemeliharaan selesai.",
+            "Menghitung parameter tempur optimal."
         );
         addDialogues(MercenaryType.TANK_RX9, Trigger.HUB_ENTER_DUNGEON,
-            "Deploying combat subroutines.",
-            "Threat anticipation: elevated. Preparing.",
-            "Formation alpha. I lead.",
-            "Structural integrity: 100%. Deploying."
+            "Mengaktifkan subrutin tempur.",
+            "Maju ke zona operasi.",
+            "Perlindungan maksimum diaktifkan.",
+            "Memimpin barisan."
         );
         addDialogues(MercenaryType.TANK_RX9, Trigger.DUNGEON_ENTER_ENEMY,
-            "3 hostiles detected. Classification: standard.",
-            "Threat level: moderate. Engaging protocols.",
-            "Combat formation: defensive. Protecting asset."
+            "Entitas musuh terdeteksi. Mengambil posisi defensif.",
+            "Musuh di depan. Saya lindungi.",
+            "Ancaman dikonfirmasi. Siap perang.",
+            "Formasi tempur aktif."
         );
         addDialogues(MercenaryType.TANK_RX9, Trigger.DUNGEON_ENTER_BOSS,
-            "WARNING: Anomalous threat signature detected.",
-            "Reclassifying threat level: CRITICAL.",
-            "Calculating 847 combat scenarios. Proceeding with highest success rate."
+            "Ancaman level tinggi. Memaksimalkan output pertahanan.",
+            "Entitas ini melebihi parameter normal. Berhati-hati.",
+            "Boss terdeteksi. Mengalokasikan semua sumber daya untuk perlindungan."
+        );
+        addDialogues(MercenaryType.TANK_RX9, Trigger.DUNGEON_ENTER_LOOT,
+            "Area aman. Lanjutkan pengumpulan.",
+            "Tidak ada ancaman tersembunyi terdeteksi.",
+            "Saya jaga perimeter."
         );
         addDialogues(MercenaryType.TANK_RX9, Trigger.DUNGEON_ENTER_REST,
-            "Running diagnostics.",
-            "Recharging energy cells. Efficiency: optimal.",
-            "Structural repairs initiated."
+            "Fase pemulihan dimulai. Efisiensi direkomendasikan.",
+            "Memanfaatkan waktu untuk defrag internal.",
+            "Istirahat produktif. 4 menit 37 detik optimal."
         );
         addDialogues(MercenaryType.TANK_RX9, Trigger.COMBAT_START,
-            "Combat mode: ACTIVE.",
-            "Initiating combat subroutines.",
-            "Taunt protocols: online. Drawing fire."
+            "Mode tempur aktif.",
+            "Mengeksekusi protokol penyerangan.",
+            "Memulai sekuens pertempuran.",
+            "Tameng diperkuat."
         );
         addDialogues(MercenaryType.TANK_RX9, Trigger.COMBAT_PLAYER_LOW_HP,
-            "WARNING: Asset HP critical. Redirecting damage.",
-            "Activating shield matrix. Covering asset.",
-            "I will absorb the damage. Stay back."
+            "HP kritis. Beralih ke mode perlindungan penuh.",
+            "Kesehatan operator menurun. Mengambil alih garis terdepan.",
+            "Perhatian: nyawa operator dalam bahaya."
         );
         addDialogues(MercenaryType.TANK_RX9, Trigger.COMBAT_ENEMY_DIES,
-            "Target eliminated.",
-            "Threat neutralized. Next target.",
-            "Updating threat registry."
+            "Target dinetralkan.",
+            "Ancaman tereliminasi.",
+            "Satu musuh kurang.",
+            "Proses eliminasi berhasil."
         );
         addDialogues(MercenaryType.TANK_RX9, Trigger.COMBAT_VICTORY,
-            "All threats eliminated. Mission success.",
-            "Combat efficiency: 94.7%.",
-            "Returning to standby."
+            "Semua ancaman tereliminasi. Misi sukses.",
+            "Operasi selesai dengan kerusakan minimal.",
+            "Efisiensi tempur: baik."
+        );
+        addDialogues(MercenaryType.TANK_RX9, Trigger.COMBAT_DEFEAT,
+            "Mundur strategis diinisiasi.",
+            "Analisis kegagalan: musuh melebihi kalkulasi.",
+            "Recalibrate dan coba lagi."
         );
         addDialogues(MercenaryType.TANK_RX9, Trigger.COMBAT_BOSS_START,
-            "Maximum power to shields. Standing firm.",
-            "This unit will not yield.",
-            "Structural integrity: holding. Engaging at full capacity."
+            "Boss terdeteksi. Output pertahanan: MAKSIMUM.",
+            "Entitas prioritas tinggi. Semua sistem tempur aktif.",
+            "Ini akan menjadi pertempuran yang menguji batas sistem kami."
+        );
+        addDialogues(MercenaryType.TANK_RX9, Trigger.DUNGEON_BOSS_CLEARED,
+            "Boss dinetralkan. Database diperbarui.",
+            "Ancaman level boss teratasi. Lanjutkan misi.",
+            "Kalkulasi berhasil. Maju."
+        );
+        addDialogues(MercenaryType.TANK_RX9, Trigger.DUNGEON_ENTER_FLOOR,
+            "Memasuki lantai baru. Memperbarui peta ancaman.",
+            "Sinkronisasi data lantai selesai.",
+            "Siap menghadapi tantangan berikutnya."
         );
 
-        // ── NYAI RORO — Tabib Mistis ─────────────────────────────
+        // ── NYAI RORO — Tabib Mistis (hangat, peduli, spiritual) ────────
         addDialogues(MercenaryType.SERA_MEND, Trigger.HUB_IDLE,
-            "Let me know if you need a checkup.",
-            "I restocked the med-kits. We're ready.",
-            "How are you feeling? Don't push yourself too hard.",
-            "I worry about everyone here sometimes.",
-            "Remember to breathe. All of you."
+            "Bagaimana kondisimu? Terlihat lelah.",
+            "Aku siapkan ramuan untuk perjalanan selanjutnya.",
+            "Roh-roh di sini... gelisah. Hati-hati.",
+            "Napas dalam. Kita punya waktu.",
+            "Kurasakan aura kuat dari bawah. Kita harus waspada."
         );
         addDialogues(MercenaryType.SERA_MEND, Trigger.HUB_ENTER_DUNGEON,
-            "I'll keep everyone alive. That's a promise.",
-            "Stay close. I can't heal what I can't reach.",
-            "Med-bay is open. Let's go."
+            "Aku ikut. Kau butuh penyembuh.",
+            "Bawa jamu-jamanku. Mungkin kita perlu itu.",
+            "Para leluhur membimbing langkah kita.",
+            "Kita pergi bersama."
         );
         addDialogues(MercenaryType.SERA_MEND, Trigger.DUNGEON_ENTER_ENEMY,
-            "Be careful. I'll handle the healing.",
-            "Don't do anything reckless!",
-            "I'm watching everyone's vitals."
+            "Ada yang mendekat. Bersiaplah.",
+            "Energi gelap... mereka sudah di sini.",
+            "Tetap tenang. Aku di sini.",
+            "Lindungi dirimu. Aku siapkan mantra."
         );
         addDialogues(MercenaryType.SERA_MEND, Trigger.DUNGEON_ENTER_BOSS,
-            "I have a bad feeling about this. Stay close.",
-            "Whatever happens, I won't stop healing.",
-            "...everyone come back alive. Please."
+            "Ini... bukan makhluk biasa. Kekuatannya luar biasa.",
+            "Aku rasakan kekuatan kuno yang besar. Berhati-hatilah.",
+            "Butuh semua kekuatan kita untuk ini. Bersama."
+        );
+        addDialogues(MercenaryType.SERA_MEND, Trigger.DUNGEON_ENTER_LOOT,
+            "Hati-hati, ada energi asing di sini.",
+            "Biar aku purifikasi dulu sebelum kita ambil.",
+            "Kabar baik! Tidak ada kutukan pada loot ini."
         );
         addDialogues(MercenaryType.SERA_MEND, Trigger.DUNGEON_ENTER_REST,
-            "Oh good, a rest point! Let me check everyone.",
-            "Sit down. I'm running diagnostics.",
-            "This is exactly what we needed."
+            "Bagus. Istirahat. Biar aku periksa lukamu.",
+            "Aku seduh jamu dari tanaman yang kutemukan.",
+            "Gunakan waktu ini untuk memulihkan jiwa dan raga."
         );
         addDialogues(MercenaryType.SERA_MEND, Trigger.COMBAT_START,
-            "Triage mode on. I've got everyone.",
-            "Don't be a hero. Let me heal.",
-            "I'm right here. Don't panic."
+            "Aku siapkan mantra perlindungan!",
+            "Bersama kita kuat.",
+            "Jangan khawatir, aku ada di sini.",
+            "Semangat, kita bisa!"
         );
         addDialogues(MercenaryType.SERA_MEND, Trigger.COMBAT_PLAYER_LOW_HP,
-            "Hold on! Applying emergency stasis!",
-            "You're hurt bad — incoming heal!",
-            "Stay with me! Don't you dare give up!"
+            "Kau terluka! Aku sembuhkan!",
+            "Bertahan! Jamu ini akan membantumu!",
+            "Jangan menyerah! Aku di sini bersamamu!"
         );
         addDialogues(MercenaryType.SERA_MEND, Trigger.COMBAT_ENEMY_DIES,
-            "One less to worry about.",
-            "Good, now let me focus on keeping everyone alive.",
-            "Focus. There might be more."
+            "Semoga rohnya tenang.",
+            "Terselesaikan dengan damai.",
+            "Kita tidak punya pilihan lain.",
+            "Satu ancaman berlalu."
         );
         addDialogues(MercenaryType.SERA_MEND, Trigger.COMBAT_VICTORY,
-            "Everyone okay? Let me check.",
-            "We made it. I'm so relieved.",
-            "Running post-combat vitals. Good news: alive."
+            "Syukurlah! Kita baik-baik saja.",
+            "Biar aku periksa semua luka.",
+            "Pertarungan berat, tapi kita menang bersama."
         );
         addDialogues(MercenaryType.SERA_MEND, Trigger.COMBAT_DEFEAT,
-            "No no no — everyone fall back!",
-            "Retreat! I'll cover you!",
-            "We can't win this one. Move!"
+            "Tidak apa-apa. Mundur dulu. Aku rawat lukamu.",
+            "Kadang mundur adalah pilihan terbaik.",
+            "Kita akan lebih kuat setelah ini."
+        );
+        addDialogues(MercenaryType.SERA_MEND, Trigger.COMBAT_BOSS_START,
+            "Yang Maha Besar, lindungi kami!",
+            "Ini saatnya kita buktikan kekuatan sejati kita!",
+            "Aku kerahkan semua kemampuan penyembuhan!"
+        );
+        addDialogues(MercenaryType.SERA_MEND, Trigger.DUNGEON_BOSS_CLEARED,
+            "Luar biasa! Kita berhasil!",
+            "Boss jatuh! Aku bangga dengan kita semua.",
+            "Istirahat sebentar, biar aku rawat luka-luka kita."
+        );
+        addDialogues(MercenaryType.SERA_MEND, Trigger.DUNGEON_ENTER_FLOOR,
+            "Lantai baru. Energinya berbeda di sini.",
+            "Aku rasakan sesuatu yang kuno di lantai ini.",
+            "Tetap bersama. Kita hadapi ini bersama."
         );
 
-        // ── RANGGA — Pembunuh Bayaran ─────────────────────────────
+        // ── RANGGA — Pembunuh Bayaran (sarkastis, dingin, humor gelap) ──
         addDialogues(MercenaryType.VECTOR, Trigger.HUB_IDLE,
-            "Still here. Unfortunately.",
-            "Don't look at me like that.",
-            "The pay better be worth this.",
-            "I've worked with worse. Not many.",
-            "I'm bored. That's dangerous for everyone."
+            "Membosankan.",
+            "Berapa lama lagi kita diam di sini?",
+            "Aku lebih suka di lapangan.",
+            "Kalau ada yang perlu dibunuh, bilang aja.",
+            "Bayaranku jalan terus meski kau tidak melakukan apa-apa."
         );
         addDialogues(MercenaryType.VECTOR, Trigger.HUB_ENTER_DUNGEON,
-            "About time. I was going insane.",
-            "Try to keep up.",
-            "Don't slow me down.",
-            "Finally something to kill."
+            "Nah, akhirnya ada kegiatan.",
+            "Bayaran ekstra untuk hari ini.",
+            "Sudah siap? Aku sudah dari tadi.",
+            "Makin dalam makin seru."
         );
         addDialogues(MercenaryType.VECTOR, Trigger.DUNGEON_ENTER_ENEMY,
-            "Already? Good.",
-            "I'll take the hard ones. You handle the scraps.",
-            "Target practice."
+            "Mangsa terdeteksi.",
+            "Oh, selamat datang. Aku sudah tunggu kalian.",
+            "Lumayan. Buat pemanasan.",
+            "Ini mudah. Hampir terlalu mudah."
         );
         addDialogues(MercenaryType.VECTOR, Trigger.DUNGEON_ENTER_BOSS,
-            "Oh, THAT's what we're dealing with. Interesting.",
-            "Finally. A real challenge.",
-            "Don't expect me to bail you out. Actually... yeah I will. But don't tell anyone."
+            "Ini yang menarik. Akhirnya lawan yang layak.",
+            "Besar ya. Biasanya yang besar lebih lambat.",
+            "Bayaran ekstra untuk ini. Kita deal?"
         );
         addDialogues(MercenaryType.VECTOR, Trigger.DUNGEON_ENTER_LOOT,
-            "Dibs on anything with crit.",
-            "If it's useful, I'm taking it.",
-            "...not bad."
+            "Cepat ambil. Siapa tahu ada yang mengawasi.",
+            "Loot terbaik biasanya sudah diambil orang lain. Semoga tidak.",
+            "Aku jaga pintu. Ambil yang berharga."
+        );
+        addDialogues(MercenaryType.VECTOR, Trigger.DUNGEON_ENTER_REST,
+            "Lima menit. Tidak lebih.",
+            "Aku tidak tidur di dungeon. Terlalu berbahaya.",
+            "Istirahat cepat, lanjut lagi."
         );
         addDialogues(MercenaryType.VECTOR, Trigger.COMBAT_START,
-            "Let's make this quick.",
-            "Engaging. Try not to get in my way.",
-            "Hack initiated. They won't know what hit them."
+            "Ini gilaku.",
+            "Aku percepat prosesnya.",
+            "Jangan halangi bidikanku.",
+            "Habisi mereka."
         );
         addDialogues(MercenaryType.VECTOR, Trigger.COMBAT_PLAYER_LOW_HP,
-            "Don't die. It would look bad for me.",
-            "Get it together! I'm not your babysitter!",
-            "...fine. I've got you. Don't make it weird."
+            "Eh, jangan mati dulu. Aku belum dibayar penuh.",
+            "Kau terlihat mengerikan. Lebih buruk dari biasanya.",
+            "Minum sesuatu! Apa gunanya bawa tabib kalau tidak dipakai?"
         );
         addDialogues(MercenaryType.VECTOR, Trigger.COMBAT_ENEMY_DIES,
-            "Too easy.",
-            "Pathetic.",
-            "One down.",
-            "Not even worth commenting on."
+            "Mudah.",
+            "Berikutnya.",
+            "Terlalu lambat.",
+            "Sesuai ekspektasi."
         );
         addDialogues(MercenaryType.VECTOR, Trigger.COMBAT_VICTORY,
-            "Obviously.",
-            "Did you doubt me?",
-            "You're welcome, by the way.",
-            "I was bored the whole time. Just so you know."
+            "Seperti yang kuduga.",
+            "Terlalu mudah.",
+            "Mana lagi?"
+        );
+        addDialogues(MercenaryType.VECTOR, Trigger.COMBAT_DEFEAT,
+            "Hari yang buruk. Langka, tapi terjadi.",
+            "Kita mundur. Bukan kalah, strategi.",
+            "Ini tidak dihitung dalam rekam jejakku."
+        );
+        addDialogues(MercenaryType.VECTOR, Trigger.COMBAT_BOSS_START,
+            "Nah, ini baru namanya tantangan.",
+            "Kalau kita menang, bonus besar ya?",
+            "Habisi dulu, nego belakangan."
+        );
+        addDialogues(MercenaryType.VECTOR, Trigger.DUNGEON_BOSS_CLEARED,
+            "Itu baru kerja nyata.",
+            "Bagus juga. Tidak seburuk yang kukira.",
+            "Boss jatuh. Transfer bayaranku."
+        );
+        addDialogues(MercenaryType.VECTOR, Trigger.DUNGEON_ENTER_FLOOR,
+            "Lantai baru, ancaman baru. Siap.",
+            "Makin dalam, makin bagus.",
+            "Aku suka adrenalinnya."
         );
 
-        // ── BIMA — Petarung Agung ──────────────────────────
+        // ── BIMA — Petarung Agung (antusias, keras, langsung) ───────────
         addDialogues(MercenaryType.MAGNUS_FORGE, Trigger.HUB_IDLE,
-            "I've been cleaning my cannon. She's beautiful.",
-            "Ready to blow something up. Just say the word.",
-            "I heard there's a boss on floor 3. Can't wait.",
-            "This place needs more explosions.",
-            "HAHAHA. Sorry. I just thought of something funny."
+            "KAPAN KITA BERANGKAT?!",
+            "Ototku sudah gatal pengen beraksi!",
+            "Musuh mana yang mau kuremukkan hari ini?",
+            "Bima siap! Selalu siap!",
+            "Latihan fisik selesai. Siap perang!"
         );
         addDialogues(MercenaryType.MAGNUS_FORGE, Trigger.HUB_ENTER_DUNGEON,
-            "YEAH! Let's GO!",
-            "Time to make some noise!",
-            "Charge cells loaded. Morale: MAXIMUM."
+            "AKHIRNYA! MAJU!",
+            "Bima di depan! Ikuti!",
+            "Siapkan otot, saatnya beraksi!",
+            "Dungeon tidak akan tahu apa yang menghantam mereka!"
         );
         addDialogues(MercenaryType.MAGNUS_FORGE, Trigger.DUNGEON_ENTER_ENEMY,
-            "I love this part!",
-            "Multiple targets? Even better.",
-            "CHARGE SHOT READY. Stand back!"
+            "MUSUH! BAGUS!",
+            "Ayo, tunjukkan kekuatanmu!",
+            "Bima tidak sabar!",
+            "Ini hari yang baik untuk bertarung!"
         );
         addDialogues(MercenaryType.MAGNUS_FORGE, Trigger.DUNGEON_ENTER_BOSS,
-            "OH. OH THAT'S A BIG ONE. HAHA!",
-            "NOW we're talking! Full power!",
-            "I've been waiting for this all floor!"
+            "BOSS! INI YANG BIMA TUNGGU!",
+            "Semakin besar, semakin SERU!",
+            "Bima akan remukkan si besar ini!"
         );
         addDialogues(MercenaryType.MAGNUS_FORGE, Trigger.DUNGEON_ENTER_LOOT,
-            "Ooh, anything go boom?",
-            "Digging through loot is my second favorite thing.",
-            "Heavy armor or I'm not interested."
+            "Ada harta! Bagikan rata!",
+            "Hasil kerja keras kita! Ambil semua!",
+            "Bima suka loot! Terutama yang berat!"
         );
         addDialogues(MercenaryType.MAGNUS_FORGE, Trigger.DUNGEON_ENTER_REST,
-            "Finally. My arms were getting tired. The cannon's heavy.",
-            "Rest? I don't need rest. ...okay maybe a little.",
-            "Refueling! Back to 100% in no time."
+            "Istirahat? Oke, tapi sebentar saja!",
+            "Bima masih kuat! Tapi oke lah, lima menit.",
+            "Pakai waktu ini untuk makan! Bima lapar!"
         );
         addDialogues(MercenaryType.MAGNUS_FORGE, Trigger.COMBAT_START,
-            "FIRE IN THE HOLE!",
-            "MAXIMUM FIREPOWER!",
-            "Let the big one go first!"
+            "SERANG!",
+            "HAJAR!",
+            "BIMA MAJU!",
+            "TIDAK ADA YANG LOLOS!"
         );
         addDialogues(MercenaryType.MAGNUS_FORGE, Trigger.COMBAT_PLAYER_LOW_HP,
-            "Hey! Nobody touches my runner!",
-            "GET AWAY FROM THEM! *cannon charging*",
-            "Cover! MOVE! I've got this!"
+            "HEY! Kau baik-baik saja?! BIMA LINDUNGI!",
+            "Mundur! Bima hadapi mereka!",
+            "Jangan mati! Bima butuh teman yang kuat!"
+        );
+        addDialogues(MercenaryType.MAGNUS_FORGE, Trigger.COMBAT_ENEMY_DIES,
+            "YA! JATUH!",
+            "BIMA KUAT!",
+            "HAJAR LAGI!",
+            "SATU LAGI!"
         );
         addDialogues(MercenaryType.MAGNUS_FORGE, Trigger.COMBAT_VICTORY,
-            "HAHAHAHA! YES!",
-            "THAT'S WHAT I'M TALKING ABOUT!",
-            "Easy. What's next?"
+            "MENANG! BIMA MENANG!",
+            "TIDAK ADA YANG BISA HENTIKAN BIMA!",
+            "Pertarungan bagus! Bima puas!"
+        );
+        addDialogues(MercenaryType.MAGNUS_FORGE, Trigger.COMBAT_DEFEAT,
+            "Tidak... Bima tidak terima!",
+            "Mundur dulu! Bima masih bisa!",
+            "Kita akan balas ini!"
+        );
+        addDialogues(MercenaryType.MAGNUS_FORGE, Trigger.COMBAT_BOSS_START,
+            "BOSS BESAR! INI TANTANGAN SESUNGGUHNYA!",
+            "BIMA TIDAK TAKUT! MAJU!",
+            "KALI INI BIMA KERAHKAN SEMUA KEKUATAN!"
+        );
+        addDialogues(MercenaryType.MAGNUS_FORGE, Trigger.DUNGEON_BOSS_CLEARED,
+            "BOSS JATUH! BIMA MENANG!",
+            "TIDAK ADA YANG BISA KALAHKAN BIMA DAN KAWAN-KAWAN!",
+            "Pertarungan LUAR BIASA! Bima bangga!"
+        );
+        addDialogues(MercenaryType.MAGNUS_FORGE, Trigger.DUNGEON_ENTER_FLOOR,
+            "LANTAI BARU! MUSUH BARU! BIMA SIAP!",
+            "Makin dalam makin seru! Bima suka!",
+            "Kita terus! Tidak ada yang bisa hentikan kita!"
         );
 
-        // ── KI AGENG — Dukun Tua ────────────────────────────
+        // ── KI AGENG — Dukun Tua (misterius, bijak, prophetic) ──────────
         addDialogues(MercenaryType.ECHO_NULL, Trigger.HUB_IDLE,
-            "Signal frequencies nominal. Awaiting disruption orders.",
-            "I detected 3 surveillance nodes in this building. Already jammed them.",
-            "Silence is the loudest signal.",
-            "...",
-            "Processing background noise. Interesting patterns."
+            "Angin berbicara... ada yang datang.",
+            "Diam itu bukan kekosongan. Diam adalah mendengarkan.",
+            "Aku membaca pertanda. Perjalanan sulit menanti.",
+            "Api lilin ini bergetar. Roh di sekitar kita gelisah.",
+            "Mantraku sudah siap. Tinggal menunggu waktu yang tepat."
         );
         addDialogues(MercenaryType.ECHO_NULL, Trigger.HUB_ENTER_DUNGEON,
-            "Mapping signal topology. Initiating.",
-            "Communication channels prepped for interference.",
-            "They won't be calling for help."
+            "Bintang menunjuk ke dalam. Kita ikuti.",
+            "Ilmu gaibku akan berguna di kedalaman itu.",
+            "Hati-hati dengan apa yang ada di sana. Aku sudah lihat bayangannya.",
+            "Kita pergi. Alam semesta menunggu."
         );
         addDialogues(MercenaryType.ECHO_NULL, Trigger.DUNGEON_ENTER_ENEMY,
-            "Detecting communication bursts. Suppressing.",
-            "They've noticed us. Limiting their coordination.",
-            "Signal jam: active. They're deaf now."
+            "Mereka datang. Aku sudah tahu.",
+            "Aura gelap mendekat. Bersiaplah.",
+            "Musuh ini... ada kutukan pada mereka.",
+            "Tangan di atas. Mantra sudah siap."
         );
         addDialogues(MercenaryType.ECHO_NULL, Trigger.DUNGEON_ENTER_BOSS,
-            "Anomalous signal source detected. High complexity.",
-            "This one's shielded. EMP will take time.",
-            "Interesting. I've never seen this frequency before."
+            "Ini yang aku lihat dalam meditasiku. Waktunya tiba.",
+            "Kekuatan kuno yang luar biasa. Hormati, lalu taklukkan.",
+            "Jangan terburu-buru. Entitas ini punya pola. Aku sudah pelajari."
+        );
+        addDialogues(MercenaryType.ECHO_NULL, Trigger.DUNGEON_ENTER_LOOT,
+            "Harta ini menyimpan cerita panjang.",
+            "Ada energi tersisa pada benda-benda ini. Hati-hati.",
+            "Ambil dengan hormat. Setiap benda punya roh."
+        );
+        addDialogues(MercenaryType.ECHO_NULL, Trigger.DUNGEON_ENTER_REST,
+            "Bagus. Waktu untuk meditasi singkat.",
+            "Alam semesta memberi kita jeda. Manfaatkan.",
+            "Dengarkan suara ruangan ini. Ada cerita di dalamnya."
         );
         addDialogues(MercenaryType.ECHO_NULL, Trigger.COMBAT_START,
-            "Frequency lock: initiated.",
-            "Disruption field: active.",
-            "EMP queued. Awaiting optimal window."
+            "Mantra perlindungan aktif.",
+            "Aku siapkan ilmu penghalang.",
+            "Kita akan menang. Aku sudah lihat.",
+            "Ikuti naluri. Jangan pikir berlebihan."
         );
         addDialogues(MercenaryType.ECHO_NULL, Trigger.COMBAT_PLAYER_LOW_HP,
-            "Asset integrity compromised. Rerouting threat signals.",
-            "Jamming their targeting systems. Buy yourself time.",
-            "Disrupting enemy coordination. Use the window."
+            "Nyawamu dalam bahaya. Fokus pada napas.",
+            "Jangan panik. Panik adalah musuh terbesar.",
+            "Aku kirim energi penyembuh padamu. Bertahanlah."
+        );
+        addDialogues(MercenaryType.ECHO_NULL, Trigger.COMBAT_ENEMY_DIES,
+            "Takdirnya terpenuhi.",
+            "Roh mereka kembali ke alam asalnya.",
+            "Selesai.",
+            "Seperti yang tertulis."
         );
         addDialogues(MercenaryType.ECHO_NULL, Trigger.COMBAT_VICTORY,
-            "Signal environment clear.",
-            "Threat frequency: nullified.",
-            "The static has settled."
+            "Seperti yang sudah aku lihat.",
+            "Alam semesta berpihak pada kita hari ini.",
+            "Kemenangan ini bukan kebetulan."
+        );
+        addDialogues(MercenaryType.ECHO_NULL, Trigger.COMBAT_DEFEAT,
+            "Ini pelajaran. Bukan akhir.",
+            "Bahkan naga pun pernah terluka. Bangkit lagi.",
+            "Aku hitung ulang. Ada yang aku lewatkan."
+        );
+        addDialogues(MercenaryType.ECHO_NULL, Trigger.COMBAT_BOSS_START,
+            "Ini makhluk yang ada dalam ramalanku. Bersiaplah.",
+            "Kekuatannya luar biasa. Tapi kita punya sesuatu yang tidak dimilikinya.",
+            "Mantra terkuatku untuk ini."
+        );
+        addDialogues(MercenaryType.ECHO_NULL, Trigger.DUNGEON_BOSS_CLEARED,
+            "Takdir telah digenapi.",
+            "Kekuatan kuno ini telah takluk. Lanjutkan.",
+            "Ini yang aku lihat dalam mimpi. Kita berhasil."
+        );
+        addDialogues(MercenaryType.ECHO_NULL, Trigger.DUNGEON_ENTER_FLOOR,
+            "Lantai baru. Roh di sini berbeda karakternya.",
+            "Aku rasakan perubahan energi. Waspada.",
+            "Setiap lantai menyimpan misteri. Kita baca bersama."
         );
 
-        // ── DEWI SRI — Penjaga Keseimbangan ─────────────────────────────
+        // ── DEWI SRI — Penjaga Keseimbangan (spiritual, puitis, tenang) ─
         addDialogues(MercenaryType.LYRA_BLOOM, Trigger.HUB_IDLE,
-            "The neon flows through all things. Even this dusty hub.",
-            "I feel good energy today. Today will be significant.",
-            "Rest while you can. The city never does.",
-            "I brewed something. It's not poisonous. Probably.",
-            "Every light in this city was once darkness. Remember that."
+            "Keseimbangan... selalu ada keseimbangan.",
+            "Bunga-bunga di atas tanah tidak tahu betapa dalamnya akar mereka.",
+            "Aku merasakan getaran alam di sini. Sesuatu akan datang.",
+            "Apakah kau sudah makan? Tubuh adalah rumah jiwa.",
+            "Air mengalir ke bawah. Kita harus ikut arah alam."
         );
         addDialogues(MercenaryType.LYRA_BLOOM, Trigger.HUB_ENTER_DUNGEON,
-            "The dungeon calls. The energy is restless.",
-            "I'll channel the resonance for us. Stay close.",
-            "May the neon light guide our path."
+            "Bumi di bawah kita penuh dengan cerita. Mari kita tulis satu lagi.",
+            "Pergi bersama, pulang bersama.",
+            "Alam semesta merestui perjalanan kita.",
+            "Aku bawa berkat panen untuk kita semua."
         );
         addDialogues(MercenaryType.LYRA_BLOOM, Trigger.DUNGEON_ENTER_ENEMY,
-            "They carry darkness. We carry light. Simple.",
-            "Resonance field warming up.",
-            "I feel their intent. It's not kind. Preparing."
+            "Makhluk ini pun punya tempatnya... tapi bukan di sini.",
+            "Keseimbangan terganggu. Kita kembalikan.",
+            "Maaf, tapi kita harus melewatimu.",
+            "Pertarungan ini perlu. Untuk keseimbangan."
         );
         addDialogues(MercenaryType.LYRA_BLOOM, Trigger.DUNGEON_ENTER_BOSS,
-            "This one... the void surrounds it. Be careful.",
-            "Ancient malice. We'll need everything we have.",
-            "Even darkness can be turned to light. Let's prove it."
-        );
-        addDialogues(MercenaryType.LYRA_BLOOM, Trigger.DUNGEON_ENTER_REST,
-            "The space breathes easier here. Rest, all of you.",
-            "I'll perform a cleansing ritual while we rest.",
-            "Peace. Brief as it is, savor it."
+            "Kekuatan sebesar ini... pasti ada alasan mengapa ia ada di sini.",
+            "Ini bukan sekadar pertarungan. Ini pemulihan keseimbangan.",
+            "Alam mengirim kita untuk menyelesaikan ini. Percaya."
         );
         addDialogues(MercenaryType.LYRA_BLOOM, Trigger.DUNGEON_ENTER_LOOT,
-            "The neon leaves gifts for those who seek.",
-            "Something here calls to me. Interesting.",
-            "The city provides."
+            "Bumi memberikan hadiahnya. Terima dengan syukur.",
+            "Ambil yang perlu, tinggalkan yang tidak.",
+            "Setiap item ini punya kisahnya. Kita lanjutkan kisah itu."
+        );
+        addDialogues(MercenaryType.LYRA_BLOOM, Trigger.DUNGEON_ENTER_REST,
+            "Tanah ini menyembuhkan. Biarkan dia bekerja.",
+            "Istirahat adalah bagian dari perjalanan, bukan kelemahan.",
+            "Aku nyanyikan mantra pemulihan untuk kita semua."
         );
         addDialogues(MercenaryType.LYRA_BLOOM, Trigger.COMBAT_START,
-            "Resonance: open. Bloom: ready.",
-            "I channel the neon for all of us.",
-            "Flow with the light. Block the dark."
+            "Keseimbangan menuntut tindakan!",
+            "Untuk alam dan kedamaian!",
+            "Mari kita selesaikan ini.",
+            "Kekuatan bumi bersamaku!"
         );
         addDialogues(MercenaryType.LYRA_BLOOM, Trigger.COMBAT_PLAYER_LOW_HP,
-            "No no no — hold on, channeling now!",
-            "The bloom finds you — hold on!",
-            "I will not lose you today!"
+            "Kau terluka! Biarkan energi bumi menyembuhkanmu!",
+            "Bertahan! Alam semesta belum selesai denganmu!",
+            "Jangan menyerah! Masih banyak yang menunggumu di luar sana!"
         );
         addDialogues(MercenaryType.LYRA_BLOOM, Trigger.COMBAT_ENEMY_DIES,
-            "Return to the void from which you came.",
-            "The light prevails. As always.",
-            "May you find peace in dissolution."
+            "Semoga rohnya menemukan kedamaian.",
+            "Selesai dengan hormat.",
+            "Keseimbangan dipulihkan.",
+            "Begitulah alam bekerja."
         );
         addDialogues(MercenaryType.LYRA_BLOOM, Trigger.COMBAT_VICTORY,
-            "The neon sings. We endure.",
-            "Harmony restored. For now.",
-            "Light always finds a way."
+            "Keseimbangan dipulihkan. Kita berhasil.",
+            "Alam semesta tersenyum pada kita hari ini.",
+            "Setiap kemenangan adalah hadiah. Syukuri."
+        );
+        addDialogues(MercenaryType.LYRA_BLOOM, Trigger.COMBAT_DEFEAT,
+            "Tidak apa-apa. Setiap jatuh adalah pelajaran untuk tumbuh.",
+            "Alam mengajarkan kita hari ini. Dengarkan.",
+            "Kita mundur, bukan menyerah. Ada bedanya."
+        );
+        addDialogues(MercenaryType.LYRA_BLOOM, Trigger.COMBAT_BOSS_START,
+            "Kekuatan ini luar biasa... tapi keseimbangan lebih kuat.",
+            "Alam bersama kita. Jangan takut.",
+            "Ini momen yang sudah ditakdirkan. Berikan segalanya!"
         );
         addDialogues(MercenaryType.LYRA_BLOOM, Trigger.DUNGEON_BOSS_CLEARED,
-            "The darkness breaks. The floor is ours.",
-            "Even the mightiest void cannot hold forever.",
-            "We've earned this. Descend when ready."
+            "Keseimbangan telah dipulihkan. Indah.",
+            "Kita lakukan yang harus dilakukan. Terima kasih semua.",
+            "Alam berterima kasih atas pengorbanan kita."
+        );
+        addDialogues(MercenaryType.LYRA_BLOOM, Trigger.DUNGEON_ENTER_FLOOR,
+            "Lantai baru. Cerita baru. Aku siap.",
+            "Energi di sini berbeda... tapi bukan tidak bersahabat.",
+            "Kita terus maju. Alam menuntun langkah kita."
         );
     }
-
-    // ── Public API ────────────────────────────────────────────
 
     /**
      * Ambil dialog random dari mercenary untuk trigger tertentu.
@@ -463,7 +631,7 @@ public class MercenaryDialogue {
             if (line != null) {
                 result.add(new ChatMessage(
                         merc.getMercenaryType(),
-                        merc.getName(),
+                        merc.getMercenaryType().displayName, // pakai displayName Nusantara
                         line
                 ));
             }

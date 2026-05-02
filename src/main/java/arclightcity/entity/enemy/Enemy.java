@@ -103,6 +103,22 @@ public abstract class Enemy extends Entity {
                 .orElse(null);
     }
 
+    protected Entity getHighestAtkTarget(List<Entity> targets) {
+        return targets.stream()
+                .filter(Entity::isAlive)
+                .max(java.util.Comparator.comparingDouble(
+                    e -> e.getStats().get(arclightcity.entity.stats.StatType.PHYSICAL_ATK)))
+                .orElse(null);
+    }
+
+    protected Entity getFastestTarget(List<Entity> targets) {
+        return targets.stream()
+                .filter(Entity::isAlive)
+                .max(java.util.Comparator.comparingDouble(
+                    e -> e.getStats().get(arclightcity.entity.stats.StatType.SPEED)))
+                .orElse(null);
+    }
+
     /** Pilih enemy (target) dengan HP tertinggi (tanky) */
     protected Entity getHighestHpTarget(List<Entity> targets) {
         return targets.stream()

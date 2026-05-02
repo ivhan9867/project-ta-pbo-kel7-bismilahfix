@@ -7,6 +7,7 @@ public class Material extends Item {
 
     public enum MaterialType {
         SCRAP_METAL, CYBER_CHIP, NEON_CRYSTAL, VOID_FRAGMENT,
+        MYTHIC_FRAGMENT,  // Didapat dari boss kill — kumpulkan 3 untuk craft Mythic weapon
         CALIBRATION_KIT, UPGRADE_CORE, LEGENDARY_SHARD
     }
 
