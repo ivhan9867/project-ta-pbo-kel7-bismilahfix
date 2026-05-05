@@ -138,7 +138,7 @@ public class Theresa extends Boss {
         return PHASE_DIALOGS[idx];
     }
 
-    private int getCurrentPhase() {
+    public int getCurrentPhase() {
         double hpPct = getCurrentHp() / getStats().get(StatType.MAX_HP);
         if (hpPct > 0.85) return 1;
         if (hpPct > 0.65) return 2;

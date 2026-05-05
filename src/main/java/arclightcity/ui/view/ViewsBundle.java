@@ -531,7 +531,7 @@ public static class MercenaryViewImpl {
         toggleBtn.setOnAction(e -> {
             if (isActive) engine.removeFromActiveParty(merc.getMercenaryType());
             else if (!engine.addToActiveParty(merc.getMercenaryType()))
-                router.addSystemChat("Regu penuh! Keluarkan satu kawula dulu.");
+                router.addSystemChat("Regu penuh! Keluarkan satu guildmate dulu.");
             router.showMercenary();
         });
         card.getChildren().addAll(header, subtitle, statsRow, vitals, toggleBtn);
@@ -1292,7 +1292,9 @@ public static class GameOverViewImpl {
         root.setBottom(actions);
 
         // Animasi flicker judul
-        FadeTransition flicker = new FadeTransition(Duration.millis(150), fallen);
+        javafx.animation.FadeTransition flicker =
+            new javafx.animation.FadeTransition(
+                javafx.util.Duration.millis(150), fallen);
         flicker.setFromValue(1.0); flicker.setToValue(0.7);
         flicker.setAutoReverse(true); flicker.setCycleCount(4);
         flicker.play();

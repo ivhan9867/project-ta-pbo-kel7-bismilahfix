@@ -90,9 +90,12 @@ public class CombatView {
         this.cm     = engine.getActiveCombat();
     }
 
+    private javafx.scene.layout.BorderPane combatRoot;
+
     public Parent build() {
         // BorderPane: top=fixed headers, center=scrollable battle area, bottom=action panel
         BorderPane root = UIFactory.screenRootBorder();
+        combatRoot = root;
 
         // ── TOP: TopBar + TurnOrderBar (fixed) ───────────
         VBox topSection = new VBox(0);
@@ -989,14 +992,43 @@ public class CombatView {
 
     public void startCombatLoop() {
         if (cm == null) return;
-        // Clear log dari combat sebelumnya
         if (logContainer != null) logContainer.getChildren().clear();
         addLog("⚔ Pertempuran dimulai!", UIFactory.RED);
         aiTurnPending    = false;
         targetSelectMode = false;
-        combatSpeedMs    = 1200; // default: comfortable reading speed
+        combatSpeedMs    = 1200;
 
-        Timeline firstTurn = new Timeline(new KeyFrame(Duration.millis(300), e -> {
+        // Cek apakah ada boss — tampilkan dialog intro
+        boolean hasBoss = cm.getEnemies().stream()
+            .anyMatch(e -> e instanceof arclightcity.entity.enemy.Boss);
+        if (hasBoss) {
+            router.emitChat(MercenaryDialogue.Trigger.COMBAT_BOSS_START);
+            // Tampilkan persona dialog intro boss
+            cm.getEnemies().stream()
+                .filter(e -> e instanceof arclightcity.entity.enemy.Boss)
+                .findFirst()
+                .ifPresent(e -> {
+                    arclightcity.entity.enemy.Boss boss =
+                        (arclightcity.entity.enemy.Boss) e;
+                    String bossColor = switch (boss.getRace()) {
+                        case DEMON  -> "#CC3300";
+                        case DIVINE -> "#FFB830";
+                        case GIANT  -> "#7755BB";
+                        default     -> "#C8860A";
+                    };
+                    java.util.List<PersonaDialogBox.DialogLine> lines =
+                        boss instanceof arclightcity.entity.enemy.Theresa
+                            ? PersonaDialogBox.theresaPhaseLines(1)
+                            : PersonaDialogBox.bossIntroLines(boss.getName(), bossColor);
+                    javafx.application.Platform.runLater(() -> {
+                        if (combatRoot != null)
+                            PersonaDialogBox.show(
+                                (javafx.scene.layout.Pane) combatRoot, lines, null);
+                    });
+                });
+        }
+
+        Timeline firstTurn = new Timeline(new KeyFrame(Duration.millis(hasBoss ? 800 : 300), e -> {
             boolean ongoing = cm.processTurn();
             refreshCombatants();
             refreshActionPanel();

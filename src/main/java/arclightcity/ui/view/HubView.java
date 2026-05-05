@@ -285,15 +285,23 @@ public class HubView {
         });
         sec.getChildren().add(enterDungeon);
 
+        // Masuk kota
+        Button enterCity = buildNavButton(
+            "🏙  MASUK KOTA",
+            "Toko senjata, jamu, bengkel empu & penadah barang",
+            "#A09070", "transparent", "#5A3A10", false);
+        enterCity.setOnAction(e -> router.showCity());
+        sec.getChildren().add(enterCity);
+
         // Secondary actions - 2 per row
         GridPane grid = new GridPane();
         grid.setHgap(0);
         grid.setVgap(0);
         grid.setPadding(new Insets(0));
 
-        Button kawula = buildNavButton("◈  KAWULA", "Kelola & rekrut kawula",
+        Button guildmate = buildNavButton("◈  GUILDMATE", "Kelola & rekrut guildmate",
             "#A09070", "transparent", "#5A3A10", false);
-        kawula.setOnAction(e -> router.showMercenary());
+        guildmate.setOnAction(e -> router.showMercenary());
 
         Button inv = buildNavButton("⊞  PERBENDAHARAAN", "Kelola senjata & item",
             "#A09070", "transparent", "#5A3A10", false);
@@ -310,12 +318,12 @@ public class HubView {
             router.addSystemChat(r.success() ? "✦ " + r.message() : "✗ " + r.message());
         });
 
-        GridPane.setHgrow(kawula, Priority.ALWAYS);
+        GridPane.setHgrow(guildmate, Priority.ALWAYS);
         GridPane.setHgrow(inv, Priority.ALWAYS);
         GridPane.setHgrow(profile, Priority.ALWAYS);
         GridPane.setHgrow(save, Priority.ALWAYS);
 
-        grid.add(kawula,  0, 0);
+        grid.add(guildmate,  0, 0);
         grid.add(inv,     1, 0);
         grid.add(profile, 0, 1);
         grid.add(save,    1, 1);
@@ -371,7 +379,7 @@ public class HubView {
 
         var mercs = engine.getActiveMercs();
         if (mercs.isEmpty()) {
-            Label none = new Label("  Tidak ada kawula aktif — kunjungi menu KAWULA");
+            Label none = new Label("  Tidak ada guildmate aktif — kunjungi menu GUILDMATE");
             none.setStyle("-fx-text-fill: #3A2810; -fx-font-family: 'Courier New';" +
                           "-fx-font-size: 11px; -fx-padding: 8 16 12 16;");
             sec.getChildren().add(none);
@@ -415,7 +423,7 @@ public class HubView {
 
         String[][] items = {
             {"⚔", "DUNGEON"},
-            {"◈", "KAWULA"},
+            {"◈", "GUILDMATE"},
             {"⊞", "ITEM"},
             {"☰", "PROFIL"}
         };

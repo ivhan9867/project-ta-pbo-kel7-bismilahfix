@@ -92,7 +92,7 @@ public class Player extends Entity {
     }
 
     private void applyBackgroundBonus() {
-        background.applyBonusTo(stats);
+        background.applyBaseStats(stats);
     }
 
     // ── Level Up ─────────────────────────────────────────────
@@ -150,6 +150,25 @@ public class Player extends Entity {
         if (!unlockedSkillIds.contains(skillId)) {
             unlockedSkillIds.add(skillId);
         }
+    }
+
+    public boolean hasUnlockedSkill(String skillId) {
+        return unlockedSkillIds.contains(skillId);
+    }
+
+    public boolean isSkillEquipped(String skillId) {
+        return equippedSkillIds.contains(skillId);
+    }
+
+    public int getEquippedSkillCount() {
+        return equippedSkillIds.size();
+    }
+
+    /** Spend skill points (untuk SkillTree) */
+    public boolean spendSkillPoint(int cost) {
+        if (skillPoints < cost) return false;
+        skillPoints -= cost;
+        return true;
     }
 
     // ── Save/Load direct setters ──────────────────────────────

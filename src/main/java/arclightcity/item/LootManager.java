@@ -338,6 +338,35 @@ public class LootManager {
         return List.of(katana);
     }
 
+    /** Generate weapon untuk dijual di Toko Senjata kota */
+    public static Weapon generateCityWeapon(int playerLevel, java.util.Random rng) {
+        // Rarity berdasarkan level player
+        Item.Rarity rarity = playerLevel < 5  ? Item.Rarity.COMMON :
+                             playerLevel < 10 ? Item.Rarity.UNCOMMON :
+                             playerLevel < 18 ? Item.Rarity.RARE :
+                             playerLevel < 28 ? Item.Rarity.EPIC :
+                                                Item.Rarity.LEGENDARY;
+
+        Weapon.WeaponType[] types = Weapon.WeaponType.values();
+        Weapon.WeaponType wType = types[rng.nextInt(types.length)];
+
+        String[] names = {
+            "Katana Pamor", "Odachi Kala", "Wakizashi Bayangan",
+            "Keris Bintang", "Golok Rune Merah", "Kujang Cahaya",
+            "Katana Api", "Pedang Gelap", "Pedang Surya Kecil"
+        };
+        String name = names[rng.nextInt(names.length)];
+
+        double mult = rarity.statMultiplier;
+        var stats = new java.util.EnumMap<StatType, Double>(StatType.class);
+        stats.put(StatType.PHYSICAL_ATK, 10.0 * mult + rng.nextInt(5));
+        if (rng.nextBoolean()) stats.put(StatType.CRIT_CHANCE, 0.05 * mult);
+        if (rarity.ordinal() >= 2) stats.put(StatType.SPEED, 2.0 * mult);
+        if (rarity.ordinal() >= 3) stats.put(StatType.ARMOR_PIERCE, 0.05 * mult);
+
+        return new Weapon(name, "Dijual oleh Pak Empu.", rarity, wType, stats);
+    }
+
     /** Generate Red Essence Shard — didapat dari membunuh boss */
     public static arclightcity.item.Material generateMythicFragment() {
         return new arclightcity.item.Material(

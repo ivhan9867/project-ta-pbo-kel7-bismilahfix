@@ -311,20 +311,31 @@ public class ProfileView {
         VBox list = new VBox(0);
         list.getChildren().add(buildIdCard(player));
 
-        // Skill Points available
-        if (player.getSkillPoints() > 0) {
-            HBox spBanner = new HBox(8);
-            spBanner.setPadding(new Insets(10, 16, 10, 16));
-            spBanner.setAlignment(Pos.CENTER_LEFT);
-            spBanner.setStyle("-fx-background-color: #FFB83011; -fx-border-color: #FFB83066;" +
-                              "-fx-border-width: 0 0 1 0;");
-            Label spLabel = new Label("⬆ " + player.getSkillPoints() +
-                                      " Skill Point(s) available — click to unlock!");
-            spLabel.setStyle("-fx-text-fill: #FFB830; -fx-font-family: 'Courier New';" +
-                             "-fx-font-size: 12px; -fx-font-weight: bold;");
-            spBanner.getChildren().add(spLabel);
-            list.getChildren().add(spBanner);
-        }
+        // SP Banner + Skill Tree button
+        HBox spBanner = new HBox(10);
+        spBanner.setPadding(new Insets(10, 16, 10, 16));
+        spBanner.setAlignment(Pos.CENTER_LEFT);
+        int sp = player.getSkillPoints();
+        spBanner.setStyle("-fx-background-color: " + (sp > 0 ? "#FFB83011" : "#1A1008") +
+                          "; -fx-border-color: " + (sp > 0 ? "#FFB83066" : "#3A2810") +
+                          "; -fx-border-width: 0 0 1 0;");
+        Label spLabel = new Label(sp > 0
+            ? "✦ " + sp + " Poin Jurus tersedia!"
+            : "Selesaikan dungeon untuk dapat Poin Jurus.");
+        spLabel.setStyle("-fx-text-fill: " + (sp > 0 ? "#FFB830" : "#5A3A10") +
+                         "; -fx-font-family: 'Courier New'; -fx-font-size: 12px; -fx-font-weight: bold;");
+        HBox.setHgrow(spLabel, Priority.ALWAYS);
+
+        Button treeBtn = new Button("🌳 POHON JURUS ▶");
+        treeBtn.setStyle(
+            "-fx-background-color: #C8860A22; -fx-border-color: " + (sp > 0 ? "#FFB830" : "#C8860A") +
+            "; -fx-border-width: 1; -fx-text-fill: " + (sp > 0 ? "#FFB830" : "#C8860A") +
+            "; -fx-font-family: 'Courier New'; -fx-font-size: 10px;" +
+            "-fx-font-weight: bold; -fx-padding: 5 10; -fx-cursor: hand;");
+        treeBtn.setOnAction(e -> router.showSkillTree());
+
+        spBanner.getChildren().addAll(spLabel, treeBtn);
+        list.getChildren().add(spBanner);
 
         // Equipped skills
         list.getChildren().add(sectionHeader("JURUS AKTIF"));

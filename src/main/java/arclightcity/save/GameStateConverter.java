@@ -179,6 +179,22 @@ public class GameStateConverter {
         }
     }
 
+    private static Weapon.WeaponType safeWeaponType(String name) {
+        if (name == null) return Weapon.WeaponType.KATANA;
+        try { return Weapon.WeaponType.valueOf(name); }
+        catch (IllegalArgumentException e) {
+            // Fallback untuk weapon type lama (BLADE, GUN, dll)
+            return switch (name) {
+                case "BLADE"         -> Weapon.WeaponType.KATANA;
+                case "HEAVY"         -> Weapon.WeaponType.ODACHI;
+                case "GUN"           -> Weapon.WeaponType.SHADOW_BLADE;
+                case "CYBER_TOOL"    -> Weapon.WeaponType.GOLOK_RUNE;
+                case "ENERGY_EMITTER"-> Weapon.WeaponType.KUJANG_BLADE;
+                default              -> Weapon.WeaponType.KATANA;
+            };
+        }
+    }
+
     private static Item dataToItem(GameSaveState.ItemData d) {
         if (d == null || d.itemClass == null) return null;
         Item.Rarity rarity = Item.Rarity.valueOf(d.rarity);

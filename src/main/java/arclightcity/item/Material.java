@@ -7,8 +7,12 @@ public class Material extends Item {
 
     public enum MaterialType {
         SCRAP_METAL, CYBER_CHIP, NEON_CRYSTAL, VOID_FRAGMENT,
-        MYTHIC_FRAGMENT,  // Didapat dari boss kill — kumpulkan 3 untuk craft Mythic weapon
-        CALIBRATION_KIT, UPGRADE_CORE, LEGENDARY_SHARD
+        MYTHIC_FRAGMENT,    // Serpihan Red Essence dari boss
+        CALIBRATION_KIT,    // Kalibrasi biasa
+        CALIBRATOR,         // Kalibrator premium (beli di Bengkel Empu kota)
+        UPGRADE_CORE,       // Upgrade biasa
+        ULTRA_ENHANCE_CORE, // Ultra Enhance +9/+10 (rare, bisa gagal)
+        LEGENDARY_SHARD
     }
 
     private final MaterialType materialType;

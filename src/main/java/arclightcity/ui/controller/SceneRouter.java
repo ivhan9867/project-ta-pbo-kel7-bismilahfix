@@ -108,6 +108,17 @@ public class SceneRouter {
         });
     }
 
+    public void showCity() {
+        var view = new arclightcity.ui.view.CityView(engine, this);
+        showWithChat(view.build());
+    }
+
+    public void showCityArea(String area) {
+        var view = new arclightcity.ui.view.CityView(engine, this);
+        view.setArea(area);
+        showWithChat(view.build());
+    }
+
     public void showHub() {
         hubView = new HubView(engine, this);
         showWithChat(hubView.build());
@@ -134,6 +145,11 @@ public class SceneRouter {
     public void showMercenary() {
         mercenaryView = new MercenaryView(engine, this);
         showWithChat(mercenaryView.build());
+    }
+
+    public void showSkillTree() {
+        var view = new arclightcity.ui.view.SkillTreeView(engine, this);
+        showWithChat(view.build());
     }
 
     public void showProfile() {
