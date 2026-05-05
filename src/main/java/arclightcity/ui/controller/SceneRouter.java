@@ -10,6 +10,7 @@ import javafx.scene.Scene;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
+import java.util.List;
 
 /**
  * SceneRouter — navigasi antar screen + MercChatPanel global di kanan.
