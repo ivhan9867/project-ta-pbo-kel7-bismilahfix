@@ -866,31 +866,42 @@ public class CombatView {
 
     private SkillInfo getSkillInfo(String skillId) {
         return switch (skillId) {
-            case "POWER_STRIKE"  -> new SkillInfo("Pukulan Harimau",
-                    "Pukulan keras pendekar: 1.8× ATK damage.", 15, false);
-            case "TEBASAN"       -> new SkillInfo("Tebasan Pamungkas",
-                    "Tebasan maut — instant kill jika HP < 25%. Else 1.5× damage.", 25, false);
-            case "DEEP_HACK"     -> new SkillInfo("Santet Digital",
-                    "Kutukan cyber: HACK debuff (-30% ATK) selama 3 giliran.", 20, false);
-            case "VIRUS_UPLOAD"  -> new SkillInfo("Upload Santet",
-                    "Kutukan mengalir: Cyber damage tiap giliran selama 4 turn.", 18, false);
-            case "PHANTOM_SHOT"  -> new SkillInfo("Panah Bayangan",
-                    "Panah tak terlihat: Crit chance tinggi. Masuk mode sembunyi.", 20, false);
-            case "SHADOW_STEP"   -> new SkillInfo("Langkah Gaib",
-                    "Serangan dari bayang-bayang: 2× crit damage, abaikan armor.", 22, false);
-            case "IRON_SHIELD"   -> new SkillInfo("Tameng Baja",
-                    "Buff BLOK selama 2 giliran. Kurangi damage secara drastis.", 18, false);
-            case "SHOCKWAVE"     -> new SkillInfo("Gempa Bumi",
-                    "Getaran bumi menghantam semua musuh sekaligus (AoE).", 24, true);
-            case "ENERGY_DRAIN"  -> new SkillInfo("Serap Tenaga",
-                    "Sedot MP dari target, pulihkan MP sendiri.", 10, false);
-            case "BIO_IRRADIATE" -> new SkillInfo("Racun Semesta",
-                    "AoE Energy DOT + debuff CORRODE ke semua musuh.", 28, true);
-            case "EMP_BURST"     -> new SkillInfo("Ledakan Petir",
-                    "AoE Cyber + STUN musuh jenis Android selama 1 giliran.", 30, true);
-            case "FIELD_BARRIER" -> new SkillInfo("Rajah Pelindung",
-                    "Pasang rajah shield pada semua sekutu.", 25, true);
-            default              -> new SkillInfo(skillId.replace("_", " "),
+            case "POWER_STRIKE"       -> new SkillInfo("Pukulan Harimau",
+                    "Pukulan keras: 1.8× ATK fisik.", 15, false);
+            case "TEBASAN"            -> new SkillInfo("Tebasan Pamungkas",
+                    "Instant kill jika HP < 25%. Else 1.5× damage.", 25, false);
+            case "SHOCKWAVE"          -> new SkillInfo("Gempa Bumi",
+                    "AoE fisik ke semua musuh sekaligus.", 24, true);
+            case "SOVEREIGN_STRIKE"   -> new SkillInfo("Tebasan Agung",
+                    "Ultimate: 3× ATK, abaikan semua armor.", 35, false);
+            case "PHANTOM_SHOT"       -> new SkillInfo("Panah Bayangan",
+                    "Crit chance tinggi, masuk sembunyi.", 20, false);
+            case "SHADOW_STEP"        -> new SkillInfo("Langkah Gaib",
+                    "2× crit damage, abaikan armor.", 22, false);
+            case "NULL_FIELD"         -> new SkillInfo("Bidang Bayangan",
+                    "Hapus buff musuh + evasion +30% 2 giliran.", 28, false);
+            case "NULL_PROTOCOL"      -> new SkillInfo("Protokol Nol",
+                    "AoE Void: semua musuh -50% DEF 3 giliran.", 35, true);
+            case "IRON_SHIELD"        -> new SkillInfo("Tameng Baja",
+                    "Buff BLOK 2 giliran, kurangi damage drastis.", 18, false);
+            case "FIELD_BARRIER"      -> new SkillInfo("Rajah Pelindung",
+                    "Shield barrier ke semua sekutu.", 25, true);
+            case "ENERGY_DRAIN"       -> new SkillInfo("Serap Tenaga",
+                    "Sedot MP musuh, pulihkan HP + MP sendiri.", 10, false);
+            case "DATA_FRAGMENTATION" -> new SkillInfo("Pecah Jiwa",
+                    "AoE besar + stun 1 giliran.", 30, true);
+            case "DEEP_HACK",
+                 "VIRUS_UPLOAD"       -> new SkillInfo("Santet Digital",
+                    "Kutukan cyber: ATK debuff -30% 3 giliran.", 20, false);
+            case "CORRUPT"            -> new SkillInfo("Korupsi",
+                    "Energy + debuff CORRODE ke target.", 22, false);
+            case "VOID_RUPTURE"       -> new SkillInfo("Robek Kekosongan",
+                    "AoE Energy damage ke semua musuh.", 26, true);
+            case "BIO_IRRADIATE"      -> new SkillInfo("Racun Semesta",
+                    "AoE Energy DOT + debuff ke semua.", 28, true);
+            case "EMP_BURST"          -> new SkillInfo("Ledakan Petir",
+                    "AoE Cyber + stun 1 giliran.", 30, true);
+            default -> new SkillInfo(skillId.replace("_", " "),
                     "Jurus khusus.", 15, false);
         };
     }
@@ -1028,7 +1039,7 @@ public class CombatView {
                 });
         }
 
-        Timeline firstTurn = new Timeline(new KeyFrame(Duration.millis(hasBoss ? 800 : 300), e -> {
+        Timeline firstTurn = new Timeline(new KeyFrame(Duration.millis(hasBoss ? 2500 : 300), e -> {
             boolean ongoing = cm.processTurn();
             refreshCombatants();
             refreshActionPanel();

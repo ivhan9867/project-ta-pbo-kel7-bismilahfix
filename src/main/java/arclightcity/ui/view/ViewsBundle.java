@@ -1078,8 +1078,22 @@ public static class VictoryViewImpl {
         HBox lootRow = buildRewardRow("Item Loot",
             result.getLootItemIds().size() + " item", "#A09070");
 
+        // Tampilkan nama item loot yang didapat
+        VBox lootDetail = new VBox(2);
+        lootDetail.setPadding(new Insets(2, 0, 4, 12));
+        engine.getInventory().getAllBagItems().stream()
+            .sorted((a, b) -> Long.compare(b.getId().hashCode(), a.getId().hashCode()))
+            .limit(result.getLootItemIds().size())
+            .forEach(item -> {
+                String rc = UIFactory.rarityColor(item.getRarity());
+                Label il = new Label("  ✦ " + item.getFullName());
+                il.setStyle("-fx-text-fill: " + rc + "; -fx-font-family: 'Courier New';" +
+                            "-fx-font-size: 10px;");
+                lootDetail.getChildren().add(il);
+            });
+
         int levels = result.getLevelsGained();
-        rewards.getChildren().addAll(rwdTitle, expRow, goldRow, lootRow);
+        rewards.getChildren().addAll(rwdTitle, expRow, goldRow, lootRow, lootDetail);
 
         if (levels > 0) {
             HBox lvlRow = buildRewardRow("Level Up!", "+" + levels + " Level", "#FF8833");

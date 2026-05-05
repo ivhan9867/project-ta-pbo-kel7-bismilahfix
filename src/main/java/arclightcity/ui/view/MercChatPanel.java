@@ -129,6 +129,13 @@ public class MercChatPanel extends VBox {
      */
     public void addMercMessage(MercenaryDialogue.ChatMessage msg) {
         Platform.runLater(() -> {
+            // Pastikan panel visible dan dalam scene
+            if (!isVisible() || getScene() == null) {
+                // Panel belum siap — coba lagi 300ms kemudian
+                new Timeline(new KeyFrame(Duration.millis(300),
+                    e -> addMercMessage(msg))).play();
+                return;
+            }
             VBox bubble = buildMercBubble(msg);
             messageContainer.getChildren().add(bubble);
             trimMessages();

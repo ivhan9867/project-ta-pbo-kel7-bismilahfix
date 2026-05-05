@@ -122,19 +122,20 @@ public class SceneRouter {
     public void showHub() {
         hubView = new HubView(engine, this);
         showWithChat(hubView.build());
-        Platform.runLater(() ->
-            emitChat(MercenaryDialogue.Trigger.HUB_IDLE));
+        emitChatDelayed(MercenaryDialogue.Trigger.HUB_IDLE, 700);
     }
 
     public void showDungeonMap() {
         dungeonMapView = new DungeonMapView(engine, this);
         showWithChat(dungeonMapView.build());
+        emitChatDelayed(MercenaryDialogue.Trigger.DUNGEON_ENTER_FLOOR, 600);
     }
 
     public void showCombat() {
         combatView = new CombatView(engine, this);
         showWithChat(combatView.build());
         combatView.startCombatLoop();
+        emitChatDelayed(MercenaryDialogue.Trigger.COMBAT_START, 1000);
     }
 
     public void showInventory() {
@@ -218,9 +219,34 @@ public class SceneRouter {
     // ── Chat Helpers ──────────────────────────────────────────
 
     public void emitChat(MercenaryDialogue.Trigger trigger) {
-        // Platform.runLater memastikan chat ditambah setelah scene selesai render
-        Platform.runLater(() ->
-            chatPanel.emitTrigger(engine.getActiveMercs(), trigger));
+        // Double runLater + delay memastikan scene sudah fully rendered
+        // sebelum pesan ditambahkan ke messageContainer
+        Platform.runLater(() -> {
+            List<arclightcity.entity.mercenary.Mercenary> mercs = engine.getActiveMercs();
+            // Delay 400ms agar layout selesai dulu
+            new javafx.animation.Timeline(
+                new javafx.animation.KeyFrame(
+                    javafx.util.Duration.millis(400),
+                    e -> Platform.runLater(() ->
+                        chatPanel.emitTrigger(mercs, trigger)
+                    )
+                )
+            ).play();
+        });
+    }
+
+    public void emitChatDelayed(MercenaryDialogue.Trigger trigger, int delayMs) {
+        Platform.runLater(() -> {
+            List<arclightcity.entity.mercenary.Mercenary> mercs = engine.getActiveMercs();
+            new javafx.animation.Timeline(
+                new javafx.animation.KeyFrame(
+                    javafx.util.Duration.millis(delayMs),
+                    e -> Platform.runLater(() ->
+                        chatPanel.emitTrigger(mercs, trigger)
+                    )
+                )
+            ).play();
+        });
     }
 
     public void addSystemChat(String message) {
