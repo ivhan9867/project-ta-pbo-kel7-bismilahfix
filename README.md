@@ -1,130 +1,84 @@
-# ⚡ MYTHIC ITEM OBTAINED
+# ⚔ MYTHIC ITEM OBTAINED
 
-![Version](https://img.shields.io/badge/version-v0.4.2-00E5FF?style=flat-square)
+![Version](https://img.shields.io/badge/version-v0.5.0-FFB830?style=flat-square)
 ![Java](https://img.shields.io/badge/Java-25-orange?style=flat-square)
 ![JavaFX](https://img.shields.io/badge/JavaFX-25-blue?style=flat-square)
 ![Build](https://img.shields.io/badge/build-Maven-AA00FF?style=flat-square)
-![Status](https://img.shields.io/badge/status-In%20Development-FFD600?style=flat-square)
+![Status](https://img.shields.io/badge/status-Alpha-CC3300?style=flat-square)
 
-> *"Bertahan hidup di kota yang tidak pernah tidur — dan tidak pernah memaafkan."*
+> *"Kumpulkan 5 Serpihan Red Essence. Tempa Red Blossom Katana. Kalahkan Theresa."*
 
-**Mythic Item Obtained** adalah game RPG roguelite turn-based dengan GUI JavaFX murni (tanpa FXML).
-Dibangun sebagai Tugas Akhir **Pemrograman Berorientasi Objek**.
-Terinspirasi dari game mobile *Arclight City* oleh Dex App Studio.
-
-Window **860×920px** — split layout: game area 560px (kiri) + mercenary chat 300px (kanan).
+**Mythic Item Obtained** adalah RPG roguelite turn-based bergaya Nusantara dengan GUI JavaFX murni.
+Dibuat sebagai Tugas Akhir **Pemrograman Berorientasi Objek 2026**.
 
 ---
 
-## ✅ Status Fitur (v0.3.7)
+## 📖 Cerita
+
+**Asuna** — seorang gamer perempuan dari dunia modern, gemar bermain game hack-and-slash dengan katana sebagai senjata andalan.
+
+Suatu malam ia tertidur di depan layar game yang masih menyala. Ketika bangun, ia sudah berada di **Nusantara** — benua kuno yang indah namun kini terancam.
+
+Ras **Demon Lord** dipimpin **Theresa** sedang mengubah tanah hijau Nusantara menjadi dataran es hampa. Asuna harus berjuang bersama para kawula untuk mengumpulkan **5 Serpihan Red Essence** dari 5 boss, menempa **Red Blossom Katana**, dan mengakhiri ancaman Theresa di Floor 51.
+
+---
+
+## 🎮 Gameplay
+
+### Core Loop
+```
+Markas → Masuk Dungeon → Jelajah Floor → Lawan Musuh → Ambil Loot
+       ↓                                               ↓
+    Upgrade Gear ←─────────── Kembali ──────────────── Boss Drop Shard
+       ↓
+    (5 Shard) → Tempa Red Blossom Katana → Lawan Theresa (F51)
+```
+
+### Sistem Red Essence Shard
+| Floor | Boss | Shard |
+|-------|------|-------|
+| F10 | Batara Kala | ✦ Serpihan 1/5 |
+| F20 | Nyi Roro Kidul | ✦ Serpihan 2/5 |
+| F30 | Rangda Agung | ✦ Serpihan 3/5 |
+| F40 | Garuda Mahaguru | ✦ Serpihan 4/5 |
+| F50 | Semar Pamungkas | ✦ Serpihan 5/5 |
+| **F51** | **THERESA** | **⚔ Final Battle** |
+
+### Kawula (Mercenary)
+| Nama | Peran | Kepribadian |
+|------|-------|-------------|
+| Srikandi | Pemanah Bayangan | Dingin, sedikit kata |
+| Gatot Kaca | Ksatria Baja | Formal, android |
+| Nyai Roro | Tabib Mistis | Hangat, peduli |
+| Rangga | Pembunuh Bayaran | Sarkastis, humor gelap |
+| Bima | Petarung Agung | Antusias, keras |
+| Ki Ageng | Dukun Tua | Bijak, prophetic |
+| Dewi Sri | Penjaga Keseimbangan | Spiritual, puitis |
+
+---
+
+## ✅ Status Fitur (v0.5.0)
 
 | Fitur | Status |
 |-------|--------|
-| Main Menu | ✅ |
-| Create Character (6 background) | ✅ |
-| Hub Screen | ✅ |
-| Dungeon Grid Map 2D (fog of war, klik tile) | ✅ v0.2.3 |
-| Room Preview di Hover Tooltip | ✅ v0.3.7 |
-| Dungeon Map Visual Overhaul (pulse, marching ants) | ✅ v0.2.8 |
-| Floor Transition Animation | ✅ v0.3.7 |
-| Combat Turn-Based | ✅ |
-| Turn Order Bar | ✅ v0.3.0 |
-| Skill Selection Popup | ✅ v0.3.0 |
-| Target Selection (klik enemy) | ✅ v0.3.0 |
-| Combat Speed Control | ✅ v0.3.0 |
-| Floating Damage Numbers | ✅ v0.3.7 |
-| EXP & Gold diterapkan setelah combat | ✅ v0.3.5 |
-| Level Up Notification | ✅ v0.3.5 |
-| Loot Room → Inventory | ✅ v0.2.0 |
-| REST Room Diminishing Heal | ✅ v0.2.5 |
-| Inventory (EQUIP / UPGRADE / CALIBRATE / USE) | ✅ |
-| Starter Skills per Background | ✅ v0.2.5 |
-| Shop (beli item, harga deterministik) | ✅ v0.2.5 |
-| Mercenary Chat Panel (150+ dialog) | ✅ v0.2.6 |
-| Mercenary Hire di Hub | ✅ v0.3.6 |
-| Profile Tab STATS (semua 26 stat) | ✅ v0.3.5 |
-| Profile Tab EQUIPMENT | ✅ v0.3.5 |
-| Profile Tab SKILLS (unlock/equip dari UI) | ✅ v0.3.5 |
-| Status Effect Tooltip | ✅ v0.3.6 |
-| Victory & Game Over Screen | ✅ |
-| Event Room | ✅ |
-| Save / Load (Java Serialization) | ✅ v0.3.4 |
-| Tutorial / Onboarding | 🚧 v0.6 |
-| Sound Effects | 🚧 TBD |
-| Craft System | 🚧 TBD |
-| Hidden Room | 🚧 v0.5 |
-| Boss Kedua | 🚧 v0.5 |
-
----
-
-## ✨ Fitur Utama
-
-### ⚔️ Combat (v0.3)
-- Turn-based berbasis SPEED stat
-- **Turn Order Bar** — antrian 6 entity ke depan
-- **Skill Selection Popup** — pilih skill, lihat deskripsi + MP cost
-- **Target Selection** — klik enemy yang ingin diserang
-- **Floating Damage Numbers** — angka melayang di atas enemy
-- **Combat Speed Control** — 1× / 2× / SKIP
-- 2 bar vital: HP + Shield | 3 tipe damage | 28 status effect
-
-### 🗺️ Dungeon Grid Map (v0.2.8 + v0.3.7)
-- Grid penuh COLS×ROWS, fog of war 3 state
-- **Marching ants** border untuk reachable tile
-- **Player breathing pulse** — 3 ring concentric sinusoidal
-- **Room preview hover** — enemy names, REST heal remaining
-- **Floor transition animation** — fade out/in dengan teks "DESCENDING TO FLOOR X"
-- Boss wajib dikalahkan untuk DESCEND
-
-### 💬 Mercenary Chat Panel (v0.2.6)
-- Panel 300px persistent semua screen
-- 7 mercenary, kepribadian unik, 150+ dialog
-- Hire merc baru langsung dari menu Mercenary
-
-### 💾 Save System (v0.3.4)
-- Java Serialization — tidak butuh library eksternal
-- 1 manual save + auto-save backup setiap turun floor
-- File: `%APPDATA%\ArclightCity\` (Windows)
-
----
-
-## 👤 Background Origin
-
-| Background | Starter Skills |
-|---|---|
-| 🥊 Street Brawler | POWER_STRIKE + EXECUTE |
-| 💻 Netrunner | DEEP_HACK + VIRUS_UPLOAD |
-| 🪖 Veteran Soldier | IRON_SHIELD + SHOCKWAVE |
-| ⚡ Energy Adept | ENERGY_DRAIN + BIO_IRRADIATE |
-| 👻 Ghost Operative | PHANTOM_SHOT + SHADOW_STEP |
-| 🔧 Techwright | EMP_BURST + FIELD_BARRIER |
-
----
-
-## 🤝 Mercenary
-
-| Merc | Role | Kepribadian | Hire Cost |
-|---|---|---|---|
-| Kira Voss | DPS Sniper | Dingin, profesional | 300g |
-| Tank-RX9 | Tank | Formal, android | Starter (gratis) |
-| Sera Mend | Support Medic | Hangat, caring | 350g |
-| Vector | DPS Assassin | Sarkastis | 400g |
-| Magnus Forge | DPS AoE | Antusias keras | 380g |
-| Echo Null | CC Jammer | Misterius teknis | 420g |
-| Lyra Bloom | Support Shaman | Spiritual poetic | 360g |
-
----
-
-## 👾 Enemy
-
-| Enemy | Tier | Mechanic |
-|---|---|---|
-| Street Thug | Standard | Stun |
-| Neon Serpent | Standard | Bleed stack |
-| Glitch Drone | Minion | MP Drain, Self Destruct |
-| Iron Clad | **Elite** | 3 armor phase |
-| Void Specter | **Elite** | Immune Physical |
-| **Null King** | **BOSS** | 3 fase, Null Field |
+| Protagonis Asuna (fixed character) | ✅ v0.5.0 |
+| Red Blossom Katana (1 Mythic item) | ✅ v0.5.0 |
+| Red Essence Shard system (5 shard) | ✅ v0.5.0 |
+| Boss per 10 floor (F10-F50) | ✅ v0.5.0 |
+| Theresa — Final Boss (F51) | ✅ v0.5.0 |
+| Weapon types → semua pedang | ✅ v0.5.0 |
+| GUI Total Nusantara Dark Gold | ✅ v0.4.4-v0.4.5 |
+| Lokalisasi penuh Bahasa Indonesia | ✅ v0.4.4 |
+| MercChatPanel fungsional | ✅ v0.3.7d |
+| 20 enemy + 5 boss Nusantara | ✅ v0.4.1 |
+| Combat (turn order, skill, floating damage) | ✅ v0.3.x |
+| Save/Load System | ✅ v0.3.4 |
+| Dungeon Grid Map (fog of war, animasi) | ✅ v0.2.x |
+| Dialog kawula 100+ (Bahasa Indonesia) | ✅ v0.4.3 |
+| Floor transition animation | ✅ v0.3.7 |
+| Lore/dialog boss per fase | 🚧 In progress |
+| Portrait karakter/kawula | 🚧 Asset pending |
+| Sound effects | 🚧 TBD |
 
 ---
 
@@ -136,65 +90,35 @@ cd ArclightCity
 mvn javafx:run
 ```
 
-Requirements: JDK 25 (atau 17+), Maven 3.9+
+**Requirements:** JDK 25+, Maven 3.9+
 
 ---
 
-## 🏗️ Arsitektur
-
-```
-Entity (abstract)
-├── Player
-├── Enemy → StreetThug, NeonSerpent, GlitchDrone, IronClad, VoidSpecter
-│   └── Boss → NullKing
-└── Mercenary → KiraVoss, TankRX9, SeraMend, Vector, MagnusForge, EchoNull, LyraBloom
-
-Item (abstract)
-├── Equipment → Weapon, Armor, Accessory
-├── Consumable
-└── Material
-```
-
-**Design Patterns:** Observer, Factory, Strategy, Template Method
-
----
-
-## 📁 Package Structure
+## 🏗 Arsitektur
 
 ```
 arclightcity/
 ├── engine/      → GameEngine (state machine)
-├── entity/      → Player, Enemy, Mercenary, Stats, Status
-├── combat/      → CombatManager, DamageCalculator, SkillExecutor, TurnQueue
+├── entity/      → Player(Asuna), Enemy(20+), Mercenary(7), Boss(6)
+├── combat/      → CombatManager, SkillExecutor, TurnQueue
 ├── dungeon/     → DungeonManager, ProceduralGenerator, Floor, Room
-├── item/        → Item hierarchy, Inventory, LootManager
+├── item/        → Item hierarchy, Inventory, LootManager (Red Blossom Katana)
 ├── save/        → GameSaveState, SaveManager, GameStateConverter
 └── ui/
-    ├── ArclightApp    → Entry point (860×920px)
-    ├── controller/    → SceneRouter + MercChatPanel global
-    ├── util/UIFactory → Komponen reusable
-    └── view/          → Semua screen views
+    ├── ArclightApp       → Entry point (860×920px)
+    ├── controller/       → SceneRouter (persistent single scene)
+    ├── util/UIFactory    → Komponen reusable, palette Nusantara Dark Gold
+    └── view/             → Semua screen (Bahasa Indonesia penuh)
 ```
 
----
-
-## 🗺️ Roadmap
-
-| Versi | Status |
-|---|---|
-| v0.1.0 – v0.2.0 | ✅ Foundation + bug fix |
-| v0.2.1 – v0.2.8 | ✅ UI, map, chat, visual |
-| v0.3.0 – v0.3.7 | ✅ Combat, save, hire, transition |
-| v0.4.0 | 📋 Progression: stat up, craft |
-| v0.5.0 | 📋 Content: boss baru, enemy baru, hidden room |
-| v0.6.0 | 📋 QoL: tutorial, onboarding |
+**Design Patterns:** Observer, Factory, Strategy, Template Method, State Machine
 
 ---
 
 ## 📝 Dokumentasi
 
-Lihat [CHANGELOG.md](CHANGELOG.md) untuk detail tiap versi.
+Lihat [CHANGELOG.md](CHANGELOG.md) untuk riwayat versi lengkap.
 
 ---
 
-*Tugas Akhir — Pemrograman Berorientasi Objek*
+*Tugas Akhir — Pemrograman Berorientasi Objek | 2026*

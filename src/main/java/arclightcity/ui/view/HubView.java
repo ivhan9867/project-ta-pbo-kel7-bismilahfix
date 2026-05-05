@@ -155,7 +155,10 @@ public class HubView {
         fragLbl.setStyle("-fx-text-fill: " + (frags > 0 ? "#FF6B00" : "#2A1808") +
                          "; -fx-font-family: 'Courier New'; -fx-font-size: 11px;" +
                          "-fx-font-weight: bold;");
-        fragLbl.setTooltip(new javafx.scene.control.Tooltip("Serpihan Red Essence: " + frags + "/5 — Kumpulkan dari 5 boss (F10/20/30/40/50)\nUntuk menempa ✦ Red Blossom Katana")));
+        fragLbl.setTooltip(new javafx.scene.control.Tooltip(
+            "Serpihan Red Essence: " + frags + "/5\n" +
+            "Kumpulkan dari 5 boss (F10/20/30/40/50)\n" +
+            "Untuk menempa Red Blossom Katana"));
 
         resources.getChildren().addAll(gold, fragLbl);
         playerRow.getChildren().addAll(avatar, info, resources);
