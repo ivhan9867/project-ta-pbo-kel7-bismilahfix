@@ -143,7 +143,7 @@ public class GameStateConverter {
     public static void restoreFromSave(GameEngine engine, GameSaveState save) {
         if (save == null || save.player == null) return;
 
-        PlayerBackground bg = PlayerBackground.valueOf(save.player.background);
+        PlayerBackground bg = PlayerBackground.ASUNA;
         engine.createCharacterFromSave(save.player.name, bg, save.player);
 
         restoreInventory(engine, save);
@@ -187,7 +187,7 @@ public class GameStateConverter {
             case "Weapon" -> {
                 var stats = parseStats(d.baseStats);
                 var w = new Weapon(d.name, "", rarity,
-                        Weapon.WeaponType.valueOf(d.subType), stats);
+                        safeWeaponType(d.subType), stats);
                 applyEquipData(w, d);
                 yield w;
             }

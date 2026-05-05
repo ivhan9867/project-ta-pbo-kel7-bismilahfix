@@ -18,7 +18,7 @@ import java.util.*;
  *
  * Layout:
  *   ┌─────────────────────────┐
- *   │ ◈ BISIK KAWULA            │  ← header
+ *   │ ◈ ✦ BISIK KAWULA            │  ← header
  *   ├─────────────────────────┤
  *   │ [chat scroll area]      │
  *   │ > KiraVoss:             │
@@ -81,7 +81,7 @@ public class MercChatPanel extends VBox {
         pulse.setCycleCount(Timeline.INDEFINITE);
         pulse.play();
 
-        Label headerLabel = new Label("BISIK KAWULA");
+        Label headerLabel = new Label("✦ BISIK KAWULA");
         headerLabel.setStyle(
             "-fx-text-fill: #6A5840;" +
             "-fx-font-family: 'Courier New';" +
@@ -118,8 +118,8 @@ public class MercChatPanel extends VBox {
         getChildren().add(scrollPane);
 
         // Welcome message
-        addSystemMessage("BISIK KAWULA ONLINE");
-        addSystemMessage("Menunggu kawula berbicara...");
+        addSystemMessage("✦ BISIK KAWULA ONLINE");
+        addSystemMessage("Kawula menunggu di sudut gelap......");
     }
 
     // ── Public API ────────────────────────────────────────────
@@ -191,7 +191,7 @@ public class MercChatPanel extends VBox {
     public void clear() {
         Platform.runLater(() -> {
             messageContainer.getChildren().clear();
-            addSystemMessage("BISIK KAWULA ONLINE");
+            addSystemMessage("✦ BISIK KAWULA ONLINE");
         });
     }
 

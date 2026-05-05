@@ -614,3 +614,113 @@ Fix: Tambahkan `@Override protected void onPhaseTransition(int fromPhase, int to
 **DungeonStateEvent — tambah `mythicCraft()` factory**
 - Notification khusus saat 3 Mythic Fragment berhasil di-craft
 - Pakai Type.LEVEL_UP untuk tampil sebagai notifikasi di DungeonMapView
+
+---
+
+## [v0.4.4] — 2026-05-02
+
+### Changed — GUI Total Overhaul
+
+**MainMenuView — Total Redesign**
+- Judul besar MYTHIC (52px) + ITEM OBTAINED (28px) dengan double gold glow animasi pulse
+- Ornamen batik: garis vertikal kiri/kanan gradient, diamond di pojok
+- Tagline "✦ MASUKI DUNIA GAIB NUSANTARA ✦"
+- Tombol MULAI PETUALANGAN (gold filled) + LANJUTKAN (dengan save info)
+- Tombol KELUAR dengan hover merah
+
+**CharacterCreateView — Total Redesign**
+- Header dengan tombol KEMBALI + ornamen gold
+- Input nama pendekar dark parchment style
+- Background card: ikon emoji + nama Nusantara + lore + starter skills
+- Card yang dipilih: border gold + glow + badge ✦
+- Bottom bar fixed: tampilkan asal usul + tombol MULAI PETUALANGAN
+
+**HubView — Total Redesign**
+- Identity bar: avatar circle + nama gold glow + badge level/background/depth + gold + fragment counter
+- Vitals section: EXP bar gradient + HP/Shield/MP compact
+- District banner: nama lokasi dinamis berdasarkan depth
+- Mythic Fragment progress bar dengan dot indicators (muncul jika punya fragment)
+- Navigation grid: MASUK DUNGEON (primary full-width) + 2×2 grid untuk kawula/item/profil/simpan
+  - Setiap tombol punya subtitle deskripsi
+  - Hover effect: icon + label berubah warna gold
+- Crew preview: daftar kawula aktif dengan vitals bars mini
+- Quick bar bottom: 4 ikon navigasi cepat dengan hover gold
+
+**VictoryView — Total Redesign**
+- Header "✦ KEMENANGAN ✦" dengan double gold glow
+- Notifikasi boss kill + fragment info
+- Reward panel border gold dengan semua reward
+- Tombol LANJUT JELAJAH + KEMBALI KE MARKAS
+
+**GameOverView — Total Redesign + Fix**
+- Judul "◆ GUGUR ◆" merah dengan animasi flicker
+- Kutipan Nusantara random
+- 3 tombol: COBA LAGI | KEMBALI KE MARKAS | MENU UTAMA
+- "Kembali ke Markas" → bukan ke main menu, tapi ke hub existing
+
+**Lokalisasi penuh Bahasa Indonesia**
+- HubView: ENTER DUNGEON → MASUK DUNGEON, MERCENARY → KAWULA, dll
+- DungeonMapView: FLOOR → LANTAI, DESCEND → TURUN, BOSS DEFEATED → BOSS DIKALAHKAN
+- CombatView: ENEMIES → LAWAN, ALLIES → SEKUTU, ATTACK → SERANG, SKILL → JURUS, FLEE → KABUR, DEFEND → BERTAHAN
+- ViewsBundle: HIRE → REKRUT, ROSTER → REGU, BUY → BELI, EQUIP → PAKAI, dll
+
+---
+
+## [v0.4.5] — 2026-05-02
+
+### Changed — Polish Menyeluruh Semua View
+
+**DungeonMapView**
+- Header diganti: custom HBox dengan tombol KEMBALI, judul lantai gold glow, counter emas
+- Semua warna lama (cyberpunk) diganti ke palette Nusantara Dark Gold
+- GridScroll border: #1C2E44 → #3A2810
+- Bottom bar: #0C1220 → #0F0A06
+
+**InventoryView (ViewsBundle)**
+- Layout: VBox (overflow) → BorderPane (fixed)
+- Custom header dengan tombol KEMBALI + judul "PERBENDAHARAAN" + gold counter
+- Item list di center ScrollPane, tidak overflow
+
+**ShopView (ViewsBundle)**
+- Layout: VBox → BorderPane
+- Custom header + Merchant info panel bergaya Nusantara
+- "WANDERING MERCHANT" → "PEDAGANG GAIB"
+- "I have just what you need..." → kutipan Bahasa Indonesia
+- "LEAVE SHOP" → "TINGGALKAN PASAR"
+- "FOR SALE" → "BARANG DAGANGAN"
+
+**EventView (ViewsBundle) — Total Redesign**
+- Layout: VBox → BorderPane
+- Header dinamis per kategori event:
+  - POSITIVE (✦ KEBERUNTUNGAN) → hijau jade
+  - NEGATIVE (☠ BAHAYA) → merah api
+  - CHOICE (◈ PILIHAN GAIB) → gold batik
+  - NEUTRAL (— PERISTIWA) → abu redup
+- Judul event dengan double dropshadow warna kategori
+- Narrative panel parchment style dengan border kiri 3px warna kategori
+- Tombol pilihan: hover berubah warna sesuai kategori + glow
+- "CHOOSE YOUR ACTION" → "PILIH TINDAKANMU"
+- "CONTINUE" → "LANJUTKAN PERJALANAN"
+
+**ProfileView — Lokalisasi + Polish**
+- Header custom Nusantara (konsisten dengan view lain)
+- Tab bar: STATS/EQUIPMENT/SKILLS → STATISTIK/PERLENGKAPAN/JURUS
+- Semua label stat dilokalkan: "Physical ATK" → "ATK Fisik", dll
+- Section headers: CHARACTER/VITALS/OFFENSE/DEFENSE/UTILITY → KARAKTER/VITAL/SERANGAN/PERTAHANAN/UTILITAS
+- Tombol EQUIP/UNEQUIP/UNLOCK → PASANG/LEPAS/BUKA
+- Skill status "EQUIPPED/UNLOCKED/READY" → "AKTIF/TERBUKA/SIAP"
+
+**MercChatPanel**
+- Header: "BISIK KAWULA" → "✦ BISIK KAWULA"
+- Placeholder: "Menunggu kawula berbicara" → "Kawula menunggu di sudut gelap..."
+
+**Semua View — Color Token Update**
+- #050810 → #0A0604 (bg deep)
+- #080D18 → #0F0A06 (bg panel)
+- #0C1220 → #150E08 (panel)
+- #1C2E44 → #3A2810 (border)
+- #5A6A80 → #6A5840 (text dim)
+- #00E5FF → #C8860A (accent)
+- #FFD600 → #FFB830 (highlight)
+- #FF1744 → #CC3300 (danger)
+- #00E676 → #2D7A45 (success)

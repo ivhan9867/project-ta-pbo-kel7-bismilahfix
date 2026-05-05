@@ -81,6 +81,7 @@ public class EntityFactory {
             case RANGDA_AGUNG       -> new RangdaAgung();
             case GARUDA_MAHAGURU    -> new GarudaMahaguru();
             case SEMAR_PAMUNGKAS    -> new SemarPamungkas();
+            case THERESA            -> new Theresa();
         };
         enemy.scaleToFloor(floor);
         return enemy;
@@ -173,17 +174,27 @@ public class EntityFactory {
     /**
      * Generate Boss untuk floor milestone.
      */
+    /**
+     * Generate boss sesuai floor.
+     * Setiap 10 floor ada main boss yang drop Red Essence Shard.
+     * Floor 51: Theresa — Final Boss, butuh Red Blossom Katana.
+     */
     public static Enemy generateBoss(int floor) {
-        // Setiap milestone floor punya boss unik
-        if (floor <= 5)  return spawn(EnemySpawnType.NULL_KING,         floor);
-        if (floor <= 8)  return spawn(EnemySpawnType.NYI_RORO_KIDUL,    floor);
-        if (floor <= 12) return spawn(EnemySpawnType.RANGDA_AGUNG,       floor);
-        if (floor <= 16) return spawn(EnemySpawnType.GARUDA_MAHAGURU,    floor);
-        if (floor >= 20) return spawn(EnemySpawnType.SEMAR_PAMUNGKAS,    floor);
-        // Antara milestone: elite sebagai mini-boss
-        if (floor <= 10) return spawn(EnemySpawnType.DETYA_WESI,         floor);
-        if (floor <= 14) return spawn(EnemySpawnType.GARUDA_KORUP,       floor);
-        return spawn(EnemySpawnType.RANGDA_MERAH, floor);
+        // Boss utama per 10 floor — setiap satu drop Red Essence Shard
+        if (floor == 10) return spawn(EnemySpawnType.NULL_KING,         floor); // Batara Kala
+        if (floor == 20) return spawn(EnemySpawnType.NYI_RORO_KIDUL,    floor); // Nyi Roro Kidul
+        if (floor == 30) return spawn(EnemySpawnType.RANGDA_AGUNG,       floor); // Rangda Agung
+        if (floor == 40) return spawn(EnemySpawnType.GARUDA_MAHAGURU,    floor); // Garuda Mahaguru
+        if (floor == 50) return spawn(EnemySpawnType.SEMAR_PAMUNGKAS,    floor); // Semar Pamungkas
+        if (floor >= 51) return spawn(EnemySpawnType.THERESA,            floor); // Final Boss
+
+        // Mini-boss antara milestone (floor bukan kelipatan 10)
+        if (floor < 10)  return spawn(EnemySpawnType.IRON_CLAD,          floor);
+        if (floor < 20)  return spawn(EnemySpawnType.VOID_SPECTER,        floor);
+        if (floor < 30)  return spawn(EnemySpawnType.RANGDA_MERAH,        floor);
+        if (floor < 40)  return spawn(EnemySpawnType.GARUDA_KORUP,        floor);
+        if (floor < 50)  return spawn(EnemySpawnType.DETYA_WESI,          floor);
+        return spawn(EnemySpawnType.SEMAR_PAMUNGKAS, floor);
     }
 
     // ── Helper ───────────────────────────────────────────────
@@ -195,13 +206,18 @@ public class EntityFactory {
     // ── Enum Spawn Types ─────────────────────────────────────
 
     public enum EnemySpawnType {
-        // Standard
+        // Standard (Floor 1-6)
         STREET_THUG, NEON_SERPENT, GLITCH_DRONE,
         TUYUL_PENCURI, WEWE_GOMBEL, POCONG_LISTRIK, BANASPATI, BABI_NGEPET,
-        // Elite
+        // Elite (Floor 4-17)
         IRON_CLAD, VOID_SPECTER,
         RANGDA_MERAH, BARONG_RUSAK, LEYAK_API, GARUDA_KORUP, DETYA_WESI,
-        // Boss
-        NULL_KING, NYI_RORO_KIDUL, RANGDA_AGUNG, GARUDA_MAHAGURU, SEMAR_PAMUNGKAS
+        // Boss per 10 floor (memberikan Red Essence Shard)
+        NULL_KING,       // Floor 10 — Boss 1
+        NYI_RORO_KIDUL,  // Floor 20 — Boss 2
+        RANGDA_AGUNG,    // Floor 30 — Boss 3
+        GARUDA_MAHAGURU, // Floor 40 — Boss 4
+        SEMAR_PAMUNGKAS, // Floor 50 — Boss 5
+        THERESA          // Floor 51 — Final Boss (butuh Red Blossom Katana)
     }
 }

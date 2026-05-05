@@ -101,29 +101,46 @@ public class DungeonMapView {
         DungeonManager dm = engine.getDungeonManager();
         Floor floor = dm.getCurrentFloor();
 
-        // BorderPane: top=header+vitals (fixed), center=map+roominfo (scrollable)
-        // bottom=room actions/DESCEND (fixed)
         BorderPane bpRoot = UIFactory.screenRootBorder();
-        // Store reference for wireEngineListeners refresh
-        VBox root = new VBox(0); // internal reference masih dipakai
-        root.setStyle("-fx-background-color: #050810;");
+        VBox root = new VBox(0);
+        root.setStyle("-fx-background-color: #0A0604;");
 
-        // ── TOP: header + vitals (fixed) ──────────────────
+        // ── TOP: header + vitals ──────────────────────────
         VBox topFixed = new VBox(0);
-        String floorTitle = "FLOOR " + dm.getCurrentFloorNumber() + ": " +
-                (floor != null ? floor.getTheme().displayName.toUpperCase() : "—");
-        topFixed.getChildren().add(UIFactory.headerWithResources(
-                floorTitle,
-                () -> router.showHub(),
-                engine.getPlayer().getGold(),
-                dm.getCurrentFloorNumber()));
+
+        // Header bar
+        HBox header = new HBox(10);
+        header.setPadding(new Insets(10, 16, 10, 16));
+        header.setAlignment(Pos.CENTER_LEFT);
+        header.setStyle("-fx-background-color: #0F0A06;" +
+                        "-fx-border-color: #3A2810; -fx-border-width: 0 0 1 0;");
+
+        Button backBtn = new Button("← MARKAS");
+        backBtn.setStyle("-fx-background-color: transparent; -fx-border-color: #3A2810;" +
+                         "-fx-border-width: 1; -fx-text-fill: #5A3A10;" +
+                         "-fx-font-family: 'Courier New'; -fx-font-size: 10px;" +
+                         "-fx-padding: 3 8; -fx-cursor: hand;");
+        backBtn.setOnAction(e -> router.showHub());
+
+        String floorName = floor != null ? floor.getTheme().displayName.toUpperCase() : "—";
+        Label floorLbl = new Label("⚔  LANTAI " + dm.getCurrentFloorNumber() + ": " + floorName);
+        floorLbl.setStyle("-fx-text-fill: #FFB830; -fx-font-family: 'Courier New';" +
+                          "-fx-font-size: 13px; -fx-font-weight: bold;" +
+                          "-fx-effect: dropshadow(gaussian, #C8860A, 6, 0.3, 0, 0);");
+        HBox.setHgrow(floorLbl, Priority.ALWAYS);
+
+        Label goldLbl = new Label("⚙ " + UIFactory.formatNumber(engine.getPlayer().getGold()));
+        goldLbl.setStyle("-fx-text-fill: #FFB830; -fx-font-family: 'Courier New';" +
+                         "-fx-font-size: 12px; -fx-font-weight: bold;");
+
+        header.getChildren().addAll(backBtn, floorLbl, goldLbl);
+        topFixed.getChildren().add(header);
         topFixed.getChildren().add(buildVitalsBar());
         bpRoot.setTop(topFixed);
 
-        // ── CENTER: map grid + current room info (scrollable) ─
+        // ── CENTER: map + room info ───────────────────────
         VBox centerContent = new VBox(0);
 
-        // Grid Map
         dungeonGridMap = new DungeonGridMap(engine, () -> {
             javafx.application.Platform.runLater(() -> {
                 refreshCurrentRoomInfo();
@@ -137,15 +154,14 @@ public class DungeonMapView {
         gridScroll.setMaxHeight(310);
         gridScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         gridScroll.setStyle(
-            "-fx-background-color: #050810;" +
-            "-fx-background: #050810;" +
-            "-fx-border-color: #1C2E44;" +
+            "-fx-background-color: #0A0604;" +
+            "-fx-background: #0A0604;" +
+            "-fx-border-color: #3A2810;" +
             "-fx-border-width: 0 0 1 0;"
         );
         gridMapContainer = new VBox(gridScroll);
         centerContent.getChildren().add(gridMapContainer);
 
-        // Current room info
         currentRoomPanel = buildCurrentRoomPanel(dm);
         centerContent.getChildren().add(currentRoomPanel);
 
@@ -153,18 +169,18 @@ public class DungeonMapView {
         centerScroll.setFitToWidth(true);
         centerScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         centerScroll.setStyle(
-            "-fx-background-color: #050810;" +
-            "-fx-background: #050810;" +
+            "-fx-background-color: #0A0604;" +
+            "-fx-background: #0A0604;" +
             "-fx-border-color: transparent;"
         );
         bpRoot.setCenter(centerScroll);
 
-        // ── BOTTOM: room actions / DESCEND (always visible) ──
+        // ── BOTTOM: room actions / DESCEND ────────────────
         roomListContainer = new VBox(8);
-        roomListContainer.setPadding(new Insets(8, 16, 10, 16));
+        roomListContainer.setPadding(new Insets(10, 16, 12, 16));
         roomListContainer.setStyle(
-            "-fx-background-color: #0C1220;" +
-            "-fx-border-color: #1C2E44;" +
+            "-fx-background-color: #0F0A06;" +
+            "-fx-border-color: #3A2810;" +
             "-fx-border-width: 1 0 0 0;"
         );
         refreshNextRooms(dm);
@@ -181,7 +197,7 @@ public class DungeonMapView {
         var player = engine.getPlayer();
         HBox bar = new HBox(12);
         bar.setPadding(new Insets(8, 16, 8, 16));
-        bar.setStyle("-fx-background-color: #080D18; -fx-border-color: #1C2E44; -fx-border-width: 0 0 1 0;");
+        bar.setStyle("-fx-background-color: #080D18; -fx-border-color: #3A2810; -fx-border-width: 0 0 1 0;");
         bar.setAlignment(Pos.CENTER_LEFT);
 
         // HP mini
@@ -209,7 +225,7 @@ public class DungeonMapView {
     private VBox miniBar(String label, String color, double current, double max) {
         VBox box = new VBox(2);
         Label lbl = new Label(label + " " + (int)current + "/" + (int)max);
-        lbl.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
+        lbl.setStyle("-fx-text-fill: #6A5840; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
 
         ProgressBar bar = new ProgressBar(max > 0 ? current / max : 0);
         bar.setPrefWidth(Double.MAX_VALUE);
@@ -226,10 +242,10 @@ public class DungeonMapView {
         legend.setStyle("-fx-border-color: #1C2E4444; -fx-border-width: 1 0 0 0;");
 
         Object[][] items = {
-            {"◆", "ENEMY",  "#FF1744"},
-            {"☆", "LOOT",   "#FFD600"},
-            {"♥", "REST",   "#00E676"},
-            {"?", "EVENT",  "#00E5FF"},
+            {"◆", "ENEMY",  "#CC3300"},
+            {"☆", "LOOT",   "#FFB830"},
+            {"♥", "REST",   "#2D7A45"},
+            {"?", "EVENT",  "#C8860A"},
             {"$", "SHOP",   "#FF6B00"},
             {"!", "TRAP",   "#FF6B00"},
             {"☠", "BOSS",   "#FF0000"},
@@ -251,7 +267,7 @@ public class DungeonMapView {
         Room current = dm.getCurrentRoom();
         VBox box = new VBox(6);
         box.setPadding(new Insets(12, 16, 8, 16));
-        box.setStyle("-fx-background-color: #0C1220; -fx-border-color: #1C2E44; -fx-border-width: 0 0 1 0;");
+        box.setStyle("-fx-background-color: #0F0A06; -fx-border-color: #3A2810; -fx-border-width: 0 0 1 0;");
 
         if (current == null) {
             box.getChildren().add(new Label("No current room"));
@@ -267,7 +283,7 @@ public class DungeonMapView {
 
         Label typeLabel = new Label(getRoomIcon(current.getType()) + "  " + current.getType().name());
         typeLabel.setStyle(
-            "-fx-text-fill: " + (isCleared ? "#5A6A80" : color) + ";" +
+            "-fx-text-fill: " + (isCleared ? "#6A5840" : color) + ";" +
             "-fx-font-family: 'Courier New', monospace;" +
             "-fx-font-size: 13px;" +
             "-fx-font-weight: bold;"
@@ -277,11 +293,11 @@ public class DungeonMapView {
         if (isCleared) {
             Label clearedBadge = new Label("✓ CLEARED");
             clearedBadge.setStyle(
-                "-fx-text-fill: #00E676;" +
+                "-fx-text-fill: #2D7A45;" +
                 "-fx-font-family: 'Courier New';" +
                 "-fx-font-size: 11px;" +
-                "-fx-background-color: #00E67622;" +
-                "-fx-border-color: #00E67655;" +
+                "-fx-background-color: #2D7A4522;" +
+                "-fx-border-color: #2D7A4555;" +
                 "-fx-border-width: 1;" +
                 "-fx-padding: 2 6;"
             );
@@ -294,7 +310,7 @@ public class DungeonMapView {
                 : getRoomDescription(current);
         Label desc = new Label(descText);
         desc.setWrapText(true);
-        desc.setStyle("-fx-text-fill: " + (isCleared ? "#3A4A60" : "#8899AA") +
+        desc.setStyle("-fx-text-fill: " + (isCleared ? "#3A4A60" : "#A09070") +
                 "; -fx-font-family: 'Courier New'; -fx-font-size: 12px;");
 
         // Floor progress bar
@@ -308,19 +324,19 @@ public class DungeonMapView {
             progressRow.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
 
             Label progressLabel = new Label("EXPLORED: " + cleared + "/" + total);
-            progressLabel.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 12px;");
+            progressLabel.setStyle("-fx-text-fill: #6A5840; -fx-font-family: 'Courier New'; -fx-font-size: 12px;");
 
             javafx.scene.control.ProgressBar progressBar = new javafx.scene.control.ProgressBar(
                     total > 0 ? (double) cleared / total : 0);
             progressBar.setPrefWidth(100);
-            progressBar.setStyle("-fx-accent: #00E5FF55; -fx-min-height: 4px; -fx-max-height: 4px;" +
+            progressBar.setStyle("-fx-accent: #C8860A55; -fx-min-height: 4px; -fx-max-height: 4px;" +
                     "-fx-background-color: #1C2E4444;");
 
             progressRow.getChildren().addAll(progressLabel, progressBar);
 
             if (bossDown) {
-                Label bossLabel = new Label("☠ BOSS DEFEATED");
-                bossLabel.setStyle("-fx-text-fill: #FF174488; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
+                Label bossLabel = new Label("☠ BOSS DIKALAHKAN");
+                bossLabel.setStyle("-fx-text-fill: #CC330088; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
                 box.getChildren().addAll(typeRow, desc, progressRow, bossLabel);
             } else {
                 box.getChildren().addAll(typeRow, desc, progressRow);
@@ -344,10 +360,10 @@ public class DungeonMapView {
         if (bossCleared) {
             // Boss sudah mati — tampilkan DESCEND
             Label done = new Label("✓ Boss defeated — floor cleared!");
-            done.setStyle("-fx-text-fill: #00E676; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
+            done.setStyle("-fx-text-fill: #2D7A45; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
             roomListContainer.getChildren().add(done);
 
-            Button descend = UIFactory.btnGold("▼  DESCEND TO NEXT FLOOR");
+            Button descend = UIFactory.btnGold("▼  TURUN KE LANTAI BERIKUTNYA");
             descend.setOnAction(e -> engine.descend());
             roomListContainer.getChildren().add(descend);
             return;
@@ -355,11 +371,11 @@ public class DungeonMapView {
 
         // Hint navigasi via grid
         Label hint = new Label("▲ Click adjacent tile on the map to explore");
-        hint.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 12px;");
+        hint.setStyle("-fx-text-fill: #6A5840; -fx-font-family: 'Courier New'; -fx-font-size: 12px;");
 
         // Boss belum dikalahkan — tampilkan reminder
-        Label bossHint = new Label("☠ Defeat the BOSS to unlock next floor");
-        bossHint.setStyle("-fx-text-fill: #FF174488; -fx-font-family: 'Courier New'; -fx-font-size: 12px;");
+        Label bossHint = new Label("☠ Kalahkan BOSS untuk membuka lantai berikutnya");
+        bossHint.setStyle("-fx-text-fill: #CC330088; -fx-font-family: 'Courier New'; -fx-font-size: 12px;");
 
         roomListContainer.getChildren().addAll(hint, bossHint);
 
@@ -397,7 +413,7 @@ public class DungeonMapView {
         // Floor transition animation — overlay cyberpunk style
         // Tampilkan overlay, tunggu user konfirmasi, lalu animate descent
         javafx.scene.control.Alert alert = UIFactory.showInfoAlert(
-            "▼ DESCEND TO FLOOR " + nextFloor,
+            "▼ TURUN KE LANTAI " + nextFloor,
             "Floor cleared. Ready to descend.\n\n" +
             "[ Floor " + (nextFloor - 1) + " → Floor " + nextFloor + " ]\n\n" +
             "HP partially restored on arrival."
@@ -432,19 +448,19 @@ public class DungeonMapView {
         textBox.setAlignment(javafx.geometry.Pos.CENTER);
 
         javafx.scene.control.Label descLabel = new javafx.scene.control.Label(
-            "▼ DESCENDING");
-        descLabel.setStyle("-fx-text-fill: #00E5FF; -fx-font-family: 'Courier New';" +
+            "▼ TURUN");
+        descLabel.setStyle("-fx-text-fill: #C8860A; -fx-font-family: 'Courier New';" +
                            "-fx-font-size: 24px; -fx-font-weight: bold;");
 
         javafx.scene.control.Label floorLabel = new javafx.scene.control.Label(
-            "FLOOR " + nextFloor);
-        floorLabel.setStyle("-fx-text-fill: #FFD600; -fx-font-family: 'Courier New';" +
+            "LANTAI " + nextFloor);
+        floorLabel.setStyle("-fx-text-fill: #FFB830; -fx-font-family: 'Courier New';" +
                             "-fx-font-size: 36px; -fx-font-weight: bold;" +
-                            "-fx-effect: dropshadow(gaussian, #FFD600, 20, 0.5, 0, 0);");
+                            "-fx-effect: dropshadow(gaussian, #FFB830, 20, 0.5, 0, 0);");
 
         javafx.scene.control.Label scanLabel = new javafx.scene.control.Label(
             "[ SCANNING SECTOR... ]");
-        scanLabel.setStyle("-fx-text-fill: #2A3A50; -fx-font-family: 'Courier New';" +
+        scanLabel.setStyle("-fx-text-fill: #3A2810; -fx-font-family: 'Courier New';" +
                            "-fx-font-size: 12px;");
 
         textBox.getChildren().addAll(descLabel, floorLabel, scanLabel);
@@ -464,9 +480,9 @@ public class DungeonMapView {
             new KeyFrame(Duration.millis(600), e -> {
                 onDescend.run();
                 // Update floor label
-                floorLabel.setText("FLOOR " + engine.getDungeonManager().getCurrentFloorNumber());
+                floorLabel.setText("LANTAI " + engine.getDungeonManager().getCurrentFloorNumber());
                 scanLabel.setText("[ SECTOR LOADED ]");
-                scanLabel.setStyle(scanLabel.getStyle().replace("#2A3A50", "#00E676"));
+                scanLabel.setStyle(scanLabel.getStyle().replace("#3A2810", "#2D7A45"));
             }),
             // 1200ms: mulai fade out
             new KeyFrame(Duration.millis(1200),
@@ -524,7 +540,7 @@ public class DungeonMapView {
         drops.forEach(engine.getInventory()::addItem);
 
         if (drops.isEmpty()) {
-            showInfoAlert("📦 LOOT ROOM", "The cache is empty. Someone got here first.");
+            showInfoAlert("📦 RUANG HARTA", "Peti sudah kosong. Ada yang lebih dulu sampai di sini.");
             return;
         }
 
@@ -555,13 +571,13 @@ public class DungeonMapView {
         alert.setHeaderText(null);
         alert.setContentText(content);
         alert.getDialogPane().setStyle(
-                "-fx-background-color: #0C1220;" +
+                "-fx-background-color: #0F0A06;" +
                 "-fx-font-family: 'Courier New', monospace;" +
                 "-fx-font-size: 11px;");
         // Style button OK
         alert.getDialogPane().lookupButton(javafx.scene.control.ButtonType.OK)
-             .setStyle("-fx-background-color: #00E5FF22; -fx-text-fill: #00E5FF;" +
-                       "-fx-border-color: #00E5FF; -fx-cursor: hand;");
+             .setStyle("-fx-background-color: #C8860A22; -fx-text-fill: #C8860A;" +
+                       "-fx-border-color: #C8860A; -fx-cursor: hand;");
         alert.showAndWait();
     }
 

@@ -153,9 +153,9 @@ public class LootManager {
         String name = names[RNG.nextInt(names.length)];
 
         Weapon.WeaponType wType = switch (bias) {
-            case "CYBER"  -> Weapon.WeaponType.CYBER_TOOL;
-            case "ENERGY" -> Weapon.WeaponType.ENERGY_EMITTER;
-            default       -> RNG.nextBoolean() ? Weapon.WeaponType.BLADE : Weapon.WeaponType.GUN;
+            case "CYBER"  -> Weapon.WeaponType.GOLOK_RUNE;
+            case "ENERGY" -> Weapon.WeaponType.KUJANG_BLADE;
+            default       -> RNG.nextBoolean() ? Weapon.WeaponType.KATANA : Weapon.WeaponType.SHADOW_BLADE;
         };
 
         return new Weapon(name, "Generated weapon — " + rarity.displayName, rarity, wType, stats);
@@ -287,104 +287,65 @@ public class LootManager {
     // ── Weapon Names ──────────────────────────────────────────
 
     private static String[] getWeaponNames(String bias) {
+        // Semua senjata adalah jenis pedang — mendukung lore Asuna slash-type
         return switch (bias) {
-            case "CYBER"  -> new String[]{"Santet Kristal", "Rajah Perusak", "Ilmu Hitam Runcing",
-                                          "Keris Cyber", "Tombak Roh Data"};
-            case "ENERGY" -> new String[]{"Cakra Neon", "Panah Petir", "Trisula Energi",
-                                          "Lembing Surya", "Cahaya Kahyangan"};
-            default       -> new String[]{"Keris Pamor", "Golok Siluman", "Tombak Rajawali",
-                                          "Kujang Sakti", "Mandau Dayak"};
+            case "CYBER"  -> new String[]{
+                "Golok Santet", "Pedang Rune Hitam", "Golok Data",
+                "Pedang Byte", "Kujang Cyber"};
+            case "ENERGY" -> new String[]{
+                "Kujang Cahaya", "Pedang Surya Mini", "Keris Energi",
+                "Pedang Api Langit", "Wakizashi Petir"};
+            default -> new String[]{
+                "Katana Pamor", "Golok Silat", "Pedang Gaib",
+                "Wakizashi Bayangan", "Odachi Kala"};
         };
     }
 
-    // ── MYTHIC WEAPON GENERATOR ─────────────────────────────
-    // Mythic tidak bisa drop dari generateLoot biasa.
-    // Hanya didapat via: boss kill fragment, floor 20 clear, atau Pasar Gaib trade.
+    // ── RED BLOSSOM KATANA SYSTEM ────────────────────────────
+    //
+    // Satu-satunya item Mythic dalam game.
+    // Cara mendapatkan:
+    //   1. Kalahkan 5 boss berbeda (F10, F20, F30, F40, F50)
+    //   2. Setiap boss drop 1 Red Essence Shard
+    //   3. Kumpulkan 5 Shard → tempa Red Blossom Katana
+    //
+    // Red Blossom Katana adalah senjata Asuna untuk mengalahkan Theresa (F51).
 
+    /** Generate Red Blossom Katana — senjata pamungkas Asuna */
     public static List<Item> generateMythicDrop() {
-        // Pilih random 1 dari 10 Mythic weapon
-        String[] mythicWeapons = {
-            "Keris Naga Raja", "Cakra Wisnu", "Tombak Inti Bumi",
-            "Kujang Bintang", "Golok Roh Purba", "Trisula Samudra",
-            "Panah Angin Sakti", "Cemeti Kilat", "Mandau Dayak Agung", "Pedang Surya"
-        };
-        Weapon.WeaponType[] wTypes = {
-            Weapon.WeaponType.BLADE,         // Keris Naga Raja
-            Weapon.WeaponType.ENERGY_EMITTER,// Cakra Wisnu
-            Weapon.WeaponType.HEAVY,         // Tombak Inti Bumi
-            Weapon.WeaponType.CYBER_TOOL,    // Kujang Bintang
-            Weapon.WeaponType.BLADE,         // Golok Roh Purba
-            Weapon.WeaponType.ENERGY_EMITTER,// Trisula Samudra
-            Weapon.WeaponType.GUN,           // Panah Angin Sakti
-            Weapon.WeaponType.CYBER_TOOL,    // Cemeti Kilat
-            Weapon.WeaponType.BLADE,         // Mandau Dayak Agung
-            Weapon.WeaponType.ENERGY_EMITTER // Pedang Surya
-        };
-
-        int idx = RNG.nextInt(mythicWeapons.length);
         var stats = new java.util.EnumMap<StatType, Double>(StatType.class);
 
-        // Stats Mythic jauh di atas Legendary
-        switch (idx) {
-            case 0 -> { // Keris Naga Raja — ATK + lifesteal per kill (simulated via high lifesteal)
-                stats.put(StatType.PHYSICAL_ATK, 85.0); stats.put(StatType.CRIT_CHANCE, 0.25);
-                stats.put(StatType.LIFESTEAL, 0.20); stats.put(StatType.DAMAGE_MULT, 0.30);
-            }
-            case 1 -> { // Cakra Wisnu — Energy chain
-                stats.put(StatType.ENERGY_ATK, 90.0); stats.put(StatType.SKILL_POWER, 0.50);
-                stats.put(StatType.ARMOR_PIERCE, 0.30); stats.put(StatType.DAMAGE_MULT, 0.25);
-            }
-            case 2 -> { // Tombak Inti Bumi — ignore armor, no crit
-                stats.put(StatType.PHYSICAL_ATK, 100.0); stats.put(StatType.ARMOR_PIERCE, 1.0);
-                stats.put(StatType.PHYSICAL_DEF, 20.0); stats.put(StatType.DAMAGE_MULT, 0.20);
-            }
-            case 3 -> { // Kujang Bintang — auto skill every 5 hits (simulated via CDR)
-                stats.put(StatType.CYBER_ATK, 75.0); stats.put(StatType.COOLDOWN_REDUCE, 0.50);
-                stats.put(StatType.SKILL_POWER, 0.40); stats.put(StatType.ACCURACY, 0.30);
-            }
-            case 4 -> { // Golok Roh Purba — lifesteal kill heal
-                stats.put(StatType.PHYSICAL_ATK, 80.0); stats.put(StatType.LIFESTEAL, 0.35);
-                stats.put(StatType.HP_REGEN, 15.0); stats.put(StatType.DAMAGE_MULT, 0.25);
-            }
-            case 5 -> { // Trisula Samudra — AoE passive (via skill power)
-                stats.put(StatType.ENERGY_ATK, 70.0); stats.put(StatType.SKILL_POWER, 0.60);
-                stats.put(StatType.MAX_MP, 50.0); stats.put(StatType.MP_REGEN, 10.0);
-            }
-            case 6 -> { // Panah Angin Sakti — first strike via speed
-                stats.put(StatType.PHYSICAL_ATK, 78.0); stats.put(StatType.SPEED, 25.0);
-                stats.put(StatType.INITIATIVE, 30.0); stats.put(StatType.CRIT_DAMAGE, 1.0);
-            }
-            case 7 -> { // Cemeti Kilat — stun (via cyber)
-                stats.put(StatType.CYBER_ATK, 85.0); stats.put(StatType.ACCURACY, 0.50);
-                stats.put(StatType.CRIT_CHANCE, 0.30); stats.put(StatType.DAMAGE_MULT, 0.20);
-            }
-            case 8 -> { // Mandau Dayak Agung — double attack (via crit + speed)
-                stats.put(StatType.PHYSICAL_ATK, 72.0); stats.put(StatType.SPEED, 18.0);
-                stats.put(StatType.CRIT_CHANCE, 0.40); stats.put(StatType.ARMOR_PIERCE, 0.25);
-            }
-            default -> { // Pedang Surya — burn permanent
-                stats.put(StatType.ENERGY_ATK, 82.0); stats.put(StatType.DAMAGE_MULT, 0.35);
-                stats.put(StatType.SKILL_POWER, 0.30); stats.put(StatType.CRIT_DAMAGE, 0.75);
-            }
-        }
+        // Stat terkuat dalam game — setara level Asuna vs Theresa
+        stats.put(StatType.PHYSICAL_ATK,  120.0);
+        stats.put(StatType.CRIT_CHANCE,     0.40);
+        stats.put(StatType.CRIT_DAMAGE,     1.20); // 220% crit
+        stats.put(StatType.ARMOR_PIERCE,    0.50); // tembus 50% armor
+        stats.put(StatType.SPEED,           10.0);
+        stats.put(StatType.LIFESTEAL,       0.20); // 20% lifesteal
+        stats.put(StatType.DAMAGE_MULT,     0.35); // +35% semua damage
+        stats.put(StatType.EVASION,         0.10); // aura pedang
 
-        Weapon w = new Weapon(
-            mythicWeapons[idx],
-            "Senjata Mythic — hanya yang terpilih dapat menggunakannya.",
+        Weapon katana = new Weapon(
+            "✦ Red Blossom Katana",
+            "Katana pamungkas yang ditempa dari 5 Serpihan Red Essence milik Garuda. " +
+            "Satu-satunya senjata yang mampu melukai Theresa, pemimpin Demon Lord. " +
+            "Ketika dihunuskan, kelopak sakura merah berguguran di sekitar pemegangnya.",
             Item.Rarity.MYTHIC,
-            wTypes[idx],
+            Weapon.WeaponType.KATANA,
             stats
         );
-        return List.of(w);
+
+        return List.of(katana);
     }
 
-    /** Generate Mythic Fragment (material untuk craft Mythic) */
-    public static Material generateMythicFragment() {
-        return new Material(
-            "✦ Pecahan Mitik",
-            "Serpihan kekuatan dari boss yang dikalahkan. Kumpulkan 3 untuk hasilkan senjata Mythic.",
+    /** Generate Red Essence Shard — didapat dari membunuh boss */
+    public static arclightcity.item.Material generateMythicFragment() {
+        return new arclightcity.item.Material(
+            "✦ Serpihan Red Essence",
+            "Pecahan kristal merah yang mengalir dari tubuh boss yang dikalahkan. " +
+            "Kumpulkan 5 Serpihan dari 5 boss berbeda untuk menempa Red Blossom Katana.",
             Item.Rarity.MYTHIC,
-            Material.MaterialType.MYTHIC_FRAGMENT
+            arclightcity.item.Material.MaterialType.MYTHIC_FRAGMENT
         );
     }
 }

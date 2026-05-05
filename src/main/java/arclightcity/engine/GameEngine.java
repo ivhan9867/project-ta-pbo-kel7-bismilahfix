@@ -172,15 +172,16 @@ public class GameEngine {
                         .anyMatch(e -> e instanceof arclightcity.entity.enemy.Boss);
                 if (bossDefeated) {
                     inventory.addItem(LootManager.generateMythicFragment());
-                    // Cek apakah sudah punya 3 fragment → auto-craft Mythic weapon
+                    // Cek apakah sudah punya 5 shard → craft Red Blossom Katana
                     long fragmentCount = inventory.getAllBagItems().stream()
                             .filter(i -> i instanceof arclightcity.item.Material m
                                       && m.getMaterialType() == arclightcity.item.Material.MaterialType.MYTHIC_FRAGMENT)
                             .count();
-                    if (fragmentCount >= 3) {
+                    if (fragmentCount >= 5) {
+                        // Hapus 5 shard, tambah Red Blossom Katana
                         int removed = 0;
                         for (arclightcity.item.Item item : new java.util.ArrayList<>(inventory.getAllBagItems())) {
-                            if (removed >= 3) break;
+                            if (removed >= 5) break;
                             if (item instanceof arclightcity.item.Material mat
                                     && mat.getMaterialType() == arclightcity.item.Material.MaterialType.MYTHIC_FRAGMENT) {
                                 inventory.removeItem(item.getId());
@@ -191,7 +192,7 @@ public class GameEngine {
                         if (onDungeonEvent != null)
                             onDungeonEvent.accept(
                                 arclightcity.dungeon.DungeonStateEvent.mythicCraft(
-                                    "Senjata Mythic berhasil di-craft dari 3 Pecahan Mitik!"));
+                                    "✦ RED BLOSSOM KATANA berhasil ditempa!"));
                     }
                 }
             }
