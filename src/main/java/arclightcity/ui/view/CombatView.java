@@ -102,8 +102,8 @@ public class CombatView {
         topSection.getChildren().add(buildTopBar());
 
         turnOrderBar = new HBox(6);
-        turnOrderBar.setPadding(new Insets(5, 12, 5, 12));
-        turnOrderBar.setMinHeight(36);
+        turnOrderBar.setPadding(new Insets(3, 10, 3, 10));
+        turnOrderBar.setMinHeight(28);
         turnOrderBar.setMaxHeight(36);
         turnOrderBar.setAlignment(Pos.CENTER_LEFT);
         turnOrderBar.setStyle(
@@ -122,11 +122,11 @@ public class CombatView {
 
         // Enemy area — wrapped in StackPane for floating damage overlay
         VBox enemySection = new VBox(6);
-        enemySection.setPadding(new Insets(6, 12, 4, 12));
+        enemySection.setPadding(new Insets(4, 10, 3, 10));
         enemySection.setStyle("-fx-border-color: #3A2810; -fx-border-width: 0 0 1 0;");
         Label enemySectionTitle = UIFactory.sectionTitle("◆ LAWAN");
         enemySectionTitle.setPadding(new Insets(0, 0, 4, 0));
-        enemyContainer = new VBox(6);
+        enemyContainer = new VBox(4);
         enemySection.getChildren().addAll(enemySectionTitle, enemyContainer);
 
         // StackPane untuk floating damage overlay di atas enemy section
@@ -138,31 +138,24 @@ public class CombatView {
 
         // Ally area
         VBox allySection = new VBox(6);
-        allySection.setPadding(new Insets(6, 12, 4, 12));
+        allySection.setPadding(new Insets(4, 10, 3, 10));
         allySection.setStyle("-fx-border-color: #3A2810; -fx-border-width: 0 0 1 0;");
         Label allySectionTitle = UIFactory.sectionTitle("◈ SEKUTU");
         allySectionTitle.setPadding(new Insets(0, 0, 4, 0));
-        allyContainer = new HBox(8);
+        allyContainer = new HBox(6);
         allySection.getChildren().addAll(allySectionTitle, allyContainer);
         battleArea.getChildren().add(allySection);
 
         // Status effects
         battleArea.getChildren().add(buildStatusPanel());
 
-        // Wrap dalam ScrollPane agar battle area bisa discroll jika konten panjang
-        ScrollPane battleScroll = new ScrollPane(battleArea);
-        battleScroll.setFitToWidth(true);
-        battleScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        battleScroll.setStyle(
-            "-fx-background-color: #0A0604;" +
-            "-fx-background: #0A0604;" +
-            "-fx-border-color: transparent;"
-        );
-        root.setCenter(battleScroll);
+        // CENTER langsung - tidak pakai ScrollPane agar tidak perlu scroll
+        battleArea.setStyle("-fx-background-color: #0A0604;");
+        root.setCenter(battleArea);
 
         // ── BOTTOM: action panel (selalu terlihat) ────────
         actionPanel = new VBox(8);
-        actionPanel.setPadding(new Insets(8, 12, 10, 12));
+        actionPanel.setPadding(new Insets(5, 10, 7, 10));
         actionPanel.setStyle(
             "-fx-background-color: #150E08;" +
             "-fx-border-color: #3A2810;" +
@@ -210,6 +203,10 @@ public class CombatView {
 
         // Combat title
         Label combatTitle = new Label("⚔  PERTEMPURAN");
+        // Animasi flicker pada judul combat
+        boolean isBoss = cm != null && cm.getEnemies().stream()
+            .anyMatch(e -> e instanceof arclightcity.entity.enemy.Boss);
+        if (isBoss) UIFactory.flicker(combatTitle);
         combatTitle.setStyle("-fx-text-fill: #CC3300; -fx-font-family: 'Courier New';" +
                              "-fx-font-size: 12px; -fx-font-weight: bold;" +
                              "-fx-effect: dropshadow(gaussian, #CC3300, 6, 0.3, 0, 0);");
@@ -238,7 +235,7 @@ public class CombatView {
 
     private VBox buildCombatLog() {
         VBox wrapper = new VBox();
-        wrapper.setPrefHeight(150);  // naik dari 130 → memanfaatkan +100px
+        wrapper.setPrefHeight(80);   // compact untuk 720px tanpa scroll
         wrapper.setMaxHeight(150);
         wrapper.setStyle("-fx-background-color: #0A0604; -fx-border-color: #3A2810; -fx-border-width: 0 0 1 0;");
 
@@ -247,7 +244,7 @@ public class CombatView {
 
         logScroll = new ScrollPane(logContainer);
         logScroll.setFitToWidth(true);
-        logScroll.setPrefHeight(150);
+        logScroll.setPrefHeight(75);
         logScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         logScroll.setStyle("-fx-background-color: #0A0604; -fx-background: #0A0604; -fx-border-color: transparent;");
 

@@ -36,8 +36,8 @@ public class CharacterCreateView {
         root.setTop(buildHeader());
 
         // ── CENTER: lore + name input ─────────────────────
-        VBox content = new VBox(20);
-        content.setPadding(new Insets(20, 20, 20, 20));
+        VBox content = new VBox(10);
+        content.setPadding(new Insets(6, 12, 6, 12));
 
         content.getChildren().add(buildLoreCard());
         content.getChildren().add(buildStatsPreview());
@@ -61,7 +61,7 @@ public class CharacterCreateView {
 
     private HBox buildHeader() {
         HBox hdr = new HBox(12);
-        hdr.setPadding(new Insets(12, 16, 12, 16));
+        hdr.setPadding(new Insets(6, 12, 6, 12));
         hdr.setAlignment(Pos.CENTER_LEFT);
         hdr.setStyle("-fx-background-color: #0F0A06;" +
                      "-fx-border-color: #3A2810; -fx-border-width: 0 0 1 0;");
@@ -75,7 +75,7 @@ public class CharacterCreateView {
 
         Label title = new Label("✦  MULAI PETUALANGAN");
         title.setStyle("-fx-text-fill: #FFB830; -fx-font-family: 'Courier New';" +
-                       "-fx-font-size: 15px; -fx-font-weight: bold;" +
+                       "-fx-font-size: 13px; -fx-font-weight: bold;" +
                        "-fx-effect: dropshadow(gaussian, #C8860A, 8, 0.3, 0, 0);");
         HBox.setHgrow(title, Priority.ALWAYS);
 
@@ -115,7 +115,7 @@ public class CharacterCreateView {
 
         Label charName = new Label("ASUNA");
         charName.setStyle("-fx-text-fill: #FFB830; -fx-font-family: 'Courier New';" +
-                          "-fx-font-size: 22px; -fx-font-weight: bold;" +
+                          "-fx-font-size: 18px; -fx-font-weight: bold;" +
                           "-fx-effect: dropshadow(gaussian, #C8860A, 12, 0.5, 0, 0);");
 
         Label charTitle = new Label("Pendekar Pedang dari Dunia Lain");
@@ -258,7 +258,7 @@ public class CharacterCreateView {
 
     private HBox buildBottomBar() {
         HBox bottom = new HBox(12);
-        bottom.setPadding(new Insets(12, 16, 14, 16));
+        bottom.setPadding(new Insets(6, 12, 8, 12));
         bottom.setAlignment(Pos.CENTER_RIGHT);
         bottom.setStyle("-fx-background-color: #0F0A06;" +
                         "-fx-border-color: #3A2810; -fx-border-width: 1 0 0 0;");

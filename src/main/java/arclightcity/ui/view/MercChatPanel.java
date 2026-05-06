@@ -14,7 +14,7 @@ import javafx.util.Duration;
 import java.util.*;
 
 /**
- * MercChatPanel — panel chat mercenary di sisi kanan layar (300px).
+ * MercChatPanel — panel chat mercenary di sisi kanan layar (340px).
  *
  * Layout:
  *   ┌─────────────────────────┐

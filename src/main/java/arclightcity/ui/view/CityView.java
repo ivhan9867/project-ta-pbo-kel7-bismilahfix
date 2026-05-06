@@ -185,7 +185,7 @@ public class CityView {
         content.setAlignment(Pos.CENTER_LEFT);
 
         Label iconLbl = new Label(icon);
-        iconLbl.setStyle("-fx-font-size: 22px;");
+        iconLbl.setStyle("-fx-font-size: 18px;");
         iconLbl.setMinWidth(36);
 
         VBox info = new VBox(3);
@@ -227,7 +227,7 @@ public class CityView {
 
     private VBox buildWeaponShop() {
         VBox list = new VBox(8);
-        list.setPadding(new Insets(12, 16, 12, 16));
+        list.setPadding(new Insets(6, 12, 6, 12));
 
         Label goldInfo = new Label("Emasmu: ⚙ " + UIFactory.formatNumber(engine.getPlayer().getGold()));
         goldInfo.setStyle("-fx-text-fill: #FFB830; -fx-font-family: 'Courier New';" +
@@ -244,7 +244,7 @@ public class CityView {
 
     private VBox buildConsumableShop() {
         VBox list = new VBox(8);
-        list.setPadding(new Insets(12, 16, 12, 16));
+        list.setPadding(new Insets(6, 12, 6, 12));
 
         Label info = new Label("Emasmu: ⚙ " + UIFactory.formatNumber(engine.getPlayer().getGold()));
         info.setStyle("-fx-text-fill: #FFB830; -fx-font-family: 'Courier New';" +
@@ -391,7 +391,7 @@ public class CityView {
 
     private VBox buildWorkshopSection() {
         VBox sec = new VBox(8);
-        sec.setPadding(new Insets(12, 16, 12, 16));
+        sec.setPadding(new Insets(6, 12, 6, 12));
 
         Label title = new Label("── PILIH ITEM UNTUK DIPROSES ──");
         title.setStyle("-fx-text-fill: #5A3A10; -fx-font-family: 'Courier New';" +
@@ -510,7 +510,7 @@ public class CityView {
 
     private VBox buildPawnshop() {
         VBox list = new VBox(8);
-        list.setPadding(new Insets(12, 16, 12, 16));
+        list.setPadding(new Insets(6, 12, 6, 12));
 
         Label desc = new Label("Jual itemmu dengan harga 40% dari nilai aslinya.");
         desc.setStyle("-fx-text-fill: #5A3A10; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");

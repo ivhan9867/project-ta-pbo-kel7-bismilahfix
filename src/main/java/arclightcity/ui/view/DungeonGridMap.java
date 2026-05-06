@@ -37,7 +37,7 @@ import java.util.*;
 public class DungeonGridMap extends StackPane {
 
     // ── Tile config ───────────────────────────────────────────
-    private static final int  TILE_SIZE  = 52;   // naik dari 42 → memanfaatkan 560px
+    private static final int  TILE_SIZE  = 64;   // 1280px resolution — memanfaatkan 940px game area
     private static final int  TILE_GAP   = 8;    // gap lebih lega
     private static final int  TILE_R     = 6;    // corner radius
     private static final int  COLS       = ProceduralGenerator.COLS;

@@ -71,13 +71,23 @@ public class DungeonManager {
     public void startDungeon(Player player, List<Mercenary> mercs) {
         this.player      = player;
         this.activeMercs = new ArrayList<>(mercs);
-        // Lanjutkan dari floor yang sudah dicapai player (bukan reset ke 0)
-        int savedFloor = Math.max(0, player.getDungeonDepth());
-        currentFloorNumber = savedFloor;
         dungeonActive    = true;
 
-        emit(DungeonStateEvent.dungeonStarted(player.getName()));
-        advanceToNextFloor();
+        int savedFloor = player.getDungeonDepth();
+
+        if (savedFloor <= 0) {
+            // Fresh start — mulai dari floor 1
+            currentFloorNumber = 0;
+            emit(DungeonStateEvent.dungeonStarted(player.getName()));
+            advanceToNextFloor();
+        } else {
+            // Lanjut dari floor yang sudah dicapai — JANGAN increment lagi
+            currentFloorNumber = savedFloor;
+            currentFloor = ProceduralGenerator.generateFloor(currentFloorNumber);
+            emit(DungeonStateEvent.dungeonStarted(player.getName()));
+            emit(DungeonStateEvent.floorEntered(currentFloorNumber, currentFloor.getTheme()));
+            enterRoom(0);
+        }
     }
 
     /**

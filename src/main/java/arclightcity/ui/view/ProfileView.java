@@ -320,7 +320,7 @@ public class ProfileView {
         // SP Banner
         int sp = player.getSkillPoints();
         HBox spBanner = new HBox(10);
-        spBanner.setPadding(new Insets(12, 16, 12, 16));
+        spBanner.setPadding(new Insets(6, 12, 6, 12));
         spBanner.setAlignment(Pos.CENTER_LEFT);
         spBanner.setStyle(
             "-fx-background-color: " + (sp > 0 ? "#FFB83011" : "#1A1008") + ";" +

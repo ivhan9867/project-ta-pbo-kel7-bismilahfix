@@ -120,19 +120,23 @@ public class SceneRouter {
         showWithChat(view.build());
     }
 
-    /** Toast notification — compact, pojok kiri atas gameArea, hilang otomatis */
+    /** Toast notification — compact pojok kiri atas, hilang otomatis */
     public void showToast(String title, String body, String color) {
         javafx.application.Platform.runLater(() -> {
-            javafx.scene.layout.VBox toast = new javafx.scene.layout.VBox(2);
+            // Toast — satu baris kompak, tidak wrap
+            javafx.scene.layout.HBox toast = new javafx.scene.layout.HBox(10);
             toast.setPadding(new javafx.geometry.Insets(8, 14, 8, 14));
-            toast.setMaxWidth(260);
+            toast.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
             toast.setStyle(
-                "-fx-background-color: #0F0A06DD;" +
+                "-fx-background-color: #0D0804F0;" +
                 "-fx-border-color: " + color + ";" +
                 "-fx-border-width: 0 0 0 3;" +
-                "-fx-effect: dropshadow(gaussian, " + color + ", 10, 0.4, 0, 1);"
+                "-fx-effect: dropshadow(gaussian, " + color + ", 8, 0.4, 0, 1);"
             );
             toast.setMouseTransparent(true);
+
+            javafx.scene.control.Label iconLbl = new javafx.scene.control.Label("●");
+            iconLbl.setStyle("-fx-text-fill: " + color + "; -fx-font-size: 8px;");
 
             javafx.scene.control.Label titleLbl = new javafx.scene.control.Label(title);
             titleLbl.setStyle(
@@ -140,16 +144,16 @@ public class SceneRouter {
                 "-fx-font-family: 'Courier New'; -fx-font-size: 12px;" +
                 "-fx-font-weight: bold;");
 
+            javafx.scene.control.Label sepLbl = new javafx.scene.control.Label("│");
+            sepLbl.setStyle("-fx-text-fill: #3A2810; -fx-font-size: 12px;");
+
             javafx.scene.control.Label bodyLbl = new javafx.scene.control.Label(body);
             bodyLbl.setStyle(
                 "-fx-text-fill: #8A7860;" +
-                "-fx-font-family: 'Courier New'; -fx-font-size: 9px;");
-            bodyLbl.setWrapText(true);
-            bodyLbl.setMaxWidth(240);
+                "-fx-font-family: 'Courier New'; -fx-font-size: 11px;");
 
-            toast.getChildren().addAll(titleLbl, bodyLbl);
+            toast.getChildren().addAll(iconLbl, titleLbl, sepLbl, bodyLbl);
 
-            // Overlay di pojok kiri atas gameArea
             javafx.scene.layout.StackPane overlay =
                 new javafx.scene.layout.StackPane(toast);
             overlay.setMouseTransparent(true);
@@ -160,22 +164,22 @@ public class SceneRouter {
             javafx.scene.layout.StackPane.setAlignment(
                 toast, javafx.geometry.Pos.TOP_LEFT);
             javafx.scene.layout.StackPane.setMargin(
-                toast, new javafx.geometry.Insets(12, 0, 0, 12));
+                toast, new javafx.geometry.Insets(10, 0, 0, 10));
 
             gameArea.getChildren().add(overlay);
 
-            // Slide in dari kiri
-            toast.setTranslateX(-260);
+            toast.setTranslateX(-800);
             javafx.animation.TranslateTransition slideIn =
                 new javafx.animation.TranslateTransition(
-                    javafx.util.Duration.millis(200), toast);
+                    javafx.util.Duration.millis(180), toast);
             slideIn.setToX(0);
+            slideIn.setInterpolator(javafx.animation.Interpolator.EASE_OUT);
 
             javafx.animation.FadeTransition fadeOut =
                 new javafx.animation.FadeTransition(
-                    javafx.util.Duration.millis(300), overlay);
+                    javafx.util.Duration.millis(350), overlay);
             fadeOut.setToValue(0);
-            fadeOut.setDelay(javafx.util.Duration.millis(2500));
+            fadeOut.setDelay(javafx.util.Duration.millis(2400));
             fadeOut.setOnFinished(e -> gameArea.getChildren().remove(overlay));
 
             slideIn.play();

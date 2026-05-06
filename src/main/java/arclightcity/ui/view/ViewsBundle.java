@@ -905,7 +905,7 @@ public static class EventViewImpl {
         };
 
         VBox topBar = new VBox(4);
-        topBar.setPadding(new Insets(12, 16, 12, 16));
+        topBar.setPadding(new Insets(6, 12, 6, 12));
         topBar.setStyle("-fx-background-color: #0F0A06;" +
                         "-fx-border-color: " + catColor + "44;" +
                         "-fx-border-width: 0 0 2 0;");
@@ -947,7 +947,7 @@ public static class EventViewImpl {
 
         // ── CENTER: narrative + ornamen ────────────────────
         VBox scrollContent = new VBox(16);
-        scrollContent.setPadding(new Insets(16, 16, 16, 16));
+        scrollContent.setPadding(new Insets(8, 12, 8, 12));
 
         // Ornamen pembatas atas
         Label ornTop = new Label("─────  " + catIcon + "  ─────────────────────────────────");
@@ -982,7 +982,7 @@ public static class EventViewImpl {
 
         // ── BOTTOM: pilihan aksi ────────────────────────────
         VBox choicesBox = new VBox(8);
-        choicesBox.setPadding(new Insets(12, 16, 14, 16));
+        choicesBox.setPadding(new Insets(6, 12, 8, 12));
         choicesBox.setStyle(
             "-fx-background-color: #0F0A06;" +
             "-fx-border-color: #3A2810; -fx-border-width: 1 0 0 0;"
@@ -1263,7 +1263,7 @@ public static class VictoryViewImpl {
 
         // ── TOP: header kemenangan ─────────────────────────
         VBox header = new VBox(6);
-        header.setPadding(new Insets(16, 16, 16, 16));
+        header.setPadding(new Insets(8, 12, 8, 12));
         header.setAlignment(Pos.CENTER);
         header.setStyle("-fx-background-color: #0F0A06;" +
                         "-fx-border-color: #C8860A44; -fx-border-width: 0 0 2 0;");
@@ -1363,7 +1363,7 @@ public static class VictoryViewImpl {
 
         // ── BOTTOM: navigation ─────────────────────────────
         VBox nav = new VBox(8);
-        nav.setPadding(new Insets(12, 16, 14, 16));
+        nav.setPadding(new Insets(6, 12, 8, 12));
         nav.setStyle("-fx-background-color: #0F0A06;" +
                      "-fx-border-color: #3A2810; -fx-border-width: 1 0 0 0;");
 
@@ -1372,7 +1372,7 @@ public static class VictoryViewImpl {
         cont.setStyle(
             "-fx-background-color: #C8860A22; -fx-border-color: #FFB830; -fx-border-width: 1;" +
             "-fx-text-fill: #FFB830; -fx-font-family: 'Courier New'; -fx-font-size: 13px;" +
-            "-fx-font-weight: bold; -fx-padding: 12 20; -fx-cursor: hand;" +
+            "-fx-font-weight: bold; -fx-padding: 8 14; -fx-cursor: hand;" +
             "-fx-effect: dropshadow(gaussian, #C8860A, 8, 0.3, 0, 0);"
         );
         cont.setOnAction(e -> router.showDungeonMap());
@@ -1427,7 +1427,7 @@ public static class GameOverViewImpl {
 
         // ── TOP: header ────────────────────────────────────
         VBox header = new VBox(4);
-        header.setPadding(new Insets(16, 16, 16, 16));
+        header.setPadding(new Insets(8, 12, 8, 12));
         header.setAlignment(Pos.CENTER);
         header.setStyle("-fx-background-color: #0F0A06;" +
                         "-fx-border-color: #3A2810; -fx-border-width: 0 0 1 0;");
@@ -1451,7 +1451,7 @@ public static class GameOverViewImpl {
 
         // ── CENTER: stats ──────────────────────────────────
         VBox content = new VBox(16);
-        content.setPadding(new Insets(20, 20, 20, 20));
+        content.setPadding(new Insets(8, 12, 8, 12));
         content.setAlignment(Pos.TOP_CENTER);
 
         var player = engine.getPlayer();
@@ -1512,7 +1512,7 @@ public static class GameOverViewImpl {
             "-fx-border-width: 1;" +
             "-fx-text-fill: #FF5533;" +
             "-fx-font-family: 'Courier New'; -fx-font-size: 14px; -fx-font-weight: bold;" +
-            "-fx-padding: 12 20; -fx-cursor: hand;"
+            "-fx-padding: 8 14; -fx-cursor: hand;"
         );
         retry.setOnAction(e -> {
             engine.createCharacter(player.getName(), player.getBackground());

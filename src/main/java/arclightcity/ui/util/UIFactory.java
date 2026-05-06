@@ -495,4 +495,81 @@ public class UIFactory {
         alert.showAndWait();
         return alert;
     }
+    // ── Animated Effects ──────────────────────────────────────
+
+    /** Pulse animation gold glow — untuk elemen penting di Hub */
+    public static void goldPulse(javafx.scene.Node node, String hexColor) {
+        javafx.animation.Timeline pulse = new javafx.animation.Timeline(
+            new javafx.animation.KeyFrame(javafx.util.Duration.ZERO,
+                new javafx.animation.KeyValue(node.opacityProperty(), 1.0)),
+            new javafx.animation.KeyFrame(javafx.util.Duration.millis(900),
+                new javafx.animation.KeyValue(node.opacityProperty(), 0.55)),
+            new javafx.animation.KeyFrame(javafx.util.Duration.millis(1800),
+                new javafx.animation.KeyValue(node.opacityProperty(), 1.0))
+        );
+        pulse.setCycleCount(javafx.animation.Animation.INDEFINITE);
+        pulse.play();
+    }
+
+    /** Shimmer scan line animation — untuk panel dungeon/combat */
+    public static void scanlineEffect(javafx.scene.layout.Region panel) {
+        javafx.scene.layout.Region scanline = new javafx.scene.layout.Region();
+        scanline.setPrefHeight(2);
+        scanline.setMaxWidth(Double.MAX_VALUE);
+        scanline.setStyle("-fx-background-color: linear-gradient(to right, " +
+            "transparent, #C8860A44, #FFB83088, #C8860A44, transparent);");
+        scanline.setMouseTransparent(true);
+        scanline.setTranslateY(-10);
+
+        if (panel instanceof javafx.scene.layout.StackPane sp) {
+            sp.getChildren().add(scanline);
+            javafx.scene.layout.StackPane.setAlignment(scanline, javafx.geometry.Pos.TOP_CENTER);
+        }
+
+        javafx.animation.TranslateTransition scan = new javafx.animation.TranslateTransition(
+            javafx.util.Duration.millis(2200), scanline);
+        scan.setFromY(0);
+        scan.setToY(panel.getHeight() > 0 ? panel.getHeight() : 720);
+        scan.setCycleCount(javafx.animation.Animation.INDEFINITE);
+        scan.setInterpolator(javafx.animation.Interpolator.LINEAR);
+        scan.play();
+    }
+
+    /** Typing animation untuk label teks */
+    public static void typewriter(javafx.scene.control.Label label, String text, int msPerChar) {
+        label.setText("");
+        javafx.animation.Timeline tw = new javafx.animation.Timeline();
+        for (int i = 0; i <= text.length(); i++) {
+            final String partial = text.substring(0, i);
+            tw.getKeyFrames().add(new javafx.animation.KeyFrame(
+                javafx.util.Duration.millis(i * msPerChar),
+                e -> label.setText(partial)
+            ));
+        }
+        tw.play();
+    }
+
+    /** Flicker effect — untuk elemen boss/danger */
+    public static void flicker(javafx.scene.Node node) {
+        javafx.animation.Timeline flicker = new javafx.animation.Timeline(
+            new javafx.animation.KeyFrame(javafx.util.Duration.millis(0),
+                new javafx.animation.KeyValue(node.opacityProperty(), 1.0)),
+            new javafx.animation.KeyFrame(javafx.util.Duration.millis(80),
+                new javafx.animation.KeyValue(node.opacityProperty(), 0.6)),
+            new javafx.animation.KeyFrame(javafx.util.Duration.millis(120),
+                new javafx.animation.KeyValue(node.opacityProperty(), 1.0)),
+            new javafx.animation.KeyFrame(javafx.util.Duration.millis(200),
+                new javafx.animation.KeyValue(node.opacityProperty(), 0.8)),
+            new javafx.animation.KeyFrame(javafx.util.Duration.millis(260),
+                new javafx.animation.KeyValue(node.opacityProperty(), 1.0))
+        );
+        flicker.setCycleCount(javafx.animation.Animation.INDEFINITE);
+        flicker.setDelay(javafx.util.Duration.millis(3000 + Math.random() * 2000));
+        flicker.play();
+    }
+
+    /** glowPulse alias untuk backward compat */
+    public static void glowPulse(javafx.scene.Node node, String color) {
+        goldPulse(node, color);
+    }
 }

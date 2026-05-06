@@ -134,7 +134,9 @@ public class HubView {
                          "-fx-font-family: 'Courier New'; -fx-font-size: 10px;" +
                          "-fx-padding: 2 6; -fx-border-color: #3A2810; -fx-border-width: 1;");
 
-        Label depthBadge = new Label("Lantai " + player.getDungeonDepth());
+        int depth = player.getDungeonDepth();
+        String floorLabel = depth <= 0 ? "Lantai 1" : "Lantai " + depth;
+        Label depthBadge = new Label(floorLabel);
         depthBadge.setStyle("-fx-background-color: #1A1008; -fx-text-fill: #5A3A10;" +
                             "-fx-font-family: 'Courier New'; -fx-font-size: 10px;" +
                             "-fx-padding: 2 6; -fx-border-color: #3A2810; -fx-border-width: 1;");
@@ -170,7 +172,7 @@ public class HubView {
 
     private VBox buildVitalsSection(Player player) {
         VBox sec = new VBox(6);
-        sec.setPadding(new Insets(12, 16, 10, 16));
+        sec.setPadding(new Insets(6, 12, 6, 12));
         sec.setStyle("-fx-background-color: #0F0A06;" +
                      "-fx-border-color: #3A2810; -fx-border-width: 0 0 1 0;");
 
@@ -348,7 +350,7 @@ public class HubView {
         content.getChildren().addAll(mainLbl, subLbl);
 
         btn.setGraphic(content);
-        btn.setPadding(new Insets(isPrimary ? 14 : 10, 16, isPrimary ? 14 : 10, 16));
+        btn.setPadding(new Insets(isPrimary ? 10 : 7, 14, isPrimary ? 10 : 7, 14));
         btn.setStyle(
             "-fx-background-color: " + bgColor + ";" +
             "-fx-border-color: " + borderColor + ";" +
@@ -386,7 +388,7 @@ public class HubView {
         } else {
             for (var merc : mercs) {
                 HBox card = new HBox(10);
-                card.setPadding(new Insets(8, 16, 8, 16));
+                card.setPadding(new Insets(6, 12, 6, 12));
                 card.setAlignment(Pos.CENTER_LEFT);
                 card.setStyle("-fx-border-color: #2A1808; -fx-border-width: 0 0 1 0;");
 
