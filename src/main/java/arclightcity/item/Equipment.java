@@ -64,6 +64,12 @@ public class Equipment extends Item {
     public Map<StatType, Double> getBaseStats()  { return Collections.unmodifiableMap(baseStats); }
     public Map<StatType, Double> getBonusStats() { return Collections.unmodifiableMap(bonusStats); }
 
+    /** Dipakai saat load save — replace seluruh bonusStats dengan data yang disimpan */
+    public void restoreBonusStats(Map<StatType, Double> saved) {
+        bonusStats.clear();
+        if (saved != null) bonusStats.putAll(saved);
+    }
+
     /** Semua stat gabungan (base + bonus dari upgrade/kalibrasi) */
     public Map<StatType, Double> getEffectiveStats() {
         Map<StatType, Double> all = new java.util.LinkedHashMap<>(baseStats);
