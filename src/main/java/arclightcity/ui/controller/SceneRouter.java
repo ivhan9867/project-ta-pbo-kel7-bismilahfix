@@ -280,6 +280,11 @@ public class SceneRouter {
         });
     }
 
+    public void showSaveLoad(boolean isSaveMode) {
+        var view = new SaveLoadView(engine, this, isSaveMode);
+        showWithChat(view.build());
+    }
+
     public void showHub() {
         hubView = new HubView(engine, this);
         showWithChat(hubView.build());

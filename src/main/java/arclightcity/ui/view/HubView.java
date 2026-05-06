@@ -315,10 +315,7 @@ public class HubView {
 
         Button save = buildNavButton("💾  SIMPAN", "Simpan perkembangan",
             "#5A3A10", "transparent", "#3A2810", false);
-        save.setOnAction(e -> {
-            var r = engine.saveGame();
-            router.addSystemChat(r.success() ? "✦ " + r.message() : "✗ " + r.message());
-        });
+        save.setOnAction(e -> router.showSaveLoad(true));
 
         GridPane.setHgrow(guildmate, Priority.ALWAYS);
         GridPane.setHgrow(inv, Priority.ALWAYS);

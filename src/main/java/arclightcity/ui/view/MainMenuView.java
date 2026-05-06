@@ -200,9 +200,7 @@ public class MainMenuView {
             continueBtn.setStyle(continueBtn.getStyle() +
                 "-fx-opacity: 0.3; -fx-cursor: default;");
         }
-        continueBtn.setOnAction(e -> {
-            if (engine.loadGame()) router.showHub();
-        });
+        continueBtn.setOnAction(e -> router.showSaveLoad(false));
 
         // Save info
         Label saveInfo = new Label(hasSave

@@ -124,6 +124,7 @@ arclightcity\entity\player\PlayerBackground.class
 arclightcity\entity\base\EntityType.class
 arclightcity\item\LootManager.class
 arclightcity\entity\enemy\GarudaKorup.class
+arclightcity\ui\view\SaveLoadView.class
 arclightcity\ui\controller\SceneRouter.class
 arclightcity\item\CalibrationSystem.class
 arclightcity\entity\stats\DamageType.class
