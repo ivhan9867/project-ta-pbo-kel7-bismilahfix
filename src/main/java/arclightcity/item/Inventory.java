@@ -23,6 +23,10 @@ public class Inventory {
     // ── Equipment Slots ──────────────────────────────────────
     private Equipment equippedWeapon     = null;
     private Equipment equippedArmor      = null;
+    private Equipment equippedHelmet     = null;
+    private Equipment equippedBoots      = null;
+    private Equipment equippedRing1      = null;
+    private Equipment equippedRing2      = null;
     private Equipment equippedAccessory1 = null;
     private Equipment equippedAccessory2 = null;
 
@@ -71,6 +75,15 @@ public class Inventory {
         return EquipResult.success(slot, equipment, old);
     }
 
+    /** Unequip berdasarkan Equipment object — cari slot otomatis */
+    public EquipResult unequip(Equipment eq) {
+        String[] allSlots = {"WEAPON","ARMOR","HELMET","BOOTS","RING_1","RING_2","ACCESSORY_1","ACCESSORY_2"};
+        for (String slot : allSlots) {
+            if (eq.equals(getEquippedInSlot(slot))) return unequip(slot);
+        }
+        return EquipResult.fail("Equipment tidak ditemukan di slot manapun");
+    }
+
     public EquipResult unequip(String slot) {
         Equipment current = getEquippedInSlot(slot);
         if (current == null) return EquipResult.fail("No equipment in slot: " + slot);
@@ -98,11 +111,18 @@ public class Inventory {
     // ── Slot helpers ─────────────────────────────────────────
 
     private String determineSlot(Equipment eq) {
+        if (eq instanceof Armor armor) {
+            return switch (armor.getArmorType()) {
+                case HELMET -> "HELMET";
+                case BOOTS  -> "BOOTS";
+                case RING   -> equippedRing1 == null ? "RING_1" : "RING_2";
+                default     -> "ARMOR";
+            };
+        }
         return switch (eq.getItemType()) {
             case WEAPON    -> "WEAPON";
-            case ARMOR     -> "ARMOR";
             case ACCESSORY -> equippedAccessory1 == null ? "ACCESSORY_1" : "ACCESSORY_2";
-            default        -> null;
+            default        -> "ARMOR";
         };
     }
 
@@ -110,6 +130,10 @@ public class Inventory {
         return switch (slot) {
             case "WEAPON"      -> equippedWeapon;
             case "ARMOR"       -> equippedArmor;
+            case "HELMET"      -> equippedHelmet;
+            case "BOOTS"       -> equippedBoots;
+            case "RING_1"      -> equippedRing1;
+            case "RING_2"      -> equippedRing2;
             case "ACCESSORY_1" -> equippedAccessory1;
             case "ACCESSORY_2" -> equippedAccessory2;
             default            -> null;
@@ -120,8 +144,12 @@ public class Inventory {
         switch (slot) {
             case "WEAPON"      -> equippedWeapon     = eq;
             case "ARMOR"       -> equippedArmor      = eq;
-            case "ACCESSORY_1" -> equippedAccessory1 = eq;
-            case "ACCESSORY_2" -> equippedAccessory2 = eq;
+            case "HELMET"      -> equippedHelmet      = eq;
+            case "BOOTS"       -> equippedBoots       = eq;
+            case "RING_1"      -> equippedRing1       = eq;
+            case "RING_2"      -> equippedRing2       = eq;
+            case "ACCESSORY_1" -> equippedAccessory1  = eq;
+            case "ACCESSORY_2" -> equippedAccessory2  = eq;
         }
     }
 
@@ -309,6 +337,10 @@ public class Inventory {
 
     public Equipment getEquippedWeapon()     { return equippedWeapon; }
     public Equipment getEquippedArmor()      { return equippedArmor; }
+    public Equipment getEquippedHelmet()     { return equippedHelmet; }
+    public Equipment getEquippedBoots()      { return equippedBoots; }
+    public Equipment getEquippedRing1()      { return equippedRing1; }
+    public Equipment getEquippedRing2()      { return equippedRing2; }
     public Equipment getEquippedAccessory1() { return equippedAccessory1; }
     public Equipment getEquippedAccessory2() { return equippedAccessory2; }
 
@@ -355,6 +387,10 @@ public class Inventory {
     /** Dipakai saat restore dari save — langsung set slot tanpa cek kondisi */
     public void forceEquipWeapon(Equipment eq)     { equippedWeapon     = eq; }
     public void forceEquipArmor(Equipment eq)      { equippedArmor      = eq; }
+    public void forceEquipHelmet(Equipment eq)     { equippedHelmet     = eq; }
+    public void forceEquipBoots(Equipment eq)      { equippedBoots      = eq; }
+    public void forceEquipRing1(Equipment eq)      { equippedRing1      = eq; }
+    public void forceEquipRing2(Equipment eq)      { equippedRing2      = eq; }
     public void forceEquipAccessory1(Equipment eq) { equippedAccessory1 = eq; }
     public void forceEquipAccessory2(Equipment eq) { equippedAccessory2 = eq; }
 }

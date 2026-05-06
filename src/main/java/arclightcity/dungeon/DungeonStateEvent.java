@@ -34,6 +34,8 @@ public class DungeonStateEvent {
         NOTHING,
         GAME_OVER,
         LEVEL_UP,
+        BOSS_DEFEATED,
+        MYTHIC_CRAFT,
         ERROR
     }
 
@@ -209,6 +211,12 @@ public class DungeonStateEvent {
     }
 
     /** Event saat 3 Mythic Fragment berhasil di-craft jadi Mythic weapon */
+    public static DungeonStateEvent bossDefeated(String bossName) {
+        return new Builder(Type.BOSS_DEFEATED)
+            .message("Boss " + bossName + " dikalahkan! ✦ Serpihan Red Essence diperoleh!")
+            .build();
+    }
+
     public static DungeonStateEvent mythicCraft(String weaponName) {
         return new Builder(Type.LEVEL_UP) // reuse LEVEL_UP type for notification
                 .message("✦ MYTHIC CRAFTED! " + weaponName)

@@ -109,10 +109,13 @@ public class LootManager {
     // ── Equipment Generator ───────────────────────────────────
 
     private static Equipment generateEquipment(Item.Rarity rarity, String bias) {
-        int slotRoll = RNG.nextInt(3);
+        int slotRoll = RNG.nextInt(6);
         return switch (slotRoll) {
             case 0 -> generateWeapon(rarity, bias);
-            case 1 -> generateArmor(rarity);
+            case 1 -> generateArmor(rarity, Armor.ArmorType.MEDIUM);
+            case 2 -> generateArmor(rarity, Armor.ArmorType.HELMET);
+            case 3 -> generateArmor(rarity, Armor.ArmorType.BOOTS);
+            case 4 -> generateArmor(rarity, Armor.ArmorType.RING);
             default -> generateAccessory(rarity, bias);
         };
     }
@@ -161,34 +164,62 @@ public class LootManager {
         return new Weapon(name, "Generated weapon — " + rarity.displayName, rarity, wType, stats);
     }
 
-    private static Armor generateArmor(Item.Rarity rarity) {
+    private static Armor generateArmor(Item.Rarity rarity, Armor.ArmorType armorType) {
         Map<StatType, Double> stats = new EnumMap<>(StatType.class);
         double mult = rarity.statMultiplier;
 
-        stats.put(StatType.MAX_HP,       30 + RNG.nextDouble() * 40 * mult);
-        stats.put(StatType.MAX_SHIELD,   15 + RNG.nextDouble() * 25 * mult); // armor selalu punya shield
-        stats.put(StatType.PHYSICAL_DEF, 10 + RNG.nextDouble() * 15 * mult);
-        stats.put(StatType.CYBER_DEF,    6  + RNG.nextDouble() * 10 * mult);
-        stats.put(StatType.ENERGY_DEF,   6  + RNG.nextDouble() * 10 * mult);
+        // Stat berdasarkan tipe slot
+        switch (armorType) {
+            case HELMET -> {
+                stats.put(StatType.MAX_HP,       20 + RNG.nextDouble() * 30 * mult);
+                stats.put(StatType.PHYSICAL_DEF, 5  + RNG.nextDouble() * 10 * mult);
+                if (rarity.ordinal() >= Item.Rarity.RARE.ordinal())
+                    stats.put(StatType.CRIT_CHANCE, 0.02 + RNG.nextDouble() * 0.06);
+            }
+            case BOOTS -> {
+                stats.put(StatType.SPEED,    2  + RNG.nextDouble() * 4  * mult);
+                stats.put(StatType.EVASION,  0.03 + RNG.nextDouble() * 0.08);
+                if (rarity.ordinal() >= Item.Rarity.RARE.ordinal())
+                    stats.put(StatType.INITIATIVE, 2 + RNG.nextDouble() * 4 * mult);
+            }
+            case RING -> {
+                stats.put(StatType.CRIT_CHANCE,  0.04 + RNG.nextDouble() * 0.08);
+                stats.put(StatType.CRIT_DAMAGE,  0.10 + RNG.nextDouble() * 0.20 * mult);
+                if (rarity.ordinal() >= Item.Rarity.RARE.ordinal())
+                    stats.put(StatType.DAMAGE_MULT, 0.03 + RNG.nextDouble() * 0.07 * mult);
+            }
+            default -> { // MEDIUM, HEAVY, dll
+                stats.put(StatType.MAX_HP,       30 + RNG.nextDouble() * 40 * mult);
+                stats.put(StatType.MAX_SHIELD,   15 + RNG.nextDouble() * 25 * mult);
+                stats.put(StatType.PHYSICAL_DEF, 10 + RNG.nextDouble() * 15 * mult);
+                stats.put(StatType.CYBER_DEF,    6  + RNG.nextDouble() * 10 * mult);
+                stats.put(StatType.ENERGY_DEF,   6  + RNG.nextDouble() * 10 * mult);
+                if (rarity.ordinal() >= Item.Rarity.RARE.ordinal())
+                    stats.put(StatType.EVASION, 0.02 + RNG.nextDouble() * 0.08);
+                if (rarity == Item.Rarity.LEGENDARY) {
+                    stats.put(StatType.TENACITY, 0.10 + RNG.nextDouble() * 0.15);
+                    stats.put(StatType.HP_REGEN, 3 + RNG.nextDouble() * 5);
+                }
+            }
+        }
 
-        if (rarity.ordinal() >= Item.Rarity.RARE.ordinal()) {
-            stats.put(StatType.EVASION,     0.02 + RNG.nextDouble() * 0.08);
-            stats.put(StatType.SHIELD_REGEN, 2   + RNG.nextDouble() * 5 * mult);
-        }
-        if (rarity.ordinal() >= Item.Rarity.EPIC.ordinal()) {
-            stats.put(StatType.SHIELD_MULT, 0.05 + RNG.nextDouble() * 0.15); // +5-20% max shield
-        }
-        if (rarity == Item.Rarity.LEGENDARY) {
-            stats.put(StatType.TENACITY,    0.10 + RNG.nextDouble() * 0.15);
-            stats.put(StatType.HP_REGEN,    3    + RNG.nextDouble() * 5);
-            stats.put(StatType.SHIELD_MULT, 0.20 + RNG.nextDouble() * 0.20); // legendary: shield besar
-        }
+        String name = switch (armorType) {
+            case HELMET -> new String[]{"Helm Rajawali", "Mahkota Empu", "Topi Batik Gaib",
+                "Helm Naga", "Pelindung Kepala Sakti"}[RNG.nextInt(5)];
+            case BOOTS  -> new String[]{"Sandal Angin", "Sepatu Cakar Harimau", "Alas Kaki Gaib",
+                "Sepatu Rajah", "Pelindung Kaki Sakti"}[RNG.nextInt(5)];
+            case RING   -> new String[]{"Cincin Pamor", "Gelang Naga", "Cincin Semar",
+                "Cincin Garuda", "Mahkota Jari"}[RNG.nextInt(5)];
+            default     -> new String[]{"Baju Zirah Majapahit", "Tameng Naga", "Kain Batik Pelindung",
+                "Rompi Rajah", "Zirah Gaib", "Perisai Garuda"}[RNG.nextInt(6)];
+        };
 
-        String[] names = {"Baju Zirah Majapahit", "Tameng Naga", "Kain Batik Pelindung",
-                          "Rompi Rajah", "Zirah Gaib", "Perisai Garuda", "Baju Besi Empu"};
-        return new Armor(names[RNG.nextInt(names.length)],
-                "Perlengkapan pelindung Nusantara — " + rarity.displayName,
-                rarity, Armor.ArmorType.MEDIUM, stats);
+        return new Armor(name, "Perlengkapan " + armorType.name().toLowerCase() +
+                " — " + rarity.displayName, rarity, armorType, stats);
+    }
+
+    private static Armor generateArmor(Item.Rarity rarity) {
+        return generateArmor(rarity, Armor.ArmorType.MEDIUM);
     }
 
     private static Accessory generateAccessory(Item.Rarity rarity, String bias) {

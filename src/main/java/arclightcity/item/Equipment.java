@@ -63,4 +63,14 @@ public class Equipment extends Item {
 
     public Map<StatType, Double> getBaseStats()  { return Collections.unmodifiableMap(baseStats); }
     public Map<StatType, Double> getBonusStats() { return Collections.unmodifiableMap(bonusStats); }
+
+    /** Semua stat gabungan (base + bonus dari upgrade/kalibrasi) */
+    public Map<StatType, Double> getEffectiveStats() {
+        Map<StatType, Double> all = new java.util.LinkedHashMap<>(baseStats);
+        bonusStats.forEach((k, v) -> all.merge(k, v, Double::sum));
+        return all;
+    }
+
+    /** Jumlah kalibrasi yang sudah dilakukan */
+    public int getCalibrationLevel() { return calibrationCount; }
 }

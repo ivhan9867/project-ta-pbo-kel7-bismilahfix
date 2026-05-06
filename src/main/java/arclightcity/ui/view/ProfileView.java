@@ -222,19 +222,14 @@ public class ProfileView {
 
         Inventory inv = engine.getInventory();
         list.getChildren().add(sectionHeader("PERLENGKAPAN AKTIF"));
-
-        // Weapon
-        list.getChildren().add(buildEquipSlot("⚔ WEAPON",
-                inv.getEquippedWeapon()));
-        // Armor
-        list.getChildren().add(buildEquipSlot("🛡 ARMOR",
-                inv.getEquippedArmor()));
-        // Accessories
-        list.getChildren().add(buildEquipSlot("◈ ACCESSORY 1",
-                inv.getEquippedAccessory1()));
-        list.getChildren().add(buildEquipSlot("◈ ACCESSORY 2",
-                inv.getEquippedAccessory2()));
-
+        list.getChildren().add(buildEquipSlot("⚔  SENJATA",    inv.getEquippedWeapon(),       inv));
+        list.getChildren().add(buildEquipSlot("🛡  BAJU BESI",  inv.getEquippedArmor(),        inv));
+        list.getChildren().add(buildEquipSlot("👑  HELM",       inv.getEquippedHelmet(),       inv));
+        list.getChildren().add(buildEquipSlot("👢  SEPATU",     inv.getEquippedBoots(),        inv));
+        list.getChildren().add(buildEquipSlot("💍  CINCIN 1",   inv.getEquippedRing1(),        inv));
+        list.getChildren().add(buildEquipSlot("💍  CINCIN 2",   inv.getEquippedRing2(),        inv));
+        list.getChildren().add(buildEquipSlot("◈  AKSESORI 1", inv.getEquippedAccessory1(),   inv));
+        list.getChildren().add(buildEquipSlot("◈  AKSESORI 2", inv.getEquippedAccessory2(),   inv));
         list.getChildren().add(sectionHeader("PERLENGKAPAN DI TAS"));
         if (inv.getEquipmentInBag().isEmpty()) {
             Label empty = new Label("  No equipment in bag.");
@@ -243,14 +238,14 @@ public class ProfileView {
             list.getChildren().add(empty);
         } else {
             for (Equipment eq : inv.getEquipmentInBag()) {
-                list.getChildren().add(buildEquipRow(eq));
+                list.getChildren().add(buildEquipRow(eq, inv));
             }
         }
 
         return list;
     }
 
-    private VBox buildEquipSlot(String slotName, Equipment eq) {
+    private VBox buildEquipSlot(String slotName, Equipment eq, Inventory inv) {
         VBox slot = new VBox(4);
         slot.setPadding(new Insets(8, 16, 8, 16));
         slot.setStyle("-fx-border-color: #3A2810; -fx-border-width: 0 0 1 0;");
@@ -261,17 +256,17 @@ public class ProfileView {
         slot.getChildren().add(nameLabel);
 
         if (eq == null) {
-            Label empty = new Label("— Empty —");
+            Label empty = new Label("— Kosong —");
             empty.setStyle("-fx-text-fill: #3A2810; -fx-font-family: 'Courier New';" +
                            "-fx-font-size: 11px;");
             slot.getChildren().add(empty);
         } else {
-            slot.getChildren().add(buildEquipRow(eq));
+            slot.getChildren().add(buildEquipRow(eq, inv));
         }
         return slot;
     }
 
-    private HBox buildEquipRow(Equipment eq) {
+    private HBox buildEquipRow(Equipment eq, Inventory inv) {
         HBox row = new HBox(10);
         row.setPadding(new Insets(6, 0, 6, 0));
         row.setAlignment(Pos.CENTER_LEFT);
@@ -302,6 +297,17 @@ public class ProfileView {
 
         info.getChildren().addAll(nameRow, statLabel);
         row.getChildren().add(info);
+
+        // Lepas button
+        javafx.scene.control.Button lepasBtn = new javafx.scene.control.Button("LEPAS");
+        lepasBtn.setStyle("-fx-background-color: transparent; -fx-border-color: #CC3300;" +
+                          "-fx-border-width: 1; -fx-text-fill: #FF5533;" +
+                          "-fx-font-family: 'Courier New'; -fx-font-size: 10px; -fx-padding: 4 8; -fx-cursor: hand;");
+        lepasBtn.setOnAction(e -> {
+            inv.unequip(eq);
+            router.showProfile("PERLENGKAPAN"); // refresh immediately
+        });
+        row.getChildren().add(lepasBtn);
         return row;
     }
 
@@ -311,70 +317,211 @@ public class ProfileView {
         VBox list = new VBox(0);
         list.getChildren().add(buildIdCard(player));
 
-        // SP Banner + Skill Tree button
-        HBox spBanner = new HBox(10);
-        spBanner.setPadding(new Insets(10, 16, 10, 16));
-        spBanner.setAlignment(Pos.CENTER_LEFT);
+        // SP Banner
         int sp = player.getSkillPoints();
-        spBanner.setStyle("-fx-background-color: " + (sp > 0 ? "#FFB83011" : "#1A1008") +
-                          "; -fx-border-color: " + (sp > 0 ? "#FFB83066" : "#3A2810") +
-                          "; -fx-border-width: 0 0 1 0;");
+        HBox spBanner = new HBox(10);
+        spBanner.setPadding(new Insets(12, 16, 12, 16));
+        spBanner.setAlignment(Pos.CENTER_LEFT);
+        spBanner.setStyle(
+            "-fx-background-color: " + (sp > 0 ? "#FFB83011" : "#1A1008") + ";" +
+            "-fx-border-color: " + (sp > 0 ? "#FFB83055" : "#3A2810") + ";" +
+            "-fx-border-width: 0 0 1 0;"
+        );
+
         Label spLabel = new Label(sp > 0
             ? "✦ " + sp + " Poin Jurus tersedia!"
-            : "Selesaikan dungeon untuk dapat Poin Jurus.");
-        spLabel.setStyle("-fx-text-fill: " + (sp > 0 ? "#FFB830" : "#5A3A10") +
-                         "; -fx-font-family: 'Courier New'; -fx-font-size: 12px; -fx-font-weight: bold;");
+            : "Selesaikan dungeon untuk mendapat Poin Jurus.");
+        spLabel.setStyle(
+            "-fx-text-fill: " + (sp > 0 ? "#FFB830" : "#5A3A10") + ";" +
+            "-fx-font-family: 'Courier New'; -fx-font-size: 12px; -fx-font-weight: bold;"
+        );
         HBox.setHgrow(spLabel, Priority.ALWAYS);
 
-        Button treeBtn = new Button("🌳 POHON JURUS ▶");
+        Button treeBtn = new Button("🌳  BUKA POHON JURUS  ▶");
         treeBtn.setStyle(
-            "-fx-background-color: #C8860A22; -fx-border-color: " + (sp > 0 ? "#FFB830" : "#C8860A") +
-            "; -fx-border-width: 1; -fx-text-fill: " + (sp > 0 ? "#FFB830" : "#C8860A") +
-            "; -fx-font-family: 'Courier New'; -fx-font-size: 10px;" +
-            "-fx-font-weight: bold; -fx-padding: 5 10; -fx-cursor: hand;");
+            "-fx-background-color: #C8860A22; -fx-border-color: #C8860A;" +
+            "-fx-border-width: 1; -fx-text-fill: #FFB830;" +
+            "-fx-font-family: 'Courier New'; -fx-font-size: 11px;" +
+            "-fx-font-weight: bold; -fx-padding: 7 14; -fx-cursor: hand;" +
+            "-fx-effect: dropshadow(gaussian, #C8860A, 6, 0.3, 0, 0);"
+        );
         treeBtn.setOnAction(e -> router.showSkillTree());
-
+        treeBtn.setOnMouseEntered(ev -> treeBtn.setStyle(
+            "-fx-background-color: #C8860A44; -fx-border-color: #FFB830;" +
+            "-fx-border-width: 1; -fx-text-fill: #FFB830;" +
+            "-fx-font-family: 'Courier New'; -fx-font-size: 11px;" +
+            "-fx-font-weight: bold; -fx-padding: 7 14; -fx-cursor: hand;" +
+            "-fx-effect: dropshadow(gaussian, #FFB830, 10, 0.5, 0, 0);"
+        ));
+        treeBtn.setOnMouseExited(ev -> treeBtn.setStyle(
+            "-fx-background-color: #C8860A22; -fx-border-color: #C8860A;" +
+            "-fx-border-width: 1; -fx-text-fill: #FFB830;" +
+            "-fx-font-family: 'Courier New'; -fx-font-size: 11px;" +
+            "-fx-font-weight: bold; -fx-padding: 7 14; -fx-cursor: hand;" +
+            "-fx-effect: dropshadow(gaussian, #C8860A, 6, 0.3, 0, 0);"
+        ));
         spBanner.getChildren().addAll(spLabel, treeBtn);
         list.getChildren().add(spBanner);
 
-        // Equipped skills
-        list.getChildren().add(sectionHeader("JURUS AKTIF"));
-        List<String> equipped = player.getEquippedSkillIds();
-        if (equipped.isEmpty()) {
-            list.getChildren().add(emptyLabel("Belum ada jurus yang dipasang."));
+        // Jurus Aktif
+        list.getChildren().add(sectionHeader("◈ JURUS AKTIF"));
+        var equippedSkills = player.getEquippedSkillIds();
+        if (equippedSkills.isEmpty()) {
+            Label none = new Label("  Belum ada jurus aktif. Buka dari Pohon Jurus.");
+            none.setStyle("-fx-text-fill: #3A2810; -fx-font-family: 'Courier New'; -fx-font-size: 11px; -fx-padding: 8 16;");
+            list.getChildren().add(none);
         } else {
-            equipped.forEach(sid -> list.getChildren().add(buildSkillRow(player, sid, true)));
-        }
-
-        // Unlocked but not equipped
-        list.getChildren().add(sectionHeader("JURUS TERBUKA"));
-        boolean hasUnequipped = false;
-        for (String sid : player.getUnlockedSkillIds()) {
-            if (!equipped.contains(sid)) {
-                list.getChildren().add(buildSkillRow(player, sid, false));
-                hasUnequipped = true;
+            for (String skillId : equippedSkills) {
+                list.getChildren().add(buildActiveSkillCard(skillId, player));
             }
         }
-        if (!hasUnequipped)
-            list.getChildren().add(emptyLabel("Semua jurus yang terbuka sudah dipasang."));
 
-        // Available to unlock
-        list.getChildren().add(sectionHeader("TERSEDIA UNTUK DIBUKA"));
-        String[] allSkills = {"POWER_STRIKE","EXECUTE","DEEP_HACK","VIRUS_UPLOAD",
-                              "PHANTOM_SHOT","SHADOW_STEP","IRON_SHIELD","SHOCKWAVE",
-                              "ENERGY_DRAIN","BIO_IRRADIATE","EMP_BURST","FIELD_BARRIER"};
-        boolean hasLocked = false;
-        for (String sid : allSkills) {
-            if (!player.getUnlockedSkillIds().contains(sid)) {
-                list.getChildren().add(buildLockedSkillRow(player, sid));
-                hasLocked = true;
+        // Jurus Terbuka (tidak aktif)
+        var unlocked = player.getUnlockedSkillIds().stream()
+            .filter(id -> !equippedSkills.contains(id))
+            .toList();
+        if (!unlocked.isEmpty()) {
+            list.getChildren().add(sectionHeader("◈ JURUS TERBUKA (TIDAK AKTIF)"));
+            for (String skillId : unlocked) {
+                list.getChildren().add(buildUnequippedSkillCard(skillId, player));
             }
         }
-        if (!hasLocked)
-            list.getChildren().add(emptyLabel("Semua jurus sudah terbuka!"));
 
         return list;
     }
+
+    private HBox buildActiveSkillCard(String skillId, Player player) {
+        String name = skillDisplayName(skillId);
+        String desc = skillDescription(skillId);
+        boolean isAoE = desc.contains("semua") || desc.contains("AoE");
+
+        HBox row = new HBox(10);
+        row.setPadding(new Insets(10, 16, 10, 16));
+        row.setAlignment(Pos.CENTER_LEFT);
+        row.setStyle("-fx-background-color: #C8860A0D; -fx-border-color: #C8860A33;" +
+                     "-fx-border-width: 0 0 1 0;");
+
+        // Status indicator
+        VBox indicator = new VBox();
+        indicator.setPrefWidth(4);
+        indicator.setMinWidth(4);
+        indicator.setStyle("-fx-background-color: #C8860A;");
+
+        VBox info = new VBox(3);
+        HBox.setHgrow(info, Priority.ALWAYS);
+
+        HBox nameRow = new HBox(8);
+        Label nameLbl = new Label("⚔  " + name);
+        nameLbl.setStyle("-fx-text-fill: #FFB830; -fx-font-family: 'Courier New';" +
+                         "-fx-font-size: 12px; -fx-font-weight: bold;");
+        if (isAoE) {
+            Label aoeLbl = new Label("AoE");
+            aoeLbl.setStyle("-fx-background-color: #7755BB22; -fx-border-color: #7755BB;" +
+                            "-fx-border-width: 1; -fx-text-fill: #7755BB;" +
+                            "-fx-font-family: 'Courier New'; -fx-font-size: 9px; -fx-padding: 1 5;");
+            nameRow.getChildren().addAll(nameLbl, aoeLbl);
+        } else {
+            nameRow.getChildren().add(nameLbl);
+        }
+
+        Label descLbl = new Label(desc);
+        descLbl.setStyle("-fx-text-fill: #6A5840; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+        descLbl.setWrapText(true);
+
+        Label statusLbl = new Label("✓ AKTIF — READY");
+        statusLbl.setStyle("-fx-text-fill: #2D7A45; -fx-font-family: 'Courier New'; -fx-font-size: 9px;");
+
+        info.getChildren().addAll(nameRow, descLbl, statusLbl);
+
+        // Lepas button
+        Button lepas = new Button("LEPAS");
+        lepas.setStyle("-fx-background-color: transparent; -fx-border-color: #3A2810;" +
+                       "-fx-border-width: 1; -fx-text-fill: #5A3A10;" +
+                       "-fx-font-family: 'Courier New'; -fx-font-size: 10px;" +
+                       "-fx-padding: 4 8; -fx-cursor: hand;");
+        lepas.setOnAction(e -> {
+            player.unequipSkill(skillId);
+            router.showProfile("JURUS");
+        });
+
+        row.getChildren().addAll(indicator, info, lepas);
+        return row;
+    }
+
+    private HBox buildUnequippedSkillCard(String skillId, Player player) {
+        String name = skillDisplayName(skillId);
+        String desc = skillDescription(skillId);
+
+        HBox row = new HBox(10);
+        row.setPadding(new Insets(8, 16, 8, 16));
+        row.setAlignment(Pos.CENTER_LEFT);
+        row.setStyle("-fx-background-color: transparent; -fx-border-color: #2A1808;" +
+                     "-fx-border-width: 0 0 1 0;");
+
+        VBox info = new VBox(2);
+        HBox.setHgrow(info, Priority.ALWAYS);
+        Label nameLbl = new Label("◈  " + name);
+        nameLbl.setStyle("-fx-text-fill: #A09070; -fx-font-family: 'Courier New';" +
+                         "-fx-font-size: 11px;");
+        Label descLbl = new Label(desc);
+        descLbl.setStyle("-fx-text-fill: #4A3820; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+        info.getChildren().addAll(nameLbl, descLbl);
+
+        boolean canEquip = player.getEquippedSkillCount() < 4;
+        Button equip = new Button("AKTIFKAN");
+        equip.setDisable(!canEquip);
+        equip.setStyle("-fx-background-color: transparent; -fx-border-color: " +
+                       (canEquip ? "#C8860A" : "#3A2810") + ";" +
+                       "-fx-border-width: 1; -fx-text-fill: " +
+                       (canEquip ? "#C8860A" : "#3A2810") + ";" +
+                       "-fx-font-family: 'Courier New'; -fx-font-size: 10px;" +
+                       "-fx-padding: 4 8; -fx-cursor: " + (canEquip ? "hand" : "default") + ";");
+        equip.setOnAction(e -> {
+            player.equipSkill(skillId);
+            router.showProfile("JURUS");
+        });
+
+        row.getChildren().addAll(info, equip);
+        return row;
+    }
+
+    private String skillDisplayName(String id) {
+        return switch (id) {
+            case "POWER_STRIKE"       -> "Pukulan Harimau";
+            case "TEBASAN"            -> "Tebasan Pamungkas";
+            case "SHOCKWAVE"          -> "Gempa Bumi";
+            case "SOVEREIGN_STRIKE"   -> "Tebasan Agung";
+            case "PHANTOM_SHOT"       -> "Panah Bayangan";
+            case "SHADOW_STEP"        -> "Langkah Gaib";
+            case "NULL_FIELD"         -> "Bidang Bayangan";
+            case "NULL_PROTOCOL"      -> "Protokol Nol";
+            case "IRON_SHIELD"        -> "Tameng Baja";
+            case "FIELD_BARRIER"      -> "Rajah Pelindung";
+            case "ENERGY_DRAIN"       -> "Serap Tenaga";
+            case "DATA_FRAGMENTATION" -> "Pecah Jiwa";
+            default -> id.replace("_", " ");
+        };
+    }
+
+    private String skillDescription(String id) {
+        return switch (id) {
+            case "POWER_STRIKE"       -> "Pukulan keras: 1.8× ATK fisik.";
+            case "TEBASAN"            -> "Instant kill jika HP < 25%, else 1.5× damage.";
+            case "SHOCKWAVE"          -> "AoE: serang semua musuh sekaligus.";
+            case "SOVEREIGN_STRIKE"   -> "Ultimate: 3× ATK, abaikan semua armor.";
+            case "PHANTOM_SHOT"       -> "Crit chance tinggi, masuk sembunyi.";
+            case "SHADOW_STEP"        -> "2× crit damage, abaikan armor.";
+            case "NULL_FIELD"         -> "Hapus semua buff musuh + evasion +30%.";
+            case "NULL_PROTOCOL"      -> "AoE Void: semua musuh -50% DEF 3 giliran.";
+            case "IRON_SHIELD"        -> "Buff BLOK 2 giliran, kurangi damage drastis.";
+            case "FIELD_BARRIER"      -> "Shield barrier ke semua sekutu.";
+            case "ENERGY_DRAIN"       -> "Sedot MP musuh, pulihkan HP+MP sendiri.";
+            case "DATA_FRAGMENTATION" -> "AoE besar + stun 1 giliran.";
+            default -> "Jurus khusus.";
+        };
+    }
+
+
 
     private HBox buildSkillRow(Player player, String skillId, boolean isEquipped) {
         HBox row = new HBox(10);

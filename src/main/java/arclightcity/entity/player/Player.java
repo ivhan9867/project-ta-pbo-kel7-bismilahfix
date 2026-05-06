@@ -152,6 +152,12 @@ public class Player extends Entity {
         }
     }
 
+    public java.util.List<String> getEquippedSkillIds()  {
+        return java.util.Collections.unmodifiableList(equippedSkillIds);
+    }
+    public java.util.List<String> getUnlockedSkillIds()  {
+        return java.util.Collections.unmodifiableList(unlockedSkillIds);
+    }
     public boolean hasUnlockedSkill(String skillId) {
         return unlockedSkillIds.contains(skillId);
     }
@@ -257,7 +263,5 @@ public class Player extends Entity {
     public int               getDungeonDepth()      { return dungeonDepth; }
     public void              setDungeonDepth(int d) { dungeonDepth = Math.max(dungeonDepth, d); }
     public PlayerBackground  getBackground()        { return background; }
-    public List<String>      getUnlockedSkillIds()  { return java.util.Collections.unmodifiableList(unlockedSkillIds); }
-    public List<String>      getEquippedSkillIds()  { return java.util.Collections.unmodifiableList(equippedSkillIds); }
     public java.util.Map<String,String> getEquippedItems() { return equippedItems; }
 }

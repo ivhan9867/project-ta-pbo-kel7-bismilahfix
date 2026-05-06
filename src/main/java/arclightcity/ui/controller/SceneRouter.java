@@ -120,6 +120,69 @@ public class SceneRouter {
         showWithChat(view.build());
     }
 
+    /** Toast notification — compact, pojok kiri atas gameArea, hilang otomatis */
+    public void showToast(String title, String body, String color) {
+        javafx.application.Platform.runLater(() -> {
+            javafx.scene.layout.VBox toast = new javafx.scene.layout.VBox(2);
+            toast.setPadding(new javafx.geometry.Insets(8, 14, 8, 14));
+            toast.setMaxWidth(260);
+            toast.setStyle(
+                "-fx-background-color: #0F0A06DD;" +
+                "-fx-border-color: " + color + ";" +
+                "-fx-border-width: 0 0 0 3;" +
+                "-fx-effect: dropshadow(gaussian, " + color + ", 10, 0.4, 0, 1);"
+            );
+            toast.setMouseTransparent(true);
+
+            javafx.scene.control.Label titleLbl = new javafx.scene.control.Label(title);
+            titleLbl.setStyle(
+                "-fx-text-fill: " + color + ";" +
+                "-fx-font-family: 'Courier New'; -fx-font-size: 12px;" +
+                "-fx-font-weight: bold;");
+
+            javafx.scene.control.Label bodyLbl = new javafx.scene.control.Label(body);
+            bodyLbl.setStyle(
+                "-fx-text-fill: #8A7860;" +
+                "-fx-font-family: 'Courier New'; -fx-font-size: 9px;");
+            bodyLbl.setWrapText(true);
+            bodyLbl.setMaxWidth(240);
+
+            toast.getChildren().addAll(titleLbl, bodyLbl);
+
+            // Overlay di pojok kiri atas gameArea
+            javafx.scene.layout.StackPane overlay =
+                new javafx.scene.layout.StackPane(toast);
+            overlay.setMouseTransparent(true);
+            overlay.setMaxWidth(ArclightApp.GAME_WIDTH);
+            overlay.setPrefWidth(ArclightApp.GAME_WIDTH);
+            overlay.setMaxHeight(ArclightApp.SCREEN_HEIGHT);
+            overlay.setStyle("-fx-background-color: transparent;");
+            javafx.scene.layout.StackPane.setAlignment(
+                toast, javafx.geometry.Pos.TOP_LEFT);
+            javafx.scene.layout.StackPane.setMargin(
+                toast, new javafx.geometry.Insets(12, 0, 0, 12));
+
+            gameArea.getChildren().add(overlay);
+
+            // Slide in dari kiri
+            toast.setTranslateX(-260);
+            javafx.animation.TranslateTransition slideIn =
+                new javafx.animation.TranslateTransition(
+                    javafx.util.Duration.millis(200), toast);
+            slideIn.setToX(0);
+
+            javafx.animation.FadeTransition fadeOut =
+                new javafx.animation.FadeTransition(
+                    javafx.util.Duration.millis(300), overlay);
+            fadeOut.setToValue(0);
+            fadeOut.setDelay(javafx.util.Duration.millis(2500));
+            fadeOut.setOnFinished(e -> gameArea.getChildren().remove(overlay));
+
+            slideIn.play();
+            fadeOut.play();
+        });
+    }
+
     public void showHub() {
         hubView = new HubView(engine, this);
         showWithChat(hubView.build());
@@ -127,9 +190,19 @@ public class SceneRouter {
     }
 
     public void showDungeonMap() {
+        // Selalu buat DungeonMapView baru untuk fresh UI
+        // tapi wireEngineListeners dipanggil di initDungeonListeners() — hanya sekali
         dungeonMapView = new DungeonMapView(engine, this);
         showWithChat(dungeonMapView.build());
         emitChatDelayed(MercenaryDialogue.Trigger.DUNGEON_ENTER_FLOOR, 600);
+    }
+
+    /** Dipanggil SEKALI saat SceneRouter dibuat — pasang semua engine listener */
+    public void initEngineListeners() {
+        if (dungeonMapView == null) {
+            dungeonMapView = new DungeonMapView(engine, this);
+        }
+        dungeonMapView.wireEngineListeners();
     }
 
     public void showCombat() {

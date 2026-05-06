@@ -92,77 +92,288 @@ public static class InventoryViewImpl {
         return root;
     }
 
-    private HBox buildEquipmentSlots(Inventory inv) {
-        HBox bar = new HBox(6);
-        bar.setPadding(new Insets(10, 16, 10, 16));
-        bar.setStyle("-fx-background-color: #150E08; -fx-border-color: #3A2810; -fx-border-width: 0 0 1 0;");
+    private VBox buildEquipmentSlots(Inventory inv) {
+        VBox container = new VBox(0);
+        container.setStyle("-fx-background-color: #0F0A06;" +
+                           "-fx-border-color: #3A2810; -fx-border-width: 0 0 1 0;");
 
-        // Ambil equipment object langsung agar bisa cek rarity warna
-        Equipment[] equips = {
-            inv.getEquippedWeapon(),
-            inv.getEquippedArmor(),
-            inv.getEquippedAccessory1(),
-            inv.getEquippedAccessory2()
-        };
-        String[] slotLabels = { "WPN", "ARM", "ACC", "ACC" };
+        Label title = new Label("── PERLENGKAPAN TERPASANG ──");
+        title.setStyle("-fx-text-fill: #5A3A10; -fx-font-family: 'Courier New';" +
+                       "-fx-font-size: 10px; -fx-letter-spacing: 2; -fx-padding: 8 16 6 16;");
+        container.getChildren().add(title);
 
-        for (int i = 0; i < equips.length; i++) {
-            Equipment eq = equips[i];
-            String label = slotLabels[i];
+        // Layout 3 kolom: kiri | tengah (body) | kanan
+        HBox layout = new HBox(6);
+        layout.setPadding(new Insets(4, 16, 10, 16));
+        layout.setAlignment(Pos.CENTER);
 
-            VBox slotBox = new VBox(2);
-            slotBox.setAlignment(Pos.CENTER);
-            slotBox.setPrefWidth(80);
+        // ── Kiri: Weapon + Armor ──────────────────────────────
+        VBox left = new VBox(6);
+        left.setAlignment(Pos.CENTER);
+        left.setMinWidth(110);
+        left.getChildren().add(buildEquipSlot("⚔", "SENJATA", inv.getEquippedWeapon(), inv));
+        left.getChildren().add(buildEquipSlot("🛡", "BAJU BESI", inv.getEquippedArmor(), inv));
 
-            if (eq == null) {
-                // Slot kosong — style gelap polos
-                slotBox.setStyle(
-                    "-fx-background-color: #0F0A06;" +
-                    "-fx-border-color: #3A281066;" +
-                    "-fx-border-width: 1;" +
-                    "-fx-padding: 6;"
-                );
-                Label slotType = new Label(label);
-                slotType.setStyle("-fx-text-fill: #6A5840; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
-                Label empty = new Label("—");
-                empty.setStyle("-fx-text-fill: #3A2810; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
-                slotBox.getChildren().addAll(slotType, empty);
-            } else {
-                // Slot terisi — border warna sesuai rarity
-                String rarityColor = UIFactory.rarityColor(eq.getRarity());
-                slotBox.setStyle(
-                    "-fx-background-color: " + rarityColor + "11;" +
-                    "-fx-border-color: " + rarityColor + ";" +
-                    "-fx-border-width: 1 1 1 3;" + // thick left border = rarity indicator
-                    "-fx-padding: 6;"
-                );
-                Label slotType = new Label(label);
-                slotType.setStyle("-fx-text-fill: #6A5840; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
-                String displayName = eq.getName().length() > 9
-                        ? eq.getName().substring(0, 8) + "…"
-                        : eq.getName();
-                Label itemName = new Label(displayName);
-                itemName.setStyle(
-                    "-fx-text-fill: " + rarityColor + ";" +
-                    "-fx-font-family: 'Courier New'; -fx-font-size: 11px; -fx-font-weight: bold;"
-                );
-                // Upgrade level badge
-                if (eq.getUpgradeLevel() > 0) {
-                    Label upgLabel = new Label("+" + eq.getUpgradeLevel());
-                    upgLabel.setStyle(
-                        "-fx-text-fill: " + UIFactory.YELLOW + ";" +
-                        "-fx-font-family: 'Courier New'; -fx-font-size: 10px;"
-                    );
-                    slotBox.getChildren().addAll(slotType, itemName, upgLabel);
-                } else {
-                    slotBox.getChildren().addAll(slotType, itemName);
-                }
+        // ── Tengah: Helm + Boots ──────────────────────────────
+        VBox center = new VBox(6);
+        center.setAlignment(Pos.CENTER);
+        center.setMinWidth(110);
+        center.getChildren().add(buildEquipSlot("👑", "HELM", inv.getEquippedHelmet(), inv));
+        center.getChildren().add(buildEquipSlot("👢", "SEPATU", inv.getEquippedBoots(), inv));
+
+        // ── Kanan: Ring1 + Ring2 ─────────────────────────────
+        VBox right = new VBox(6);
+        right.setAlignment(Pos.CENTER);
+        right.setMinWidth(110);
+        right.getChildren().add(buildEquipSlot("💍", "CINCIN 1", inv.getEquippedRing1(), inv));
+        right.getChildren().add(buildEquipSlot("💍", "CINCIN 2", inv.getEquippedRing2(), inv));
+
+        layout.getChildren().addAll(left, center, right);
+        container.getChildren().add(layout);
+
+        // ── Baris 2: Aksesori 1 + 2 (lebar penuh) ────────────
+        HBox accRow = new HBox(6);
+        accRow.setPadding(new Insets(0, 16, 8, 16));
+        accRow.setAlignment(Pos.CENTER);
+
+        VBox accLeft = new VBox(0);
+        accLeft.setAlignment(Pos.CENTER);
+        HBox.setHgrow(accLeft, Priority.ALWAYS);
+        accLeft.getChildren().add(buildEquipSlotWide("◈", "AKSESORI 1", inv.getEquippedAccessory1(), inv));
+
+        VBox accRight = new VBox(0);
+        accRight.setAlignment(Pos.CENTER);
+        HBox.setHgrow(accRight, Priority.ALWAYS);
+        accRight.getChildren().add(buildEquipSlotWide("◈", "AKSESORI 2", inv.getEquippedAccessory2(), inv));
+
+        accRow.getChildren().addAll(accLeft, accRight);
+        container.getChildren().add(accRow);
+
+        return container;
+    }
+
+    /** Slot lebar untuk baris aksesori */
+    private HBox buildEquipSlotWide(String icon, String slotName, Equipment eq, Inventory inv) {
+        HBox slot = new HBox(10);
+        slot.setAlignment(Pos.CENTER_LEFT);
+        slot.setPadding(new Insets(6, 10, 6, 10));
+        slot.setMaxWidth(Double.MAX_VALUE);
+        slot.setCursor(eq != null ? javafx.scene.Cursor.HAND : javafx.scene.Cursor.DEFAULT);
+
+        Label iconLbl = new Label(icon);
+        iconLbl.setStyle("-fx-font-size: 14px;" + (eq == null ? "-fx-opacity: 0.3;" : ""));
+
+        VBox info = new VBox(1);
+        HBox.setHgrow(info, Priority.ALWAYS);
+        Label nameLbl = new Label(slotName);
+        nameLbl.setStyle("-fx-text-fill: #5A3A10; -fx-font-family: 'Courier New'; -fx-font-size: 8px;");
+
+        if (eq == null) {
+            slot.setStyle("-fx-background-color: #0A0604; -fx-border-color: #2A1808; -fx-border-width: 1;");
+            Label emptyLbl = new Label("— Kosong —");
+            emptyLbl.setStyle("-fx-text-fill: #2A1808; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+            info.getChildren().addAll(nameLbl, emptyLbl);
+        } else {
+            String rc = UIFactory.rarityColor(eq.getRarity());
+            slot.setStyle("-fx-background-color: " + rc + "11; -fx-border-color: " + rc +
+                          "; -fx-border-width: 1 1 1 3;");
+            Label itemLbl = new Label(eq.getName());
+            itemLbl.setStyle("-fx-text-fill: " + rc + "; -fx-font-family: 'Courier New';" +
+                             "-fx-font-size: 11px; -fx-font-weight: bold;");
+            Label upgLbl = eq.getUpgradeLevel() > 0
+                ? new Label("+" + eq.getUpgradeLevel() + " | " + eq.getRarity().displayName)
+                : new Label(eq.getRarity().displayName);
+            upgLbl.setStyle("-fx-text-fill: " + rc + "88; -fx-font-family: 'Courier New'; -fx-font-size: 9px;");
+            info.getChildren().addAll(nameLbl, itemLbl, upgLbl);
+            slot.setOnMouseClicked(e -> showItemDetailPopup(eq, inv));
+        }
+        slot.getChildren().addAll(iconLbl, info);
+        return slot;
+    }
+
+    private VBox buildEquipSlot(String icon, String slotName, Equipment eq, Inventory inv) {
+        VBox slot = new VBox(2);
+        slot.setAlignment(Pos.CENTER);
+        slot.setPrefWidth(105);
+        slot.setCursor(eq != null ? javafx.scene.Cursor.HAND : javafx.scene.Cursor.DEFAULT);
+
+        if (eq == null) {
+            slot.setStyle("-fx-background-color: #0A0604; -fx-border-color: #2A1808;" +
+                          "-fx-border-width: 1; -fx-padding: 8;");
+            Label iconLbl = new Label(icon);
+            iconLbl.setStyle("-fx-font-size: 16px; -fx-opacity: 0.3;");
+            Label nameLbl = new Label(slotName);
+            nameLbl.setStyle("-fx-text-fill: #2A1808; -fx-font-family: 'Courier New'; -fx-font-size: 9px;");
+            Label emptyLbl = new Label("— Kosong —");
+            emptyLbl.setStyle("-fx-text-fill: #2A1808; -fx-font-family: 'Courier New'; -fx-font-size: 9px;");
+            slot.getChildren().addAll(iconLbl, nameLbl, emptyLbl);
+        } else {
+            String rc = UIFactory.rarityColor(eq.getRarity());
+            slot.setStyle("-fx-background-color: " + rc + "11;" +
+                          "-fx-border-color: " + rc + ";" +
+                          "-fx-border-width: 1 1 1 3; -fx-padding: 8;");
+
+            Label iconLbl = new Label(icon);
+            iconLbl.setStyle("-fx-font-size: 16px;");
+
+            Label nameLbl = new Label(slotName);
+            nameLbl.setStyle("-fx-text-fill: #5A3A10; -fx-font-family: 'Courier New'; -fx-font-size: 8px;");
+
+            String displayName = eq.getName().length() > 11
+                ? eq.getName().substring(0, 10) + "…" : eq.getName();
+            Label itemLbl = new Label(displayName);
+            itemLbl.setStyle("-fx-text-fill: " + rc + "; -fx-font-family: 'Courier New';" +
+                             "-fx-font-size: 10px; -fx-font-weight: bold;");
+            itemLbl.setWrapText(true);
+            itemLbl.setMaxWidth(100);
+
+            HBox badges = new HBox(4);
+            badges.setAlignment(Pos.CENTER);
+            if (eq.getUpgradeLevel() > 0) {
+                Label upg = new Label("+" + eq.getUpgradeLevel());
+                upg.setStyle("-fx-text-fill: #2D7A45; -fx-font-family: 'Courier New'; -fx-font-size: 9px;");
+                badges.getChildren().add(upg);
             }
+            Label rar = new Label("[" + eq.getRarity().displayName + "]");
+            rar.setStyle("-fx-text-fill: " + rc + "77; -fx-font-family: 'Courier New'; -fx-font-size: 8px;");
+            badges.getChildren().add(rar);
 
-            bar.getChildren().add(slotBox);
+            slot.getChildren().addAll(iconLbl, nameLbl, itemLbl, badges);
+
+            // Klik → popup detail item
+            slot.setOnMouseClicked(e -> showItemDetailPopup(eq, inv));
+            slot.setOnMouseEntered(ev ->
+                slot.setStyle(slot.getStyle().replace(rc + "11", rc + "22")));
+            slot.setOnMouseExited(ev ->
+                slot.setStyle(slot.getStyle().replace(rc + "22", rc + "11")));
+        }
+        return slot;
+    }
+
+    /** Popup detail item seperti screenshot game RPG */
+    private void showItemDetailPopup(Equipment eq, Inventory inv) {
+        javafx.stage.Stage popup = new javafx.stage.Stage();
+        popup.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+        popup.setTitle(eq.getFullName());
+
+        String rc = UIFactory.rarityColor(eq.getRarity());
+
+        VBox root = new VBox(0);
+        root.setStyle("-fx-background-color: #0F0A06; -fx-border-color: " + rc +
+                      "; -fx-border-width: 2;");
+        root.setPrefWidth(340);
+
+        // Header
+        VBox header = new VBox(4);
+        header.setPadding(new Insets(14, 16, 12, 16));
+        header.setStyle("-fx-background-color: #1A1008;" +
+                        "-fx-border-color: " + rc + "44; -fx-border-width: 0 0 2 0;");
+
+        Label nameLabel = new Label(eq.getFullName());
+        nameLabel.setStyle("-fx-text-fill: " + rc + "; -fx-font-family: 'Courier New';" +
+                           "-fx-font-size: 16px; -fx-font-weight: bold;" +
+                           "-fx-effect: dropshadow(gaussian, " + rc + ", 8, 0.3, 0, 0);");
+        nameLabel.setWrapText(true);
+
+        HBox meta = new HBox(10);
+        Label rarLabel = new Label(eq.getRarity().displayName.toUpperCase());
+        rarLabel.setStyle("-fx-text-fill: " + rc + "; -fx-font-family: 'Courier New';" +
+                          "-fx-font-size: 10px; -fx-font-weight: bold;" +
+                          "-fx-border-color: " + rc + "; -fx-border-width: 1; -fx-padding: 1 6;");
+        Label typeLabel = new Label(eq.getItemType().name());
+        typeLabel.setStyle("-fx-text-fill: #6A5840; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+        if (eq.getUpgradeLevel() > 0) {
+            Label upgLabel = new Label("+" + eq.getUpgradeLevel() + " UPGRADE");
+            upgLabel.setStyle("-fx-text-fill: #2D7A45; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+            meta.getChildren().addAll(rarLabel, typeLabel, upgLabel);
+        } else {
+            meta.getChildren().addAll(rarLabel, typeLabel);
         }
 
-        return bar;
+        // Calibration bar (10 dots)
+        int calLvl = eq.getCalibrationLevel();
+        HBox calBar = new HBox(3);
+        calBar.setAlignment(Pos.CENTER_LEFT);
+        Label calTitle = new Label("KALIBRASI  ");
+        calTitle.setStyle("-fx-text-fill: #5A3A10; -fx-font-family: 'Courier New'; -fx-font-size: 9px;");
+        calBar.getChildren().add(calTitle);
+        for (int i = 0; i < 10; i++) {
+            Label dot = new Label("■");
+            dot.setStyle("-fx-text-fill: " + (i < calLvl ? "#7755BB" : "#2A1808") +
+                         "; -fx-font-size: 9px;");
+            calBar.getChildren().add(dot);
+        }
+
+        // Upgrade bar
+        int upgLvl = eq.getUpgradeLevel();
+        HBox upgBar = new HBox(3);
+        Label upgTitle = new Label("UPGRADE    ");
+        upgTitle.setStyle("-fx-text-fill: #5A3A10; -fx-font-family: 'Courier New'; -fx-font-size: 9px;");
+        upgBar.setAlignment(Pos.CENTER_LEFT);
+        upgBar.getChildren().add(upgTitle);
+        for (int i = 0; i < 10; i++) {
+            Label dot = new Label("■");
+            dot.setStyle("-fx-text-fill: " + (i < upgLvl ? "#2D7A45" : "#2A1808") +
+                         "; -fx-font-size: 9px;");
+            upgBar.getChildren().add(dot);
+        }
+
+        header.getChildren().addAll(nameLabel, meta, calBar, upgBar);
+
+        // Stats
+        VBox statsBox = new VBox(2);
+        statsBox.setPadding(new Insets(12, 16, 8, 16));
+        statsBox.setStyle("-fx-border-color: #2A1808; -fx-border-width: 0 0 1 0;");
+
+        Label descLbl = new Label(eq.getDescription());
+        descLbl.setWrapText(true);
+        descLbl.setStyle("-fx-text-fill: #6A5840; -fx-font-family: 'Courier New';" +
+                         "-fx-font-size: 10px; -fx-font-style: italic; -fx-padding: 0 0 8 0;");
+        statsBox.getChildren().add(descLbl);
+
+        eq.getEffectiveStats().forEach((stat, val) -> {
+            if (val == 0) return;
+            HBox row = new HBox();
+            Label sn = new Label(stat.displayName);
+            sn.setStyle("-fx-text-fill: #A09070; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
+            HBox.setHgrow(sn, Priority.ALWAYS);
+            String formatted = (val < 1.0 && val > 0) ? String.format("+%.0f%%", val * 100)
+                                                        : String.format("+%.0f", val);
+            Label sv = new Label(formatted);
+            sv.setStyle("-fx-text-fill: #2D7A45; -fx-font-family: 'Courier New';" +
+                        "-fx-font-size: 11px; -fx-font-weight: bold;");
+            row.getChildren().addAll(sn, sv);
+            statsBox.getChildren().add(row);
+        });
+
+        // Action buttons
+        HBox actions = new HBox(8);
+        actions.setPadding(new Insets(10, 16, 14, 16));
+
+        Button unequipBtn = new Button("LEPAS");
+        unequipBtn.setStyle("-fx-background-color: transparent; -fx-border-color: #CC3300;" +
+                            "-fx-border-width: 1; -fx-text-fill: #FF5533;" +
+                            "-fx-font-family: 'Courier New'; -fx-font-size: 11px;" +
+                            "-fx-padding: 6 14; -fx-cursor: hand;");
+        unequipBtn.setOnAction(e -> {
+            inv.unequip(eq);
+            popup.close();
+        });
+
+        Button closeBtn = new Button("TUTUP");
+        closeBtn.setStyle("-fx-background-color: transparent; -fx-border-color: #3A2810;" +
+                          "-fx-border-width: 1; -fx-text-fill: #6A5840;" +
+                          "-fx-font-family: 'Courier New'; -fx-font-size: 11px;" +
+                          "-fx-padding: 6 14; -fx-cursor: hand;");
+        closeBtn.setOnAction(e -> popup.close());
+        HBox.setHgrow(closeBtn, Priority.ALWAYS);
+
+        actions.getChildren().addAll(unequipBtn, closeBtn);
+
+        root.getChildren().addAll(header, statsBox, actions);
+
+        popup.setScene(new javafx.scene.Scene(root));
+        popup.show();
     }
 
     private HBox buildMaterialBar(Inventory inv) {
@@ -202,14 +413,17 @@ public static class InventoryViewImpl {
         HBox tabs = new HBox(0);
         tabs.setStyle("-fx-background-color: #150E08; -fx-border-color: #3A2810; -fx-border-width: 0 0 1 0;");
 
-        String[] filters = {"ALL", "WEAPON", "ARMOR", "ACCESSORY", "CONSUMABLE", "MATERIAL"};
-        for (String filter : filters) {
-            Label tab = new Label(filter);
-            tab.setPadding(new Insets(8, 12, 8, 12));
+        String[] filters = {"ALL","WEAPON","ARMOR","HELM","SEPATU","CINCIN","ACCESSORY","CONSUMABLE","MATERIAL"};
+        String[] labels  = {"SEMUA","SENJATA","BAJU","HELM","SEPATU","CINCIN","AKSESORI","KONSUMABLE","MATERIAL"};
+        for (int fi = 0; fi < filters.length; fi++) {
+            final String filter = filters[fi];
+            final String label  = labels[fi];
+            Label tab = new Label(label);
+            tab.setPadding(new Insets(8, 10, 8, 10));
             boolean active = filter.equals(activeFilter);
             tab.setStyle(
                 "-fx-text-fill: " + (active ? UIFactory.CYAN : UIFactory.DIM) + ";" +
-                "-fx-font-family: 'Courier New'; -fx-font-size: 12px;" +
+                "-fx-font-family: 'Courier New'; -fx-font-size: 10px;" +
                 (active ? "-fx-border-color: transparent transparent #C8860A transparent; -fx-border-width: 0 0 2 0;" : "")
             );
             tab.setCursor(javafx.scene.Cursor.HAND);
@@ -229,6 +443,24 @@ public static class InventoryViewImpl {
         var items = inv.getAllItems().stream()
                 .filter(item -> {
                     if (activeFilter.equals("ALL")) return true;
+                    // Aksesori (class Accessory) — bukan Armor
+                    if (item instanceof arclightcity.item.Accessory) {
+                        return activeFilter.equals("ACCESSORY");
+                    }
+                    // Armor dengan subtype khusus
+                    if (item instanceof arclightcity.item.Armor armor) {
+                        return switch (activeFilter) {
+                            case "ARMOR"  -> armor.getArmorType() == arclightcity.item.Armor.ArmorType.LIGHT
+                                          || armor.getArmorType() == arclightcity.item.Armor.ArmorType.MEDIUM
+                                          || armor.getArmorType() == arclightcity.item.Armor.ArmorType.HEAVY
+                                          || armor.getArmorType() == arclightcity.item.Armor.ArmorType.EXOSUIT;
+                            case "HELM"   -> armor.getArmorType() == arclightcity.item.Armor.ArmorType.HELMET;
+                            case "SEPATU" -> armor.getArmorType() == arclightcity.item.Armor.ArmorType.BOOTS;
+                            case "CINCIN" -> armor.getArmorType() == arclightcity.item.Armor.ArmorType.RING;
+                            default       -> false;
+                        };
+                    }
+                    // Weapon, Consumable, Material
                     return item.getItemType().name().equals(activeFilter);
                 })
                 .toList();
@@ -261,6 +493,11 @@ public static class InventoryViewImpl {
         row.setStyle(styleNormal);
         row.setOnMouseEntered(e -> row.setStyle(styleHover));
         row.setOnMouseExited(e -> row.setStyle(styleNormal));
+        row.setOnMouseClicked(e -> {
+            if (item instanceof Equipment eq) {
+                showItemDetailPopup(eq, inv);
+            }
+        });
 
         // Rarity indicator
         VBox rarityBar = new VBox();
@@ -310,7 +547,8 @@ public static class InventoryViewImpl {
             equipBtn.setOnAction(e -> {
                 var result = inv.equip(eq);
                 showAlert(result.success ? "✅ " + result.message : "❌ " + result.message);
-                refreshItemList(inv); // refresh setelah equip
+                // Refresh seluruh inventory view agar slot atas ikut update
+                router.showInventory();
             });
 
             // UPGRADE button
@@ -1078,19 +1316,21 @@ public static class VictoryViewImpl {
         HBox lootRow = buildRewardRow("Item Loot",
             result.getLootItemIds().size() + " item", "#A09070");
 
-        // Tampilkan nama item loot yang didapat
+        // Tampilkan loot dari bag (item terakhir ditambahkan)
         VBox lootDetail = new VBox(2);
         lootDetail.setPadding(new Insets(2, 0, 4, 12));
-        engine.getInventory().getAllBagItems().stream()
-            .sorted((a, b) -> Long.compare(b.getId().hashCode(), a.getId().hashCode()))
-            .limit(result.getLootItemIds().size())
-            .forEach(item -> {
+        int lootCount = result.getLootItemIds().size();
+        if (lootCount > 0) {
+            var allItems = engine.getInventory().getAllItems();
+            int start = Math.max(0, allItems.size() - lootCount);
+            allItems.subList(start, allItems.size()).forEach(item -> {
                 String rc = UIFactory.rarityColor(item.getRarity());
                 Label il = new Label("  ✦ " + item.getFullName());
                 il.setStyle("-fx-text-fill: " + rc + "; -fx-font-family: 'Courier New';" +
                             "-fx-font-size: 10px;");
                 lootDetail.getChildren().add(il);
             });
+        }
 
         int levels = result.getLevelsGained();
         rewards.getChildren().addAll(rwdTitle, expRow, goldRow, lootRow, lootDetail);

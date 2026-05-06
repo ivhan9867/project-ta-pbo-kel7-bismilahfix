@@ -5,7 +5,7 @@ import java.util.Map;
 
 public class Armor extends Equipment {
 
-    public enum ArmorType { LIGHT, MEDIUM, HEAVY, EXOSUIT }
+    public enum ArmorType { LIGHT, MEDIUM, HEAVY, EXOSUIT, HELMET, BOOTS, RING }
 
     private final ArmorType armorType;
 

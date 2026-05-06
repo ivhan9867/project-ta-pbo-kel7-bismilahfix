@@ -52,9 +52,17 @@ public class GameStateConverter {
         if (inv != null) {
             // Equipment yang diequip
             if (inv.getEquippedWeapon()     != null)
-                save.inventoryItems.add(equipToData(inv.getEquippedWeapon(), "WEAPON"));
+                save.inventoryItems.add(equipToData(inv.getEquippedWeapon(),     "WEAPON"));
             if (inv.getEquippedArmor()      != null)
-                save.inventoryItems.add(equipToData(inv.getEquippedArmor(), "ARMOR"));
+                save.inventoryItems.add(equipToData(inv.getEquippedArmor(),      "ARMOR"));
+            if (inv.getEquippedHelmet()     != null)
+                save.inventoryItems.add(equipToData(inv.getEquippedHelmet(),     "HELMET"));
+            if (inv.getEquippedBoots()      != null)
+                save.inventoryItems.add(equipToData(inv.getEquippedBoots(),      "BOOTS"));
+            if (inv.getEquippedRing1()      != null)
+                save.inventoryItems.add(equipToData(inv.getEquippedRing1(),      "RING_1"));
+            if (inv.getEquippedRing2()      != null)
+                save.inventoryItems.add(equipToData(inv.getEquippedRing2(),      "RING_2"));
             if (inv.getEquippedAccessory1() != null)
                 save.inventoryItems.add(equipToData(inv.getEquippedAccessory1(), "ACC1"));
             if (inv.getEquippedAccessory2() != null)
@@ -146,6 +154,12 @@ public class GameStateConverter {
         PlayerBackground bg = PlayerBackground.ASUNA;
         engine.createCharacterFromSave(save.player.name, bg, save.player);
 
+        // Restore floor number ke DungeonManager
+        int savedDepth = save.player.dungeonDepth;
+        if (savedDepth > 0) {
+            engine.getDungeonManager().setCurrentFloorNumber(savedDepth);
+        }
+
         restoreInventory(engine, save);
         restoreMercenaries(engine, save);
 
@@ -167,6 +181,10 @@ public class GameStateConverter {
                     switch (d.slot) {
                         case "WEAPON" -> inv.forceEquipWeapon(eq);
                         case "ARMOR"  -> inv.forceEquipArmor(eq);
+                        case "HELMET" -> inv.forceEquipHelmet(eq);
+                        case "BOOTS"  -> inv.forceEquipBoots(eq);
+                        case "RING_1" -> inv.forceEquipRing1(eq);
+                        case "RING_2" -> inv.forceEquipRing2(eq);
                         case "ACC1"   -> inv.forceEquipAccessory1(eq);
                         case "ACC2"   -> inv.forceEquipAccessory2(eq);
                     }

@@ -31,6 +31,10 @@ public class ArclightApp extends Application {
         engine       = new GameEngine();
         router       = new SceneRouter(stage, engine);
 
+        // Pasang semua engine listener SEKALI di sini
+        // Tidak boleh dipanggil lagi dari mana pun
+        router.initEngineListeners();
+
         // Setup stage
         stage.setTitle("MYTHIC ITEM OBTAINED");
         stage.setWidth(SCREEN_WIDTH);

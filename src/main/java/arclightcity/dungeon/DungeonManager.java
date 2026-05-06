@@ -54,10 +54,26 @@ public class DungeonManager {
     /**
      * Mulai dungeon run baru.
      */
+    /** Reset state dungeon untuk new game tanpa kehilangan listener */
+    public void resetState() {
+        this.currentFloor       = null;
+        this.currentFloorNumber = 0;
+        this.dungeonActive      = false;
+        this.player             = null;
+        this.activeMercs        = new ArrayList<>();
+    }
+
+    /** Dipakai saat load save — restore floor ke posisi tersimpan */
+    public void setCurrentFloorNumber(int floor) {
+        this.currentFloorNumber = Math.max(0, floor);
+    }
+
     public void startDungeon(Player player, List<Mercenary> mercs) {
         this.player      = player;
         this.activeMercs = new ArrayList<>(mercs);
-        currentFloorNumber = 0;
+        // Lanjutkan dari floor yang sudah dicapai player (bukan reset ke 0)
+        int savedFloor = Math.max(0, player.getDungeonDepth());
+        currentFloorNumber = savedFloor;
         dungeonActive    = true;
 
         emit(DungeonStateEvent.dungeonStarted(player.getName()));
@@ -190,7 +206,10 @@ public class DungeonManager {
         // Setup combat
         combatManager.setup(player, activeMercs, enemies);
 
-        // Listen hasil combat
+        // Reset listeners sebelum combat baru — cegah accumulate
+        combatManager.clearResultListeners();
+
+        // Listen hasil combat (slot 1: DungeonManager logic)
         combatManager.addResultListener(result -> {
             if (result.isVictory()) {
                 room.setCleared(true);

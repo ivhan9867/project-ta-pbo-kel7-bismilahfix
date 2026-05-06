@@ -150,6 +150,7 @@ arclightcity\entity\enemy\NeonSerpent.class
 arclightcity\item\Equipment.class
 arclightcity\save\SaveManager.class
 arclightcity\entity\enemy\LeyakApi.class
+arclightcity\item\LootManager$1.class
 arclightcity\ui\view\ViewsBundle.class
 arclightcity\ui\view\CityView.class
 arclightcity\entity\enemy\StreetThug.class

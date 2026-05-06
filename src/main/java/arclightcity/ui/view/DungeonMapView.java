@@ -54,7 +54,7 @@ public class DungeonMapView {
         // wireEngineListeners() dipanggil di build() setelah semua field siap
     }
 
-    private void wireEngineListeners() {
+    public void wireEngineListeners() {
         engine.setOnDungeonEvent(event -> {
             javafx.application.Platform.runLater(() -> {
                 switch (event.type) {
@@ -64,11 +64,31 @@ public class DungeonMapView {
                     }
                     case EVENT_ENCOUNTERED    -> router.showEvent(event.dungeonEvent);
                     case SHOP_OPENED          -> {
-                        router.addSystemChat("Merchant encountered");
+                        router.addSystemChat("Pedagang ditemukan");
                         router.showShop();
                     }
                     case GAME_OVER            -> router.showGameOver();
-                    case LEVEL_UP             -> showLevelUpNotification(event);
+                    case LEVEL_UP -> showLevelUpNotification(event);
+                    case BOSS_DEFEATED -> {
+                        router.showToast(
+                            "💀  BOSS DIKALAHKAN!",
+                            event.message,
+                            "#FF6B00"
+                        );
+                        router.addSystemChat("✦ " + event.message);
+                        router.emitChat(MercenaryDialogue.Trigger.COMBAT_VICTORY);
+                        refreshMapGrid();
+                        refreshCurrentRoomInfo();
+                        refreshNextRoomsPanel();
+                    }
+                    case MYTHIC_CRAFT -> {
+                        router.showToast(
+                            "✦  SENJATA MYTHIC DITEMPA!",
+                            event.message,
+                            "#FF6B00"
+                        );
+                        router.addSystemChat("✦✦✦ " + event.message);
+                    }
                     case READY_FOR_NEXT_FLOOR -> showDescentPrompt(event.intValue);
                     case LOOT_FOUND           -> {
                         showLootPopup(event);
@@ -83,13 +103,21 @@ public class DungeonMapView {
                         refreshCurrentRoomInfo();
                         refreshNextRoomsPanel();
                     }
-                    case ROOM_CLEARED, ROOM_ENTERED, FLOOR_ENTERED -> {
-                        if (event.type == DungeonStateEvent.Type.FLOOR_ENTERED) {
-                            router.emitChat(MercenaryDialogue.Trigger.DUNGEON_ENTER_FLOOR);
-                        }
+                    case ROOM_CLEARED, ROOM_ENTERED -> {
                         refreshMapGrid();
                         refreshCurrentRoomInfo();
                         refreshNextRoomsPanel();
+                    }
+                    case FLOOR_ENTERED -> {
+                        router.emitChat(MercenaryDialogue.Trigger.DUNGEON_ENTER_FLOOR);
+                        // Rebuild dungeon map view setelah sedikit delay
+                        // agar descend() selesai dulu sebelum view dibuat ulang
+                        new javafx.animation.Timeline(
+                            new javafx.animation.KeyFrame(
+                                javafx.util.Duration.millis(300),
+                                ev -> router.showDungeonMap()
+                            )
+                        ).play();
                     }
                     default -> refreshCurrentRoomInfo();
                 }
@@ -97,11 +125,13 @@ public class DungeonMapView {
         });
     }
 
+    private javafx.scene.layout.BorderPane bpRoot;
+
     public Parent build() {
         DungeonManager dm = engine.getDungeonManager();
         Floor floor = dm.getCurrentFloor();
 
-        BorderPane bpRoot = UIFactory.screenRootBorder();
+        bpRoot = UIFactory.screenRootBorder();
         VBox root = new VBox(0);
         root.setStyle("-fx-background-color: #0A0604;");
 
@@ -186,7 +216,6 @@ public class DungeonMapView {
         refreshNextRooms(dm);
         bpRoot.setBottom(roomListContainer);
 
-        wireEngineListeners();
         UIFactory.fadeIn(bpRoot, 300);
         return bpRoot;
     }
@@ -291,7 +320,7 @@ public class DungeonMapView {
         typeRow.getChildren().add(typeLabel);
 
         if (isCleared) {
-            Label clearedBadge = new Label("✓ CLEARED");
+            Label clearedBadge = new Label("✓ SELESAI");
             clearedBadge.setStyle(
                 "-fx-text-fill: #2D7A45;" +
                 "-fx-font-family: 'Courier New';" +
@@ -306,7 +335,7 @@ public class DungeonMapView {
 
         // Description
         String descText = isCleared
-                ? "You've been here before. Nothing left to find."
+                ? "Sudah pernah dijelajahi. Tidak ada lagi yang tersisa."
                 : getRoomDescription(current);
         Label desc = new Label(descText);
         desc.setWrapText(true);
@@ -323,7 +352,7 @@ public class DungeonMapView {
             HBox progressRow = new HBox(8);
             progressRow.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
 
-            Label progressLabel = new Label("EXPLORED: " + cleared + "/" + total);
+            Label progressLabel = new Label("DIJELAJAHI: " + cleared + "/" + total);
             progressLabel.setStyle("-fx-text-fill: #6A5840; -fx-font-family: 'Courier New'; -fx-font-size: 12px;");
 
             javafx.scene.control.ProgressBar progressBar = new javafx.scene.control.ProgressBar(
@@ -370,7 +399,7 @@ public class DungeonMapView {
         }
 
         // Hint navigasi via grid
-        Label hint = new Label("▲ Click adjacent tile on the map to explore");
+        Label hint = new Label("▲ Klik ruangan yang berdekatan di peta untuk menjelajah");
         hint.setStyle("-fx-text-fill: #6A5840; -fx-font-family: 'Courier New'; -fx-font-size: 12px;");
 
         // Boss belum dikalahkan — tampilkan reminder
@@ -387,40 +416,98 @@ public class DungeonMapView {
     // ── Descent prompt ─────────────────────────────────────
 
     private void showLevelUpNotification(DungeonStateEvent event) {
-        int newLevel   = event.intValue;
-        int skillPts   = engine.getPlayer().getSkillPoints();
+        int newLevel = event.intValue;
+        int skillPts = engine.getPlayer().getSkillPoints();
 
-        // Chat notification
-        router.addSystemChat("⬆ LEVEL UP → LV." + newLevel);
+        // Chat notification — selalu reliable
+        router.addSystemChat("⬆ LEVEL UP → LV." + newLevel +
+            "  |  ✦ +" + skillPts + " Poin Jurus");
 
-        // Alert dialog
-        javafx.scene.control.Alert alert = UIFactory.showInfoAlert(
-            "⬆ LEVEL UP!",
-            "You reached Level " + newLevel + "!\n\n" +
-            "Skill Points available: " + skillPts + "\n" +
-            "Visit your Profile to unlock new skills."
+        // Toast via SceneRouter yang punya akses scene yang benar
+        router.showToast(
+            "⬆  LEVEL UP  LV." + newLevel,
+            "Asuna naik level! +" + skillPts + " Poin Jurus tersedia.",
+            "#FFB830"
         );
-
-        // Glow effect saat level up
-        UIFactory.fadeIn((javafx.scene.layout.Region)
-            javafx.stage.Stage.getWindows().stream()
-                .filter(w -> w.isShowing()).findFirst()
-                .map(w -> ((javafx.stage.Stage)w).getScene().getRoot())
-                .orElse(null), 300);
     }
 
     private void showDescentPrompt(int nextFloor) {
-        // Floor transition animation — overlay cyberpunk style
-        // Tampilkan overlay, tunggu user konfirmasi, lalu animate descent
-        javafx.scene.control.Alert alert = UIFactory.showInfoAlert(
-            "▼ TURUN KE LANTAI " + nextFloor,
-            "Floor cleared. Ready to descend.\n\n" +
-            "[ Floor " + (nextFloor - 1) + " → Floor " + nextFloor + " ]\n\n" +
-            "HP partially restored on arrival."
-        );
+        // Tampilkan panel pilihan di bawah dungeon map
+        // Player bisa pilih: TURUN atau KEMBALI KE MARKAS
 
-        // Setelah alert ditutup, jalankan transition animation
-        playFloorTransition(nextFloor, () -> engine.descend());
+        javafx.application.Platform.runLater(() -> {
+            // Buat panel pilihan
+            javafx.scene.layout.VBox panel = new javafx.scene.layout.VBox(8);
+            panel.setPadding(new javafx.geometry.Insets(12, 16, 14, 16));
+            panel.setStyle(
+                "-fx-background-color: #0F0A06;" +
+                "-fx-border-color: #C8860A; -fx-border-width: 2 0 0 0;" +
+                "-fx-effect: dropshadow(gaussian, #C8860A, 12, 0.3, 0, -2);"
+            );
+
+            javafx.scene.layout.HBox titleRow = new javafx.scene.layout.HBox(8);
+            titleRow.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+
+            javafx.scene.control.Label icon = new javafx.scene.control.Label("▼");
+            icon.setStyle("-fx-text-fill: #C8860A; -fx-font-size: 16px;");
+
+            javafx.scene.control.Label titleLbl =
+                new javafx.scene.control.Label("LANTAI " + (nextFloor-1) + " SELESAI!");
+            titleLbl.setStyle(
+                "-fx-text-fill: #FFB830; -fx-font-family: 'Courier New';" +
+                "-fx-font-size: 13px; -fx-font-weight: bold;" +
+                "-fx-effect: dropshadow(gaussian, #C8860A, 6, 0.3, 0, 0);");
+            javafx.scene.layout.HBox.setHgrow(titleLbl, javafx.scene.layout.Priority.ALWAYS);
+
+            javafx.scene.control.Label subLbl =
+                new javafx.scene.control.Label("Menuju lantai " + nextFloor + "...");
+            subLbl.setStyle("-fx-text-fill: #5A3A10; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+
+            titleRow.getChildren().addAll(icon, titleLbl);
+
+            // Tombol pilihan
+            javafx.scene.layout.HBox btnRow = new javafx.scene.layout.HBox(8);
+
+            javafx.scene.control.Button descBtn = new javafx.scene.control.Button(
+                "▼  TURUN KE LANTAI " + nextFloor);
+            descBtn.setMaxWidth(Double.MAX_VALUE);
+            javafx.scene.layout.HBox.setHgrow(descBtn, javafx.scene.layout.Priority.ALWAYS);
+            descBtn.setStyle(
+                "-fx-background-color: #C8860A22; -fx-border-color: #FFB830; -fx-border-width: 1;" +
+                "-fx-text-fill: #FFB830; -fx-font-family: 'Courier New'; -fx-font-size: 12px;" +
+                "-fx-font-weight: bold; -fx-padding: 10 16; -fx-cursor: hand;" +
+                "-fx-effect: dropshadow(gaussian, #C8860A, 6, 0.3, 0, 0);");
+            descBtn.setOnAction(e -> {
+                // Hapus panel pilihan dari root
+                if (panel.getParent() instanceof javafx.scene.layout.BorderPane bp) {
+                    bp.setBottom(null);
+                }
+                playFloorTransition(nextFloor, () -> engine.descend());
+            });
+
+            javafx.scene.control.Button hubBtn = new javafx.scene.control.Button(
+                "◈  KEMBALI KE MARKAS");
+            hubBtn.setStyle(
+                "-fx-background-color: transparent; -fx-border-color: #3A2810; -fx-border-width: 1;" +
+                "-fx-text-fill: #6A5840; -fx-font-family: 'Courier New'; -fx-font-size: 11px;" +
+                "-fx-padding: 10 16; -fx-cursor: hand;");
+            hubBtn.setOnAction(e -> router.showHub());
+
+            btnRow.getChildren().addAll(descBtn, hubBtn);
+            panel.getChildren().addAll(titleRow, subLbl, btnRow);
+
+            // Tampilkan di bawah dungeon map view
+            if (bpRoot != null) {
+                bpRoot.setBottom(panel);
+            }
+        });
+
+        // Toast kecil di pojok
+        router.showToast(
+            "▼  LANTAI " + (nextFloor-1) + " SELESAI",
+            "Pilih: turun atau kembali ke markas",
+            "#C8860A"
+        );
     }
 
     /**

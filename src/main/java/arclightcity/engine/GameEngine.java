@@ -70,7 +70,7 @@ public class GameEngine {
         ownedMercs.clear();
         activeMercs.clear();
 
-        // Setup DungeonManager
+        // Selalu buat DungeonManager baru untuk clean state
         dungeonManager = new DungeonManager();
         wireDungeonListeners();
 
@@ -119,6 +119,8 @@ public class GameEngine {
     // ── Wire Dungeon Listeners ────────────────────────────────
 
     private void wireDungeonListeners() {
+        // Set listener ke dungeonManager yang aktif saat ini
+        // Dipanggil setiap kali dungeonManager baru dibuat
         dungeonManager.setStateListener(event -> {
             if (onDungeonEvent != null) onDungeonEvent.accept(event);
 
@@ -149,21 +151,27 @@ public class GameEngine {
                     drops.forEach(inventory::addItem);
                 });
 
-                // Level up notification (CombatManager sudah apply exp,
-                // kita tinggal cek apakah level player naik)
+                // Level up notification
                 if (result.getLevelsGained() > 0 && onDungeonEvent != null) {
                     onDungeonEvent.accept(
                         arclightcity.dungeon.DungeonStateEvent.levelUp(
                             player.getLevel(), player.getSkillPoints()));
                 }
 
-                // Loyalty merc naik setelah victory
-                // (CombatManager sudah panggil completeMission, skip duplikat)
-
-                // Mythic Fragment drop saat boss dikalahkan
+                // Boss defeat notification + Mythic Fragment
                 boolean bossDefeated = result.getDefeatedEnemies().stream()
                         .anyMatch(e -> e instanceof arclightcity.entity.enemy.Boss);
                 if (bossDefeated) {
+                    String bossName = result.getDefeatedEnemies().stream()
+                        .filter(e -> e instanceof arclightcity.entity.enemy.Boss)
+                        .findFirst().map(e -> e.getName()).orElse("Boss");
+
+                    // Event boss defeat ke UI
+                    if (onDungeonEvent != null) {
+                        onDungeonEvent.accept(
+                            arclightcity.dungeon.DungeonStateEvent.bossDefeated(bossName));
+                    }
+
                     inventory.addItem(LootManager.generateMythicFragment());
                     // Cek apakah sudah punya 5 shard → craft Red Blossom Katana
                     long fragmentCount = inventory.getAllBagItems().stream()
@@ -208,9 +216,8 @@ public class GameEngine {
 
     public void startDungeonRun() {
         if (player == null) return;
-        // Buat DungeonManager baru setiap run untuk reset state penuh
-        dungeonManager = new DungeonManager();
-        wireDungeonListeners();
+        // Reset dungeon state tanpa buat DungeonManager baru
+        // agar listener yang sudah dipasang tidak berduplikat
         transitionTo(GameState.DUNGEON);
         dungeonManager.startDungeon(player, activeMercs);
     }
@@ -362,6 +369,7 @@ public class GameEngine {
     // ════════════════════════════════════════════════════════
 
     public void setOnStateChange(Consumer<GameState> l)          { onStateChange = l; }
+
     public void setOnDungeonEvent(Consumer<DungeonStateEvent> l) { onDungeonEvent = l; }
     public void setOnCombatStart(Consumer<CombatManager> l)      { onCombatStart = l; }
     public void setOnCombatEnd(Consumer<CombatResult> l)         { onCombatEnd = l; }
