@@ -334,7 +334,13 @@ public class DungeonManager {
                 handleEnemyRoom(bonusRoom, false);
             }
             case OPEN_SHOP   -> handleShopRoom(room);
-            case REVEAL_MAP    -> emit(DungeonStateEvent.mapRevealed());
+            case REVEAL_MAP    -> {
+                // Reveal semua room di floor saat ini
+                if (currentFloor != null) {
+                    currentFloor.getRooms().forEach(r -> r.setVisited(true));
+                }
+                emit(DungeonStateEvent.mapRevealed());
+            }
             case CALIBRATION  -> emit(DungeonStateEvent.calibrationAvailable(result.intValue));
             case NOTHING      -> emit(DungeonStateEvent.nothing());
             default           -> { }

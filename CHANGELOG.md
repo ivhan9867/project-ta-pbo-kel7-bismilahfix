@@ -4,6 +4,39 @@
 
 ---
 
+## [v0.6.0] — 2026-05-07
+
+### MAJOR — Combat Overhaul + System Polish
+
+**Combat Visual Overhaul**
+- Log pertempuran dihapus — diganti floating damage numbers yang kaya visual
+- Floating damage: 8 tipe visual berbeda (crit gold+wobble, heal hijau, DOT coklat, skill gold, evade biru, block, status, defeated)
+- Shadow/outline pada semua angka floating untuk keterbacaan
+- Durasi dan rise berbeda per tipe: crit 1800ms/75px, skill 1600ms/65px, normal 1400ms/55px
+- Enemy card: gradient background + left border tebal + glow merah saat giliran
+- Ally card: gradient gold saat aktif
+- Turn order bar: gradient merah + glow bawah
+- Action panel: gradient naik + border gold halus
+- battleArea: gradient 3 stop vertikal
+
+**Fix Save/Load Item (Definitif)**
+- Root cause: `getBonusStats()` return unmodifiable map → UnsupportedOperationException
+- Fix: `Equipment.restoreBonusStats()` akses map internal langsung
+- Fix: `setUpgradeLevelDirect()` — tidak trigger random bonus saat load
+- `activeMercs` sekarang tersimpan dan di-restore → party langsung ready setelah load
+
+**Map Reveal (Event Dungeon)**
+- `revealAll()` di DungeonGridMap — reveal semua tiles sekaligus
+- Toast hijau + system chat saat peta terbuka
+- Room ditandai `visited = true` via `setVisited()`
+
+**Lokalisasi Penuh Combat**
+- DamageType: Physical→Fisik, Energy→Energi, True→Mutlak, Heal→Pulih
+- CombatEvent: semua pesan bahasa Indonesia
+- "No active effects" → "Tidak ada efek aktif"
+
+---
+
 ## [v0.5.8] — 2026-05-06
 
 ### UI Polish & Animation Update

@@ -70,6 +70,9 @@ public class Equipment extends Item {
         if (saved != null) bonusStats.putAll(saved);
     }
 
+    /** Set upgrade level langsung tanpa trigger random stat bonus */
+    public void setUpgradeLevelDirect(int level) { this.upgradeLevel = level; }
+
     /** Semua stat gabungan (base + bonus dari upgrade/kalibrasi) */
     public Map<StatType, Double> getEffectiveStats() {
         Map<StatType, Double> all = new java.util.LinkedHashMap<>(baseStats);

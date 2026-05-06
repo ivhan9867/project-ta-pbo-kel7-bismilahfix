@@ -78,7 +78,15 @@ public class CombatView {
 
     // v0.3: Floating damage texts
     private record FloatingText(String text, String color,
-                                double x, double y, long startMs) {}
+                                double x, double y, long startMs,
+                                int duration, double rise) {
+        // Convenience constructor with defaults
+        FloatingText(String text, String color, double x, double y, long startMs) {
+            this(text, color, x, y, startMs,
+                text.startsWith("⚡") ? 1800 : text.startsWith("✦") ? 1600 : 1400,
+                text.startsWith("⚡") ? 75 : text.startsWith("✦") ? 65 : 55);
+        }
+    }
     private final java.util.List<FloatingText> floatingTexts
             = new java.util.ArrayList<>();
     private Canvas   floatCanvas;   // overlay untuk floating damage numbers
@@ -107,9 +115,10 @@ public class CombatView {
         turnOrderBar.setMaxHeight(36);
         turnOrderBar.setAlignment(Pos.CENTER_LEFT);
         turnOrderBar.setStyle(
-            "-fx-background-color: #0F0A06;" +
-            "-fx-border-color: #3A2810;" +
-            "-fx-border-width: 0 0 1 0;"
+            "-fx-background-color: linear-gradient(to right, #1A0806, #0F0604, #1A0806);" +
+            "-fx-border-color: #CC330055;" +
+            "-fx-border-width: 0 0 1 0;" +
+            "-fx-effect: dropshadow(gaussian, #CC330033, 4, 0.2, 0, 1);"
         );
         topSection.getChildren().add(turnOrderBar);
         root.setTop(topSection);
@@ -160,7 +169,7 @@ public class CombatView {
             "-fx-background: #0A0604;" +
             "-fx-border-color: transparent;"
         );
-        battleArea.setStyle("-fx-background-color: #0A0604;");
+        battleArea.setStyle("-fx-background-color: linear-gradient(to bottom, #140A06, #0A0602, #120806);");
         root.setCenter(battleScroll);
 
         // ── BOTTOM: action panel (selalu terlihat) ────────
@@ -254,7 +263,9 @@ public class CombatView {
 
         logScroll = new ScrollPane(logContainer);
         logScroll.setFitToWidth(true);
-        logScroll.setPrefHeight(75);
+        logScroll.setPrefHeight(0);
+        logScroll.setVisible(false);
+        logScroll.setManaged(false);
         logScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         logScroll.setStyle("-fx-background-color: #0A0604; -fx-background: #0A0604; -fx-border-color: transparent;");
 
@@ -297,7 +308,7 @@ public class CombatView {
         }
 
         if (panel.getChildren().isEmpty()) {
-            Label none = new Label("No active effects");
+            Label none = new Label("Tidak ada efek aktif");
             none.setStyle("-fx-text-fill: #3A2810; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
             panel.getChildren().add(none);
         }
@@ -343,13 +354,16 @@ public class CombatView {
                 && cm.getCurrentActor().getId().equals(enemy.getId());
 
         String borderColor = isCurrentActor ? UIFactory.RED : "#3A2810";
+        String cardBg = isCurrentActor
+            ? "linear-gradient(to bottom right, #2A0808, #180606)"
+            : "linear-gradient(to bottom, #150606, #100505)";
         card.setStyle(
-            "-fx-background-color: " + (isCurrentActor ? "#1C0808" : "#100808") + ";" +
+            "-fx-background-color: " + cardBg + ";" +
             "-fx-border-color: " + borderColor + ";" +
-            "-fx-border-width: " + (isCurrentActor ? "2" : "1") + " " +
-                                   (isCurrentActor ? "2" : "1") + " " +
-                                   (isCurrentActor ? "2" : "1") + " 3;" +
-            (isCurrentActor ? "-fx-effect: dropshadow(gaussian, #CC3300, 10, 0.4, 0, 0);" : "")
+            "-fx-border-width: 0 0 0 4;" +
+            (isCurrentActor
+                ? "-fx-effect: dropshadow(gaussian, #CC3300AA, 18, 0.5, 0, 0);"
+                : "-fx-effect: dropshadow(gaussian, #44000044, 4, 0.1, 0, 0);")
         );
 
         // Name + badges row
@@ -1146,18 +1160,6 @@ public class CombatView {
     // FLOATING DAMAGE NUMBERS
     // ════════════════════════════════════════════════════
 
-    /** Spawn angka floating di atas canvas enemy area */
-    private void spawnFloat(String text, String color, int enemyIndex) {
-        if (floatCanvas == null) return;
-        // Posisi X: spread berdasarkan index enemy (estimasi card ~180px wide)
-        double x = 60 + (enemyIndex * 180) + (Math.random() * 60 - 30);
-        double y = 40 + (Math.random() * 20);
-        floatingTexts.add(new FloatingText(text, color, x, y, System.currentTimeMillis()));
-        if (floatLoop == null || floatLoop.getStatus() != Animation.Status.RUNNING) {
-            startFloatLoop();
-        }
-    }
-
     private void startFloatLoop() {
         floatLoop = new Timeline(new KeyFrame(Duration.millis(16), e -> drawFloats()));
         floatLoop.setCycleCount(Timeline.INDEFINITE);
@@ -1170,22 +1172,47 @@ public class CombatView {
         gc.clearRect(0, 0, floatCanvas.getWidth(), floatCanvas.getHeight());
 
         long now = System.currentTimeMillis();
-        floatingTexts.removeIf(ft -> (now - ft.startMs()) > 1400);
+        floatingTexts.removeIf(ft -> (now - ft.startMs()) > ft.duration());
 
         for (FloatingText ft : floatingTexts) {
-            double elapsed = (now - ft.startMs()) / 1400.0; // 0→1
-            double yOffset = elapsed * 55;             // melayang ke atas 55px
-            double alpha   = elapsed < 0.5 ? 1.0 : (1.0 - elapsed) * 2; // fade out
+            double elapsed = (now - ft.startMs()) / (double) ft.duration();
+            double yOffset = elapsed * ft.rise();
+            double alpha   = elapsed < 0.3 ? 1.0 : Math.max(0, (1.0 - elapsed) * 1.4);
 
             try {
-                Color c = Color.web(ft.color(), alpha);
-                gc.setFill(c);
-                // Ukuran font: crit lebih besar
-                boolean isCrit = ft.text().contains("!");
+                Color baseColor = Color.web(ft.color(), alpha);
+                gc.setFill(baseColor);
+
+                boolean isCrit  = ft.text().startsWith("⚡");
+                boolean isHeal  = ft.text().startsWith("+");
+                boolean isDot   = ft.text().startsWith("☠");
+                boolean isSkill = ft.text().startsWith("✦");
+                boolean isMiss  = ft.text().equals("MENGHINDAR") || ft.text().equals("MISS");
+
+                double fontSize = isCrit ? 22 : isSkill ? 20 : isMiss ? 14 : 16;
+                double wobble   = isCrit ? Math.sin(elapsed * 12) * 4 : 0;
+
                 gc.setFont(Font.font("Courier New",
-                        javafx.scene.text.FontWeight.BOLD, isCrit ? 18 : 14));
+                    isCrit || isSkill ? javafx.scene.text.FontWeight.BOLD
+                                      : javafx.scene.text.FontWeight.NORMAL,
+                    fontSize));
                 gc.setTextAlign(javafx.scene.text.TextAlignment.CENTER);
-                gc.fillText(ft.text(), ft.x(), ft.y() - yOffset);
+
+                // Shadow/glow effect untuk crit dan skill
+                if (isCrit || isSkill) {
+                    Color shadow = Color.web(ft.color(), alpha * 0.4);
+                    gc.setFill(shadow);
+                    gc.fillText(ft.text(), ft.x() + wobble + 2, ft.y() - yOffset + 2);
+                    gc.setFill(baseColor);
+                }
+
+                gc.fillText(ft.text(), ft.x() + wobble, ft.y() - yOffset);
+
+                // Outline putih untuk keterbacaan
+                gc.setStroke(Color.web("#00000088", alpha));
+                gc.setLineWidth(1.5);
+                gc.strokeText(ft.text(), ft.x() + wobble, ft.y() - yOffset);
+
             } catch (Exception ignored) {}
         }
 
@@ -1199,50 +1226,118 @@ public class CombatView {
     private void handleFloatingDamage(CombatEvent event) {
         if (floatCanvas == null || cm == null) return;
 
-        String msg   = event.getMessage();
+        String msg = event.getMessage();
         if (msg == null) return;
 
-        String color;
-        String displayText;
+        // Posisi X berdasarkan target entity
+        double x = getEntityX(event.getTargetId());
+        double y = 30 + (Math.random() * 20);
+
+        String text  = null;
+        String color = null;
 
         switch (event.getType()) {
+            case CRITICAL_HIT -> {
+                double dmg = extractDamage(msg);
+                text  = "⚡ " + (int)dmg + "!";
+                color = "#FFD700"; // gold untuk crit
+                // Extra spread untuk crit
+                x += (Math.random() * 30 - 15);
+            }
             case DAMAGE_DEALT -> {
-                // Extract angka dari pesan "X hits Y for Z damage"
-                java.util.regex.Matcher m =
-                    java.util.regex.Pattern.compile("for (\\d+)").matcher(msg);
-                if (!m.find()) return;
-                int dmg = Integer.parseInt(m.group(1));
-                boolean isCrit = msg.contains("CRIT") || msg.contains("critical");
-                color       = isCrit ? "#FFB830" : "#FF5533";
-                displayText = isCrit ? dmg + "!" : String.valueOf(dmg);
+                double dmg = extractDamage(msg);
+                if (dmg > 0) {
+                    text  = "-" + (int)dmg;
+                    // Warna berdasarkan damage type
+                    if (msg.contains("Fisik"))   color = "#FF6644";
+                    else if (msg.contains("Cyber"))  color = "#44AAFF";
+                    else if (msg.contains("Energi")) color = "#AA44FF";
+                    else color = "#FF8844";
+                }
+            }
+            case DAMAGE_EVADED -> {
+                text  = "MENGHINDAR";
+                color = "#88CCFF";
+            }
+            case DAMAGE_BLOCKED -> {
+                double blocked = extractDamage(msg);
+                text  = "🛡 " + (int)blocked;
+                color = "#6699CC";
             }
             case HEAL_RECEIVED -> {
-                java.util.regex.Matcher m =
-                    java.util.regex.Pattern.compile("(\\d+)").matcher(msg);
-                if (!m.find()) return;
-                color       = UIFactory.GREEN;
-                displayText = "+" + m.group(1);
+                double heal = extractDamage(msg);
+                text  = "+" + (int)heal;
+                color = "#44FF88";
+                y = 50; // heal muncul lebih bawah
             }
             case EFFECT_TICK -> {
-                java.util.regex.Matcher m =
-                    java.util.regex.Pattern.compile("(\\d+)").matcher(msg);
-                if (!m.find()) return;
-                color       = UIFactory.ORANGE;
-                displayText = m.group(1);
+                double dmg = extractDamage(msg);
+                text  = "☠ " + (int)dmg;
+                color = "#AA4400";
+            }
+            case SKILL_USED -> {
+                // Skill indicator - muncul di atas user
+                double ux = getEntityX(event.getActorId());
+                String skillText = extractSkillName(msg);
+                if (skillText != null) {
+                    spawnFloat("✦ " + skillText, "#FFB830", ux, 20);
+                }
+                return;
+            }
+            case EFFECT_APPLIED -> {
+                text  = "⚑ " + extractStatusName(msg);
+                color = "#FF8833";
+            }
+            case ENTITY_DIED -> {
+                text  = "💀";
+                color = "#CC3300";
+                y = 10;
             }
             default -> { return; }
         }
 
-        // Spawn di posisi enemy yang terkena (estimasi dari posisi di container)
-        int enemyIdx = 0;
-        List<Entity> enemies = cm.getAllEnemies(); // getAllEnemies() returns List<Entity>
+        if (text != null) spawnFloat(text, color, x, y);
+    }
+
+    private void spawnFloat(String text, String color, double x, double y) {
+        floatingTexts.add(new FloatingText(text, color, x, y, System.currentTimeMillis()));
+        if (floatLoop == null || floatLoop.getStatus() != Animation.Status.RUNNING) {
+            startFloatLoop();
+        }
+    }
+
+    private double getEntityX(String entityId) {
+        if (entityId == null || cm == null) return 100 + Math.random() * 200;
+        // Cari index enemy atau ally
+        var enemies = cm.getEnemies();
         for (int i = 0; i < enemies.size(); i++) {
-            if (msg.contains(enemies.get(i).getName())) {
-                enemyIdx = i;
-                break;
+            if (enemies.get(i).getId().equals(entityId)) {
+                return 80 + i * 160 + Math.random() * 40 - 20;
             }
         }
-        spawnFloat(displayText, color, enemyIdx);
+        // Ally: posisi di bawah
+        return 100 + Math.random() * 200;
+    }
+
+    private double extractDamage(String msg) {
+        try {
+            java.util.regex.Matcher m =
+                java.util.regex.Pattern.compile("([0-9]+\\.?[0-9]*)").matcher(msg);
+            if (m.find()) return Double.parseDouble(m.group(1));
+        } catch (Exception ignored) {}
+        return 0;
+    }
+
+    private String extractSkillName(String msg) {
+        if (msg == null) return null;
+        // "X menggunakan Pukulan Harimau"
+        int idx = msg.lastIndexOf(" ");
+        return idx > 0 ? msg.substring(idx + 1) : null;
+    }
+
+    private String extractStatusName(String msg) {
+        if (msg == null) return "Status";
+        int idx = msg.lastIndexOf(":");
     }
 
     private Entity getFirstAliveEnemy() {

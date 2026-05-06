@@ -100,6 +100,8 @@ public class GameStateConverter {
             md.currentMp     = merc.getCurrentMp();
             md.currentShield = merc.getCurrentShield();
             md.isActive      = engine.getActiveMercs().contains(merc);
+            md.isActive = engine.getActiveMercs().stream()
+                .anyMatch(m -> m.getMercenaryType() == merc.getMercenaryType());
             save.ownedMercs.add(md);
         }
 
@@ -320,8 +322,9 @@ public class GameStateConverter {
     }
 
     private static void applyEquipData(Equipment eq, GameSaveState.ItemData d) {
-        for (int i = 0; i < d.upgradeLevel; i++) eq.applyUpgrade();
-        // Restore bonus stats via method yang bisa modify internal map
+        // Set level langsung tanpa trigger random stat bonus
+        eq.setUpgradeLevelDirect(d.upgradeLevel);
+        // Restore bonus stats persis seperti saat disimpan
         eq.restoreBonusStats(parseStats(d.bonusStats));
     }
 

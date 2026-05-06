@@ -6,11 +6,11 @@ package arclightcity.entity.stats;
  */
 public enum DamageType {
 
-    PHYSICAL  ("Physical",  "Serangan fisik mentah — dikurangi PHYSICAL_DEF",  StatType.PHYSICAL_DEF),
-    CYBER     ("Cyber",     "Serangan hack/virus — dikurangi CYBER_DEF",        StatType.CYBER_DEF),
-    ENERGY    ("Energy",    "Serangan plasma/neon — dikurangi ENERGY_DEF",      StatType.ENERGY_DEF),
-    TRUE      ("True",      "Damage murni — tidak bisa dikurangi DEF apapun",   null),
-    HEAL      ("Heal",      "Bukan damage — memulihkan HP",                     null);
+    PHYSICAL  ("Fisik",    "Serangan fisik mentah — dikurangi PHYSICAL_DEF",  StatType.PHYSICAL_DEF),
+    CYBER     ("Cyber",    "Serangan hack/virus — dikurangi CYBER_DEF",        StatType.CYBER_DEF),
+    ENERGY    ("Energi",   "Serangan plasma/neon — dikurangi ENERGY_DEF",      StatType.ENERGY_DEF),
+    TRUE      ("Mutlak",   "Damage murni — tidak bisa dikurangi DEF apapun",   null),
+    HEAL      ("Pulih",    "Bukan damage — memulihkan HP",                     null);
 
     public final String displayName;
     public final String description;

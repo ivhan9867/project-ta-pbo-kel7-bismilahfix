@@ -119,6 +119,15 @@ public class DungeonGridMap extends StackPane {
         visibleTiles.add(0);
     }
 
+    /** Reveal semua tiles di floor saat ini (MAP_REVEALED event) */
+    public void revealAll() {
+        if (floor == null) return;
+        for (int i = 0; i < floor.getTotalRooms(); i++) {
+            visibleTiles.add(i);
+        }
+        draw();
+    }
+
     private void revealAround(int idx) {
         int r = idx / COLS, c = idx % COLS;
         int[][] dirs = {{-1,0},{1,0},{0,-1},{0,1}};

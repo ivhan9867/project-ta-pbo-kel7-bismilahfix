@@ -103,10 +103,17 @@ public class DungeonMapView {
                         router.emitChat(MercenaryDialogue.Trigger.DUNGEON_ENTER_REST);
                     }
                     case MAP_REVEALED -> {
-                        // Event reveal map — refresh grid untuk tampilkan room baru
-                        refreshMapGrid();
-                        refreshNextRoomsPanel();
-                        router.addSystemChat("◈ Peta area terbuka! Jalur baru terlihat.");
+                        // Reveal semua tile + flash animation
+                        router.addSystemChat("◈ Peta area terbuka! Semua jalur terlihat.");
+                        // Flash effect pada map
+                        router.showToast("◈  PETA TERUNGKAP!",
+                            "Semua ruangan di lantai ini terbuka!", "#2D7A45");
+                        // Refresh grid dengan semua tiles visible
+                        javafx.application.Platform.runLater(() -> {
+                            if (dungeonGridMap != null) dungeonGridMap.revealAll();
+                            refreshMapGrid();
+                            refreshNextRoomsPanel();
+                        });
                     }
                     case ROOM_ALREADY_CLEARED -> {
                         refreshMapGrid();
