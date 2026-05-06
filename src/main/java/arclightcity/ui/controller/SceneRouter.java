@@ -3,6 +3,7 @@ package arclightcity.ui.controller;
 import arclightcity.combat.CombatResult;
 import arclightcity.dungeon.DungeonEvent;
 import arclightcity.engine.GameEngine;
+import arclightcity.item.Inventory;
 import arclightcity.ui.ArclightApp;
 import arclightcity.ui.view.*;
 import javafx.application.Platform;
@@ -184,6 +185,98 @@ public class SceneRouter {
 
             slideIn.play();
             fadeOut.play();
+        });
+    }
+
+    /** Tampilkan item picker untuk kalibrasi — dari dungeon event */
+    public void showCalibrationPicker() {
+        javafx.application.Platform.runLater(() -> {
+            Inventory inv = engine.getInventory();
+            java.util.List<arclightcity.item.Equipment> equips = new java.util.ArrayList<>();
+            if (inv.getEquippedWeapon() != null)     equips.add(inv.getEquippedWeapon());
+            if (inv.getEquippedArmor() != null)      equips.add(inv.getEquippedArmor());
+            if (inv.getEquippedHelmet() != null)     equips.add(inv.getEquippedHelmet());
+            if (inv.getEquippedBoots() != null)      equips.add(inv.getEquippedBoots());
+            equips.addAll(inv.getEquipmentInBag());
+
+            javafx.stage.Stage picker = new javafx.stage.Stage();
+            picker.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+            picker.setTitle("Kalibrasi Item — Pilih Item");
+
+            javafx.scene.layout.VBox root = new javafx.scene.layout.VBox(0);
+            root.setStyle("-fx-background-color: #0A0604;");
+            root.setPrefWidth(400);
+
+            javafx.scene.control.Label title = new javafx.scene.control.Label("◈  PILIH ITEM UNTUK DIKALIBRASI");
+            title.setStyle("-fx-text-fill: #7755BB; -fx-font-family: 'Courier New';" +
+                          "-fx-font-size: 13px; -fx-font-weight: bold;" +
+                          "-fx-padding: 12 16 8 16;" +
+                          "-fx-border-color: #3A2810; -fx-border-width: 0 0 1 0;");
+            root.getChildren().add(title);
+
+            javafx.scene.control.ScrollPane scroll = new javafx.scene.control.ScrollPane();
+            scroll.setFitToWidth(true);
+            scroll.setStyle("-fx-background-color: #0A0604; -fx-background: #0A0604;");
+
+            javafx.scene.layout.VBox list = new javafx.scene.layout.VBox(0);
+            list.setStyle("-fx-background-color: #0A0604;");
+
+            if (equips.isEmpty()) {
+                javafx.scene.control.Label none = new javafx.scene.control.Label("Tidak ada item yang bisa dikalibrasi.");
+                none.setStyle("-fx-text-fill: #3A2810; -fx-font-family: 'Courier New'; -fx-padding: 16;");
+                list.getChildren().add(none);
+            }
+
+            for (arclightcity.item.Equipment eq : equips) {
+                String rc = arclightcity.ui.util.UIFactory.rarityColor(eq.getRarity());
+                javafx.scene.layout.HBox row = new javafx.scene.layout.HBox(10);
+                row.setPadding(new javafx.geometry.Insets(10, 14, 10, 14));
+                row.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+                row.setStyle("-fx-background-color: #1A1008; -fx-border-color: #2A1808;" +
+                            "-fx-border-width: 0 0 1 0; -fx-cursor: hand;");
+
+                javafx.scene.layout.VBox info = new javafx.scene.layout.VBox(2);
+                javafx.scene.layout.HBox.setHgrow(info, javafx.scene.layout.Priority.ALWAYS);
+
+                javafx.scene.control.Label nameLbl = new javafx.scene.control.Label(eq.getFullName());
+                nameLbl.setStyle("-fx-text-fill: " + rc + "; -fx-font-family: 'Courier New';" +
+                               "-fx-font-size: 12px; -fx-font-weight: bold;");
+                javafx.scene.control.Label calLbl = new javafx.scene.control.Label(
+                    "Kalibrasi: " + eq.getCalibrationLevel() + "/10  |  +" + eq.getUpgradeLevel());
+                calLbl.setStyle("-fx-text-fill: #5A3A10; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+                info.getChildren().addAll(nameLbl, calLbl);
+
+                javafx.scene.control.Button calBtn = new javafx.scene.control.Button("KALIBRASI");
+                calBtn.setStyle("-fx-background-color: #7755BB22; -fx-border-color: #7755BB;" +
+                               "-fx-border-width: 1; -fx-text-fill: #9977DD;" +
+                               "-fx-font-family: 'Courier New'; -fx-font-size: 10px;" +
+                               "-fx-padding: 5 10; -fx-cursor: hand;");
+                calBtn.setOnAction(e -> {
+                    eq.calibrate(new java.util.Random());
+                    addSystemChat("◈ " + eq.getName() + " berhasil dikalibrasi!");
+                    picker.close();
+                    showDungeonMap();
+                });
+
+                row.getChildren().addAll(info, calBtn);
+                list.getChildren().add(row);
+            }
+
+            scroll.setContent(list);
+            scroll.setPrefHeight(350);
+            root.getChildren().add(scroll);
+
+            javafx.scene.control.Button closeBtn = new javafx.scene.control.Button("LEWATI");
+            closeBtn.setMaxWidth(Double.MAX_VALUE);
+            closeBtn.setStyle("-fx-background-color: transparent; -fx-border-color: #3A2810;" +
+                             "-fx-border-width: 1 0 0 0; -fx-text-fill: #5A3A10;" +
+                             "-fx-font-family: 'Courier New'; -fx-font-size: 11px;" +
+                             "-fx-padding: 10; -fx-cursor: hand;");
+            closeBtn.setOnAction(e -> { picker.close(); showDungeonMap(); });
+            root.getChildren().add(closeBtn);
+
+            picker.setScene(new javafx.scene.Scene(root));
+            picker.show();
         });
     }
 

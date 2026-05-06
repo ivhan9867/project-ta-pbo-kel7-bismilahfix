@@ -304,7 +304,7 @@ public class ProfileView {
                           "-fx-border-width: 1; -fx-text-fill: #FF5533;" +
                           "-fx-font-family: 'Courier New'; -fx-font-size: 10px; -fx-padding: 4 8; -fx-cursor: hand;");
         lepasBtn.setOnAction(e -> {
-            inv.unequip(eq);
+            inv.unequip(eq); // unequip by Equipment object
             router.showProfile("PERLENGKAPAN"); // refresh immediately
         });
         row.getChildren().add(lepasBtn);

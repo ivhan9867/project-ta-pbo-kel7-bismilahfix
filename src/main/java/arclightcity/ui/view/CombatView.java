@@ -149,9 +149,19 @@ public class CombatView {
         // Status effects
         battleArea.getChildren().add(buildStatusPanel());
 
-        // CENTER langsung - tidak pakai ScrollPane agar tidak perlu scroll
+        // Wrap dalam ScrollPane tapi dibatasi — cukup untuk 1-2 musuh tanpa scroll
+        // jika ada lebih banyak musuh, baru perlu scroll
+        ScrollPane battleScroll = new ScrollPane(battleArea);
+        battleScroll.setFitToWidth(true);
+        battleScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        battleScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        battleScroll.setStyle(
+            "-fx-background-color: #0A0604;" +
+            "-fx-background: #0A0604;" +
+            "-fx-border-color: transparent;"
+        );
         battleArea.setStyle("-fx-background-color: #0A0604;");
-        root.setCenter(battleArea);
+        root.setCenter(battleScroll);
 
         // ── BOTTOM: action panel (selalu terlihat) ────────
         actionPanel = new VBox(8);

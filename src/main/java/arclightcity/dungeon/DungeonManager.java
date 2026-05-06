@@ -334,9 +334,10 @@ public class DungeonManager {
                 handleEnemyRoom(bonusRoom, false);
             }
             case OPEN_SHOP   -> handleShopRoom(room);
-            case REVEAL_MAP  -> emit(DungeonStateEvent.mapRevealed());
-            case NOTHING     -> emit(DungeonStateEvent.nothing());
-            default          -> { }
+            case REVEAL_MAP    -> emit(DungeonStateEvent.mapRevealed());
+            case CALIBRATION  -> emit(DungeonStateEvent.calibrationAvailable(result.intValue));
+            case NOTHING      -> emit(DungeonStateEvent.nothing());
+            default           -> { }
         }
     }
 

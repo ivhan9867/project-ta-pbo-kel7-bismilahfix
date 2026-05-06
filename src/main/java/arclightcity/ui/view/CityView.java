@@ -304,6 +304,7 @@ public class CityView {
             if (engine.getPlayer().spendGold(finalPrice)) {
                 engine.getInventory().addItem(item);
                 router.addSystemChat("✓ " + item.getName() + " dibeli!");
+                engine.autoSave(); // save otomatis setelah beli
                 router.showCityArea("JAMU".equals(activeArea) ? "JAMU" : "SENJATA");
             }
         });
@@ -575,6 +576,7 @@ public class CityView {
             engine.getInventory().removeItem(item.getId());
             engine.getPlayer().addGold(fp);
             router.addSystemChat("✓ " + item.getName() + " dijual ⚙" + fp);
+            engine.autoSave();
             router.showCityArea("PENADAH");
         });
 

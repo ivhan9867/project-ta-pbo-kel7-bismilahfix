@@ -36,6 +36,7 @@ public class DungeonStateEvent {
         LEVEL_UP,
         BOSS_DEFEATED,
         MYTHIC_CRAFT,
+        CALIBRATION_AVAILABLE,
         ERROR
     }
 
@@ -211,6 +212,13 @@ public class DungeonStateEvent {
     }
 
     /** Event saat 3 Mythic Fragment berhasil di-craft jadi Mythic weapon */
+    public static DungeonStateEvent calibrationAvailable(int slots) {
+        return new Builder(Type.CALIBRATION_AVAILABLE)
+            .intValue(slots)
+            .message("Altar kalibrasi ditemukan! Pilih item untuk dikalibrasi.")
+            .build();
+    }
+
     public static DungeonStateEvent bossDefeated(String bossName) {
         return new Builder(Type.BOSS_DEFEATED)
             .message("Boss " + bossName + " dikalahkan! ✦ Serpihan Red Essence diperoleh!")

@@ -568,8 +568,5 @@ public class UIFactory {
         flicker.play();
     }
 
-    /** glowPulse alias untuk backward compat */
-    public static void glowPulse(javafx.scene.Node node, String color) {
-        goldPulse(node, color);
-    }
+
 }

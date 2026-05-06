@@ -358,6 +358,8 @@ public static class InventoryViewImpl {
         unequipBtn.setOnAction(e -> {
             inv.unequip(eq);
             popup.close();
+            // Refresh inventory view agar slot terupdate
+            router.showInventory();
         });
 
         Button closeBtn = new Button("TUTUP");
