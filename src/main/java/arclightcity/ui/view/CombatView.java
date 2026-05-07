@@ -1338,6 +1338,7 @@ public class CombatView {
     private String extractStatusName(String msg) {
         if (msg == null) return "Status";
         int idx = msg.lastIndexOf(":");
+        return idx > 0 ? msg.substring(idx + 1).trim() : "Status";
     }
 
     private Entity getFirstAliveEnemy() {
