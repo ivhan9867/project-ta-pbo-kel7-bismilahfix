@@ -395,16 +395,17 @@ public class SceneRouter {
     // ── Chat Helpers ──────────────────────────────────────────
 
     public void emitChat(MercenaryDialogue.Trigger trigger) {
-        // Double runLater + delay memastikan scene sudah fully rendered
-        // sebelum pesan ditambahkan ke messageContainer
         Platform.runLater(() -> {
             List<arclightcity.entity.mercenary.Mercenary> mercs = engine.getActiveMercs();
-            // Delay 400ms agar layout selesai dulu
+            // Fallback ke ownedMercs jika activeMercs kosong
+            if (mercs == null || mercs.isEmpty()) mercs = engine.getOwnedMercs();
+            if (mercs == null || mercs.isEmpty()) return;
+            final var finalMercs = mercs;
             new javafx.animation.Timeline(
                 new javafx.animation.KeyFrame(
                     javafx.util.Duration.millis(400),
                     e -> Platform.runLater(() ->
-                        chatPanel.emitTrigger(mercs, trigger)
+                        chatPanel.emitTrigger(finalMercs, trigger)
                     )
                 )
             ).play();
@@ -414,11 +415,14 @@ public class SceneRouter {
     public void emitChatDelayed(MercenaryDialogue.Trigger trigger, int delayMs) {
         Platform.runLater(() -> {
             List<arclightcity.entity.mercenary.Mercenary> mercs = engine.getActiveMercs();
+            if (mercs == null || mercs.isEmpty()) mercs = engine.getOwnedMercs();
+            if (mercs == null || mercs.isEmpty()) return;
+            final var finalMercs = mercs;
             new javafx.animation.Timeline(
                 new javafx.animation.KeyFrame(
                     javafx.util.Duration.millis(delayMs),
                     e -> Platform.runLater(() ->
-                        chatPanel.emitTrigger(mercs, trigger)
+                        chatPanel.emitTrigger(finalMercs, trigger)
                     )
                 )
             ).play();

@@ -184,6 +184,12 @@ public class Player extends Entity {
     public void setExpDirect(double exp, double toNext)            { this.currentExp = exp; this.expToNextLevel = toNext; }
     public void setGold(long gold)                                 { this.gold = Math.max(0, gold); }
     public void addGold(long amount)                              { this.gold += amount; }
+    public void fullRestore() {
+        this.currentHp     = getStats().get(arclightcity.entity.stats.StatType.MAX_HP);
+        this.currentMp     = getStats().get(arclightcity.entity.stats.StatType.MAX_MP);
+        this.currentShield = getStats().get(arclightcity.entity.stats.StatType.MAX_SHIELD);
+    }
+
     public void setHpDirect(double hp)                             { this.currentHp = Math.min(hp, stats.get(StatType.MAX_HP)); }
     public void setMpDirect(double mp)                             { this.currentMp = Math.min(mp, stats.get(StatType.MAX_MP)); }
     public void setShieldDirect(double shield)                     { this.currentShield = Math.min(shield, stats.get(StatType.MAX_SHIELD)); }

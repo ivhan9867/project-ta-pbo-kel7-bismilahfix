@@ -45,7 +45,7 @@ public abstract class Enemy extends Entity {
      */
     public void scaleToFloor(int floor) {
         this.floorLevel = floor;
-        double scaleFactor = 1.0 + (floor - 1) * 0.15; // +15% per floor
+        double scaleFactor = 1.0 + (floor - 1) * 0.08; // +8% per floor (turun dari 15%)
         stats.scaleBase(scaleFactor);
 
         // Reward scale

@@ -1517,8 +1517,23 @@ public static class GameOverViewImpl {
             "-fx-padding: 8 14; -fx-cursor: hand;"
         );
         retry.setOnAction(e -> {
-            engine.createCharacter(player.getName(), player.getBackground());
-            arclightcity.save.SaveManager.deleteAllSaves();
+            // Coba load auto-save dulu, kalau tidak ada baru load slot 1
+            var autoSave = arclightcity.save.SaveManager.loadAuto();
+            if (autoSave.isPresent()) {
+                arclightcity.save.GameStateConverter.restoreFromSave(engine, autoSave.get());
+                router.addSystemChat("📂 Dimuat dari auto-save terakhir.");
+            } else {
+                var slot1 = arclightcity.save.SaveManager.loadSlot(1);
+                if (slot1.isPresent()) {
+                    arclightcity.save.GameStateConverter.restoreFromSave(engine, slot1.get());
+                    router.addSystemChat("📂 Dimuat dari Slot 1.");
+                } else {
+                    // Tidak ada save sama sekali - kembali ke hub dengan state saat ini
+                    // Restore HP/MP player ke full
+                    engine.getPlayer().fullRestore();
+                    router.addSystemChat("⚠ Tidak ada save — HP/MP dipulihkan penuh.");
+                }
+            }
             router.showHub();
         });
 
