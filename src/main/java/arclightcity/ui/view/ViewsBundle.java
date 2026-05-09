@@ -41,116 +41,347 @@ public static class InventoryViewImpl {
 
     Parent build() {
         Inventory inv = engine.getInventory();
-        VBox root = UIFactory.screenRoot();
+        BorderPane root = UIFactory.screenRootBorder();
 
-        root.getChildren().add(UIFactory.headerWithResources(
-                "INVENTORY", () -> router.showHub(),
-                engine.getPlayer().getGold(), 0));
+        // ── TOP: header + equipment slots + material bar ──
+        VBox topSection = new VBox(0);
 
-        // ── Equipment slots header ────────────────────────
-        root.getChildren().add(buildEquipmentSlots(inv));
+        // Header
+        HBox header = new HBox(10);
+        header.setPadding(new Insets(10, 16, 10, 16));
+        header.setAlignment(Pos.CENTER_LEFT);
+        header.setStyle("-fx-background-color: #0F0A06;" +
+                        "-fx-border-color: #3A2810; -fx-border-width: 0 0 1 0;");
 
-        // ── Material counters ─────────────────────────────
-        root.getChildren().add(buildMaterialBar(inv));
+        Button back = new Button("← MARKAS");
+        back.setStyle("-fx-background-color: transparent; -fx-border-color: #3A2810;" +
+                      "-fx-border-width: 1; -fx-text-fill: #5A3A10;" +
+                      "-fx-font-family: 'Courier New'; -fx-font-size: 10px;" +
+                      "-fx-padding: 3 8; -fx-cursor: hand;");
+        back.setOnAction(e -> router.showHub());
 
-        UIFactory.divider();
+        Label title = new Label("⊞  PERBENDAHARAAN");
+        title.setStyle("-fx-text-fill: #FFB830; -fx-font-family: 'Courier New';" +
+                       "-fx-font-size: 14px; -fx-font-weight: bold;" +
+                       "-fx-effect: dropshadow(gaussian, #C8860A, 6, 0.3, 0, 0);");
+        HBox.setHgrow(title, Priority.ALWAYS);
 
-        // ── Filter tabs ───────────────────────────────────
-        root.getChildren().add(buildFilterTabs());
+        Label goldLbl = new Label("⚙ " + UIFactory.formatNumber(engine.getPlayer().getGold()));
+        goldLbl.setStyle("-fx-text-fill: #FFB830; -fx-font-family: 'Courier New';" +
+                         "-fx-font-size: 12px; -fx-font-weight: bold;");
+        header.getChildren().addAll(back, title, goldLbl);
 
-        // ── Item list ─────────────────────────────────────
-        ScrollPane scroll = new ScrollPane();
-        scroll.setFitToWidth(true);
-        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scroll.setStyle("-fx-background-color: #050810; -fx-background: #050810; -fx-border-color: transparent;");
-        VBox.setVgrow(scroll, Priority.ALWAYS);
+        topSection.getChildren().add(header);
+        topSection.getChildren().add(buildEquipmentSlots(inv));
+        topSection.getChildren().add(buildMaterialBar(inv));
+        topSection.getChildren().add(buildFilterTabs());
+        root.setTop(topSection);
 
+        // ── CENTER: item list ──────────────────────────────
         itemListContainer = new VBox(0);
         refreshItemList(inv);
-        scroll.setContent(itemListContainer);
-        root.getChildren().add(scroll);
+
+        ScrollPane scroll = new ScrollPane(itemListContainer);
+        scroll.setFitToWidth(true);
+        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scroll.setStyle("-fx-background-color: #0A0604; -fx-background: #0A0604;" +
+                        "-fx-border-color: transparent;");
+        root.setCenter(scroll);
 
         UIFactory.fadeIn(root, 300);
         return root;
     }
 
-    private HBox buildEquipmentSlots(Inventory inv) {
-        HBox bar = new HBox(6);
-        bar.setPadding(new Insets(10, 16, 10, 16));
-        bar.setStyle("-fx-background-color: #0C1220; -fx-border-color: #1C2E44; -fx-border-width: 0 0 1 0;");
+    private VBox buildEquipmentSlots(Inventory inv) {
+        VBox container = new VBox(0);
+        container.setStyle("-fx-background-color: #0F0A06;" +
+                           "-fx-border-color: #3A2810; -fx-border-width: 0 0 1 0;");
 
-        // Ambil equipment object langsung agar bisa cek rarity warna
-        Equipment[] equips = {
-            inv.getEquippedWeapon(),
-            inv.getEquippedArmor(),
-            inv.getEquippedAccessory1(),
-            inv.getEquippedAccessory2()
-        };
-        String[] slotLabels = { "WPN", "ARM", "ACC", "ACC" };
+        Label title = new Label("── PERLENGKAPAN TERPASANG ──");
+        title.setStyle("-fx-text-fill: #5A3A10; -fx-font-family: 'Courier New';" +
+                       "-fx-font-size: 10px; -fx-letter-spacing: 2; -fx-padding: 8 16 6 16;");
+        container.getChildren().add(title);
 
-        for (int i = 0; i < equips.length; i++) {
-            Equipment eq = equips[i];
-            String label = slotLabels[i];
+        // Layout 3 kolom: kiri | tengah (body) | kanan
+        HBox layout = new HBox(6);
+        layout.setPadding(new Insets(4, 16, 10, 16));
+        layout.setAlignment(Pos.CENTER);
 
-            VBox slotBox = new VBox(2);
-            slotBox.setAlignment(Pos.CENTER);
-            slotBox.setPrefWidth(80);
+        // ── Kiri: Weapon + Armor ──────────────────────────────
+        VBox left = new VBox(6);
+        left.setAlignment(Pos.CENTER);
+        left.setMinWidth(110);
+        left.getChildren().add(buildEquipSlot("⚔", "SENJATA", inv.getEquippedWeapon(), inv));
+        left.getChildren().add(buildEquipSlot("🛡", "BAJU BESI", inv.getEquippedArmor(), inv));
 
-            if (eq == null) {
-                // Slot kosong — style gelap polos
-                slotBox.setStyle(
-                    "-fx-background-color: #080D18;" +
-                    "-fx-border-color: #1C2E4466;" +
-                    "-fx-border-width: 1;" +
-                    "-fx-padding: 6;"
-                );
-                Label slotType = new Label(label);
-                slotType.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
-                Label empty = new Label("—");
-                empty.setStyle("-fx-text-fill: #2A3A50; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
-                slotBox.getChildren().addAll(slotType, empty);
-            } else {
-                // Slot terisi — border warna sesuai rarity
-                String rarityColor = UIFactory.rarityColor(eq.getRarity());
-                slotBox.setStyle(
-                    "-fx-background-color: " + rarityColor + "11;" +
-                    "-fx-border-color: " + rarityColor + ";" +
-                    "-fx-border-width: 1 1 1 3;" + // thick left border = rarity indicator
-                    "-fx-padding: 6;"
-                );
-                Label slotType = new Label(label);
-                slotType.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
-                String displayName = eq.getName().length() > 9
-                        ? eq.getName().substring(0, 8) + "…"
-                        : eq.getName();
-                Label itemName = new Label(displayName);
-                itemName.setStyle(
-                    "-fx-text-fill: " + rarityColor + ";" +
-                    "-fx-font-family: 'Courier New'; -fx-font-size: 11px; -fx-font-weight: bold;"
-                );
-                // Upgrade level badge
-                if (eq.getUpgradeLevel() > 0) {
-                    Label upgLabel = new Label("+" + eq.getUpgradeLevel());
-                    upgLabel.setStyle(
-                        "-fx-text-fill: " + UIFactory.YELLOW + ";" +
-                        "-fx-font-family: 'Courier New'; -fx-font-size: 10px;"
-                    );
-                    slotBox.getChildren().addAll(slotType, itemName, upgLabel);
-                } else {
-                    slotBox.getChildren().addAll(slotType, itemName);
-                }
+        // ── Tengah: Helm + Boots ──────────────────────────────
+        VBox center = new VBox(6);
+        center.setAlignment(Pos.CENTER);
+        center.setMinWidth(110);
+        center.getChildren().add(buildEquipSlot("👑", "HELM", inv.getEquippedHelmet(), inv));
+        center.getChildren().add(buildEquipSlot("👢", "SEPATU", inv.getEquippedBoots(), inv));
+
+        // ── Kanan: Ring1 + Ring2 ─────────────────────────────
+        VBox right = new VBox(6);
+        right.setAlignment(Pos.CENTER);
+        right.setMinWidth(110);
+        right.getChildren().add(buildEquipSlot("💍", "CINCIN 1", inv.getEquippedRing1(), inv));
+        right.getChildren().add(buildEquipSlot("💍", "CINCIN 2", inv.getEquippedRing2(), inv));
+
+        layout.getChildren().addAll(left, center, right);
+        container.getChildren().add(layout);
+
+        // ── Baris 2: Aksesori 1 + 2 (lebar penuh) ────────────
+        HBox accRow = new HBox(6);
+        accRow.setPadding(new Insets(0, 16, 8, 16));
+        accRow.setAlignment(Pos.CENTER);
+
+        VBox accLeft = new VBox(0);
+        accLeft.setAlignment(Pos.CENTER);
+        HBox.setHgrow(accLeft, Priority.ALWAYS);
+        accLeft.getChildren().add(buildEquipSlotWide("◈", "AKSESORI 1", inv.getEquippedAccessory1(), inv));
+
+        VBox accRight = new VBox(0);
+        accRight.setAlignment(Pos.CENTER);
+        HBox.setHgrow(accRight, Priority.ALWAYS);
+        accRight.getChildren().add(buildEquipSlotWide("◈", "AKSESORI 2", inv.getEquippedAccessory2(), inv));
+
+        accRow.getChildren().addAll(accLeft, accRight);
+        container.getChildren().add(accRow);
+
+        return container;
+    }
+
+    /** Slot lebar untuk baris aksesori */
+    private HBox buildEquipSlotWide(String icon, String slotName, Equipment eq, Inventory inv) {
+        HBox slot = new HBox(10);
+        slot.setAlignment(Pos.CENTER_LEFT);
+        slot.setPadding(new Insets(6, 10, 6, 10));
+        slot.setMaxWidth(Double.MAX_VALUE);
+        slot.setCursor(eq != null ? javafx.scene.Cursor.HAND : javafx.scene.Cursor.DEFAULT);
+
+        Label iconLbl = new Label(icon);
+        iconLbl.setStyle("-fx-font-size: 14px;" + (eq == null ? "-fx-opacity: 0.3;" : ""));
+
+        VBox info = new VBox(1);
+        HBox.setHgrow(info, Priority.ALWAYS);
+        Label nameLbl = new Label(slotName);
+        nameLbl.setStyle("-fx-text-fill: #5A3A10; -fx-font-family: 'Courier New'; -fx-font-size: 8px;");
+
+        if (eq == null) {
+            slot.setStyle("-fx-background-color: #0A0604; -fx-border-color: #2A1808; -fx-border-width: 1;");
+            Label emptyLbl = new Label("— Kosong —");
+            emptyLbl.setStyle("-fx-text-fill: #2A1808; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+            info.getChildren().addAll(nameLbl, emptyLbl);
+        } else {
+            String rc = UIFactory.rarityColor(eq.getRarity());
+            slot.setStyle("-fx-background-color: " + rc + "11; -fx-border-color: " + rc +
+                          "; -fx-border-width: 1 1 1 3;");
+            Label itemLbl = new Label(eq.getName());
+            itemLbl.setStyle("-fx-text-fill: " + rc + "; -fx-font-family: 'Courier New';" +
+                             "-fx-font-size: 11px; -fx-font-weight: bold;");
+            Label upgLbl = eq.getUpgradeLevel() > 0
+                ? new Label("+" + eq.getUpgradeLevel() + " | " + eq.getRarity().displayName)
+                : new Label(eq.getRarity().displayName);
+            upgLbl.setStyle("-fx-text-fill: " + rc + "88; -fx-font-family: 'Courier New'; -fx-font-size: 9px;");
+            info.getChildren().addAll(nameLbl, itemLbl, upgLbl);
+            slot.setOnMouseClicked(e -> showItemDetailPopup(eq, inv));
+        }
+        slot.getChildren().addAll(iconLbl, info);
+        return slot;
+    }
+
+    private VBox buildEquipSlot(String icon, String slotName, Equipment eq, Inventory inv) {
+        VBox slot = new VBox(2);
+        slot.setAlignment(Pos.CENTER);
+        slot.setPrefWidth(105);
+        slot.setCursor(eq != null ? javafx.scene.Cursor.HAND : javafx.scene.Cursor.DEFAULT);
+
+        if (eq == null) {
+            slot.setStyle("-fx-background-color: #0A0604; -fx-border-color: #2A1808;" +
+                          "-fx-border-width: 1; -fx-padding: 8;");
+            Label iconLbl = new Label(icon);
+            iconLbl.setStyle("-fx-font-size: 16px; -fx-opacity: 0.3;");
+            Label nameLbl = new Label(slotName);
+            nameLbl.setStyle("-fx-text-fill: #2A1808; -fx-font-family: 'Courier New'; -fx-font-size: 9px;");
+            Label emptyLbl = new Label("— Kosong —");
+            emptyLbl.setStyle("-fx-text-fill: #2A1808; -fx-font-family: 'Courier New'; -fx-font-size: 9px;");
+            slot.getChildren().addAll(iconLbl, nameLbl, emptyLbl);
+        } else {
+            String rc = UIFactory.rarityColor(eq.getRarity());
+            slot.setStyle("-fx-background-color: " + rc + "11;" +
+                          "-fx-border-color: " + rc + ";" +
+                          "-fx-border-width: 1 1 1 3; -fx-padding: 8;");
+
+            Label iconLbl = new Label(icon);
+            iconLbl.setStyle("-fx-font-size: 16px;");
+
+            Label nameLbl = new Label(slotName);
+            nameLbl.setStyle("-fx-text-fill: #5A3A10; -fx-font-family: 'Courier New'; -fx-font-size: 8px;");
+
+            String displayName = eq.getName().length() > 11
+                ? eq.getName().substring(0, 10) + "…" : eq.getName();
+            Label itemLbl = new Label(displayName);
+            itemLbl.setStyle("-fx-text-fill: " + rc + "; -fx-font-family: 'Courier New';" +
+                             "-fx-font-size: 10px; -fx-font-weight: bold;");
+            itemLbl.setWrapText(true);
+            itemLbl.setMaxWidth(100);
+
+            HBox badges = new HBox(4);
+            badges.setAlignment(Pos.CENTER);
+            if (eq.getUpgradeLevel() > 0) {
+                Label upg = new Label("+" + eq.getUpgradeLevel());
+                upg.setStyle("-fx-text-fill: #2D7A45; -fx-font-family: 'Courier New'; -fx-font-size: 9px;");
+                badges.getChildren().add(upg);
             }
+            Label rar = new Label("[" + eq.getRarity().displayName + "]");
+            rar.setStyle("-fx-text-fill: " + rc + "77; -fx-font-family: 'Courier New'; -fx-font-size: 8px;");
+            badges.getChildren().add(rar);
 
-            bar.getChildren().add(slotBox);
+            slot.getChildren().addAll(iconLbl, nameLbl, itemLbl, badges);
+
+            // Klik → popup detail item
+            slot.setOnMouseClicked(e -> showItemDetailPopup(eq, inv));
+            slot.setOnMouseEntered(ev ->
+                slot.setStyle(slot.getStyle().replace(rc + "11", rc + "22")));
+            slot.setOnMouseExited(ev ->
+                slot.setStyle(slot.getStyle().replace(rc + "22", rc + "11")));
+        }
+        return slot;
+    }
+
+    /** Popup detail item seperti screenshot game RPG */
+    private void showItemDetailPopup(Equipment eq, Inventory inv) {
+        javafx.stage.Stage popup = new javafx.stage.Stage();
+        popup.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+        popup.setTitle(eq.getFullName());
+
+        String rc = UIFactory.rarityColor(eq.getRarity());
+
+        VBox root = new VBox(0);
+        root.setStyle("-fx-background-color: #0F0A06; -fx-border-color: " + rc +
+                      "; -fx-border-width: 2;");
+        root.setPrefWidth(340);
+
+        // Header
+        VBox header = new VBox(4);
+        header.setPadding(new Insets(14, 16, 12, 16));
+        header.setStyle("-fx-background-color: #1A1008;" +
+                        "-fx-border-color: " + rc + "44; -fx-border-width: 0 0 2 0;");
+
+        Label nameLabel = new Label(eq.getFullName());
+        nameLabel.setStyle("-fx-text-fill: " + rc + "; -fx-font-family: 'Courier New';" +
+                           "-fx-font-size: 16px; -fx-font-weight: bold;" +
+                           "-fx-effect: dropshadow(gaussian, " + rc + ", 8, 0.3, 0, 0);");
+        nameLabel.setWrapText(true);
+
+        HBox meta = new HBox(10);
+        Label rarLabel = new Label(eq.getRarity().displayName.toUpperCase());
+        rarLabel.setStyle("-fx-text-fill: " + rc + "; -fx-font-family: 'Courier New';" +
+                          "-fx-font-size: 10px; -fx-font-weight: bold;" +
+                          "-fx-border-color: " + rc + "; -fx-border-width: 1; -fx-padding: 1 6;");
+        Label typeLabel = new Label(eq.getItemType().name());
+        typeLabel.setStyle("-fx-text-fill: #6A5840; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+        if (eq.getUpgradeLevel() > 0) {
+            Label upgLabel = new Label("+" + eq.getUpgradeLevel() + " UPGRADE");
+            upgLabel.setStyle("-fx-text-fill: #2D7A45; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+            meta.getChildren().addAll(rarLabel, typeLabel, upgLabel);
+        } else {
+            meta.getChildren().addAll(rarLabel, typeLabel);
         }
 
-        return bar;
+        // Calibration bar (10 dots)
+        int calLvl = eq.getCalibrationLevel();
+        HBox calBar = new HBox(3);
+        calBar.setAlignment(Pos.CENTER_LEFT);
+        Label calTitle = new Label("KALIBRASI  ");
+        calTitle.setStyle("-fx-text-fill: #5A3A10; -fx-font-family: 'Courier New'; -fx-font-size: 9px;");
+        calBar.getChildren().add(calTitle);
+        for (int i = 0; i < 10; i++) {
+            Label dot = new Label("■");
+            dot.setStyle("-fx-text-fill: " + (i < calLvl ? "#7755BB" : "#2A1808") +
+                         "; -fx-font-size: 9px;");
+            calBar.getChildren().add(dot);
+        }
+
+        // Upgrade bar
+        int upgLvl = eq.getUpgradeLevel();
+        HBox upgBar = new HBox(3);
+        Label upgTitle = new Label("UPGRADE    ");
+        upgTitle.setStyle("-fx-text-fill: #5A3A10; -fx-font-family: 'Courier New'; -fx-font-size: 9px;");
+        upgBar.setAlignment(Pos.CENTER_LEFT);
+        upgBar.getChildren().add(upgTitle);
+        for (int i = 0; i < 10; i++) {
+            Label dot = new Label("■");
+            dot.setStyle("-fx-text-fill: " + (i < upgLvl ? "#2D7A45" : "#2A1808") +
+                         "; -fx-font-size: 9px;");
+            upgBar.getChildren().add(dot);
+        }
+
+        header.getChildren().addAll(nameLabel, meta, calBar, upgBar);
+
+        // Stats
+        VBox statsBox = new VBox(2);
+        statsBox.setPadding(new Insets(12, 16, 8, 16));
+        statsBox.setStyle("-fx-border-color: #2A1808; -fx-border-width: 0 0 1 0;");
+
+        Label descLbl = new Label(eq.getDescription());
+        descLbl.setWrapText(true);
+        descLbl.setStyle("-fx-text-fill: #6A5840; -fx-font-family: 'Courier New';" +
+                         "-fx-font-size: 10px; -fx-font-style: italic; -fx-padding: 0 0 8 0;");
+        statsBox.getChildren().add(descLbl);
+
+        eq.getEffectiveStats().forEach((stat, val) -> {
+            if (val == 0) return;
+            HBox row = new HBox();
+            Label sn = new Label(stat.displayName);
+            sn.setStyle("-fx-text-fill: #A09070; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
+            HBox.setHgrow(sn, Priority.ALWAYS);
+            String formatted = (val < 1.0 && val > 0) ? String.format("+%.0f%%", val * 100)
+                                                        : String.format("+%.0f", val);
+            Label sv = new Label(formatted);
+            sv.setStyle("-fx-text-fill: #2D7A45; -fx-font-family: 'Courier New';" +
+                        "-fx-font-size: 11px; -fx-font-weight: bold;");
+            row.getChildren().addAll(sn, sv);
+            statsBox.getChildren().add(row);
+        });
+
+        // Action buttons
+        HBox actions = new HBox(8);
+        actions.setPadding(new Insets(10, 16, 14, 16));
+
+        Button unequipBtn = new Button("LEPAS");
+        unequipBtn.setStyle("-fx-background-color: transparent; -fx-border-color: #CC3300;" +
+                            "-fx-border-width: 1; -fx-text-fill: #FF5533;" +
+                            "-fx-font-family: 'Courier New'; -fx-font-size: 11px;" +
+                            "-fx-padding: 6 14; -fx-cursor: hand;");
+        unequipBtn.setOnAction(e -> {
+            inv.unequip(eq);
+            popup.close();
+            // Refresh inventory view agar slot terupdate
+            router.showInventory();
+        });
+
+        Button closeBtn = new Button("TUTUP");
+        closeBtn.setStyle("-fx-background-color: transparent; -fx-border-color: #3A2810;" +
+                          "-fx-border-width: 1; -fx-text-fill: #6A5840;" +
+                          "-fx-font-family: 'Courier New'; -fx-font-size: 11px;" +
+                          "-fx-padding: 6 14; -fx-cursor: hand;");
+        closeBtn.setOnAction(e -> popup.close());
+        HBox.setHgrow(closeBtn, Priority.ALWAYS);
+
+        actions.getChildren().addAll(unequipBtn, closeBtn);
+
+        root.getChildren().addAll(header, statsBox, actions);
+
+        popup.setScene(new javafx.scene.Scene(root));
+        popup.show();
     }
 
     private HBox buildMaterialBar(Inventory inv) {
         HBox bar = new HBox(12);
         bar.setPadding(new Insets(8, 16, 8, 16));
-        bar.setStyle("-fx-background-color: #080D18; -fx-border-color: #1C2E44; -fx-border-width: 0 0 1 0;");
+        bar.setStyle("-fx-background-color: #0F0A06; -fx-border-color: #3A2810; -fx-border-width: 0 0 1 0;");
         bar.setAlignment(Pos.CENTER_LEFT);
 
         String[][] mats = {
@@ -164,7 +395,7 @@ public static class InventoryViewImpl {
             VBox m = new VBox(0);
             m.setAlignment(Pos.CENTER);
             Label name = new Label(mat[0]);
-            name.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+            name.setStyle("-fx-text-fill: #6A5840; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
             Label val = new Label(mat[1]);
             val.setStyle("-fx-text-fill: " + UIFactory.CYAN + "; -fx-font-family: 'Courier New'; -fx-font-size: 11px; -fx-font-weight: bold;");
             m.getChildren().addAll(name, val);
@@ -172,7 +403,7 @@ public static class InventoryViewImpl {
         }
 
         Label bagInfo = new Label("BAG " + inv.getBagSize() + "/" + inv.getMaxBagSize());
-        bagInfo.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 12px;");
+        bagInfo.setStyle("-fx-text-fill: #6A5840; -fx-font-family: 'Courier New'; -fx-font-size: 12px;");
         HBox.setHgrow(new Region(), Priority.ALWAYS);
         bar.getChildren().addAll(new Region(), bagInfo);
         HBox.setHgrow(bar.getChildren().get(bar.getChildren().size() - 2), Priority.ALWAYS);
@@ -182,17 +413,20 @@ public static class InventoryViewImpl {
 
     private HBox buildFilterTabs() {
         HBox tabs = new HBox(0);
-        tabs.setStyle("-fx-background-color: #0C1220; -fx-border-color: #1C2E44; -fx-border-width: 0 0 1 0;");
+        tabs.setStyle("-fx-background-color: #150E08; -fx-border-color: #3A2810; -fx-border-width: 0 0 1 0;");
 
-        String[] filters = {"ALL", "WEAPON", "ARMOR", "ACCESSORY", "CONSUMABLE", "MATERIAL"};
-        for (String filter : filters) {
-            Label tab = new Label(filter);
-            tab.setPadding(new Insets(8, 12, 8, 12));
+        String[] filters = {"ALL","WEAPON","ARMOR","HELM","SEPATU","CINCIN","ACCESSORY","CONSUMABLE","MATERIAL"};
+        String[] labels  = {"SEMUA","SENJATA","BAJU","HELM","SEPATU","CINCIN","AKSESORI","KONSUMABLE","MATERIAL"};
+        for (int fi = 0; fi < filters.length; fi++) {
+            final String filter = filters[fi];
+            final String label  = labels[fi];
+            Label tab = new Label(label);
+            tab.setPadding(new Insets(8, 10, 8, 10));
             boolean active = filter.equals(activeFilter);
             tab.setStyle(
                 "-fx-text-fill: " + (active ? UIFactory.CYAN : UIFactory.DIM) + ";" +
-                "-fx-font-family: 'Courier New'; -fx-font-size: 12px;" +
-                (active ? "-fx-border-color: transparent transparent #00E5FF transparent; -fx-border-width: 0 0 2 0;" : "")
+                "-fx-font-family: 'Courier New'; -fx-font-size: 10px;" +
+                (active ? "-fx-border-color: transparent transparent #C8860A transparent; -fx-border-width: 0 0 2 0;" : "")
             );
             tab.setCursor(javafx.scene.Cursor.HAND);
             tab.setOnMouseClicked(e -> {
@@ -211,13 +445,31 @@ public static class InventoryViewImpl {
         var items = inv.getAllItems().stream()
                 .filter(item -> {
                     if (activeFilter.equals("ALL")) return true;
+                    // Aksesori (class Accessory) — bukan Armor
+                    if (item instanceof arclightcity.item.Accessory) {
+                        return activeFilter.equals("ACCESSORY");
+                    }
+                    // Armor dengan subtype khusus
+                    if (item instanceof arclightcity.item.Armor armor) {
+                        return switch (activeFilter) {
+                            case "ARMOR"  -> armor.getArmorType() == arclightcity.item.Armor.ArmorType.LIGHT
+                                          || armor.getArmorType() == arclightcity.item.Armor.ArmorType.MEDIUM
+                                          || armor.getArmorType() == arclightcity.item.Armor.ArmorType.HEAVY
+                                          || armor.getArmorType() == arclightcity.item.Armor.ArmorType.EXOSUIT;
+                            case "HELM"   -> armor.getArmorType() == arclightcity.item.Armor.ArmorType.HELMET;
+                            case "SEPATU" -> armor.getArmorType() == arclightcity.item.Armor.ArmorType.BOOTS;
+                            case "CINCIN" -> armor.getArmorType() == arclightcity.item.Armor.ArmorType.RING;
+                            default       -> false;
+                        };
+                    }
+                    // Weapon, Consumable, Material
                     return item.getItemType().name().equals(activeFilter);
                 })
                 .toList();
 
         if (items.isEmpty()) {
             Label empty = new Label("No items");
-            empty.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-padding: 20;");
+            empty.setStyle("-fx-text-fill: #6A5840; -fx-font-family: 'Courier New'; -fx-padding: 20;");
             itemListContainer.getChildren().add(empty);
             return;
         }
@@ -234,15 +486,20 @@ public static class InventoryViewImpl {
         row.setCursor(javafx.scene.Cursor.HAND);
 
         // Default: gelap dengan separator bawah
-        String styleNormal = "-fx-background-color: #050810;" +
-                             "-fx-border-color: transparent transparent #0C1220 transparent;" +
+        String styleNormal = "-fx-background-color: #0A0604;" +
+                             "-fx-border-color: transparent transparent #150E08 transparent;" +
                              "-fx-border-width: 0 0 1 0;";
-        String styleHover  = "-fx-background-color: #0C1220;" +
-                             "-fx-border-color: transparent transparent #1C2E44 transparent;" +
+        String styleHover  = "-fx-background-color: #150E08;" +
+                             "-fx-border-color: transparent transparent #3A2810 transparent;" +
                              "-fx-border-width: 0 0 1 0;";
         row.setStyle(styleNormal);
         row.setOnMouseEntered(e -> row.setStyle(styleHover));
         row.setOnMouseExited(e -> row.setStyle(styleNormal));
+        row.setOnMouseClicked(e -> {
+            if (item instanceof Equipment eq) {
+                showItemDetailPopup(eq, inv);
+            }
+        });
 
         // Rarity indicator
         VBox rarityBar = new VBox();
@@ -272,7 +529,7 @@ public static class InventoryViewImpl {
         // Stat summary (ambil 2 stat utama)
         String statSummary = buildStatSummary(item);
         Label descLabel = new Label(statSummary);
-        descLabel.setStyle("-fx-text-fill: #8899AA; -fx-font-family: 'Courier New'; -fx-font-size: 12px;");
+        descLabel.setStyle("-fx-text-fill: #A09070; -fx-font-family: 'Courier New'; -fx-font-size: 12px;");
         descLabel.setWrapText(true);
 
         info.getChildren().addAll(nameRow, descLabel);
@@ -284,24 +541,25 @@ public static class InventoryViewImpl {
 
         if (item instanceof Equipment eq) {
             // EQUIP button
-            Button equipBtn = new Button("EQUIP");
-            equipBtn.setStyle("-fx-background-color: #00E5FF15; -fx-border-color: #00E5FF55;" +
-                    " -fx-border-width: 1; -fx-text-fill: #00E5FF;" +
+            Button equipBtn = new Button("PAKAI");
+            equipBtn.setStyle("-fx-background-color: #C8860A15; -fx-border-color: #C8860A55;" +
+                    " -fx-border-width: 1; -fx-text-fill: #C8860A;" +
                     " -fx-font-family: 'Courier New'; -fx-font-size: 11px;" +
                     " -fx-padding: 3 6; -fx-cursor: hand;");
             equipBtn.setOnAction(e -> {
                 var result = inv.equip(eq);
                 showAlert(result.success ? "✅ " + result.message : "❌ " + result.message);
-                refreshItemList(inv); // refresh setelah equip
+                // Refresh seluruh inventory view agar slot atas ikut update
+                router.showInventory();
             });
 
             // UPGRADE button
             Button upgradeBtn = new Button("+UPG");
             boolean canUpgrade = eq.canUpgrade();
             upgradeBtn.setStyle("-fx-background-color: transparent;" +
-                    " -fx-border-color: " + (canUpgrade ? "#FFD60066" : "#5A6A8055") + ";" +
+                    " -fx-border-color: " + (canUpgrade ? "#FFB83066" : "#6A584055") + ";" +
                     " -fx-border-width: 1;" +
-                    " -fx-text-fill: " + (canUpgrade ? "#FFD600" : "#5A6A80") + ";" +
+                    " -fx-text-fill: " + (canUpgrade ? "#FFB830" : "#6A5840") + ";" +
                     " -fx-font-family: 'Courier New'; -fx-font-size: 11px;" +
                     " -fx-padding: 3 6; -fx-cursor: " + (canUpgrade ? "hand" : "default") + ";");
             upgradeBtn.setDisable(!canUpgrade);
@@ -315,9 +573,9 @@ public static class InventoryViewImpl {
             Button calibBtn = new Button("CAL");
             boolean hasKit = inv.getCalibrationKits() > 0;
             calibBtn.setStyle("-fx-background-color: transparent;" +
-                    " -fx-border-color: " + (hasKit ? "#AA00FF66" : "#5A6A8055") + ";" +
+                    " -fx-border-color: " + (hasKit ? "#7755BB66" : "#6A584055") + ";" +
                     " -fx-border-width: 1;" +
-                    " -fx-text-fill: " + (hasKit ? "#AA00FF" : "#5A6A80") + ";" +
+                    " -fx-text-fill: " + (hasKit ? "#7755BB" : "#6A5840") + ";" +
                     " -fx-font-family: 'Courier New'; -fx-font-size: 11px;" +
                     " -fx-padding: 3 6; -fx-cursor: " + (hasKit ? "hand" : "default") + ";");
             calibBtn.setDisable(!hasKit);
@@ -331,11 +589,11 @@ public static class InventoryViewImpl {
 
         } else if (item instanceof arclightcity.item.Consumable cons) {
             Label stackLabel = new Label("x" + cons.getStackCount());
-            stackLabel.setStyle("-fx-text-fill: #00E676; -fx-font-family: 'Courier New';" +
+            stackLabel.setStyle("-fx-text-fill: #2D7A45; -fx-font-family: 'Courier New';" +
                     " -fx-font-size: 11px; -fx-font-weight: bold;");
-            Button useBtn = new Button("USE");
-            useBtn.setStyle("-fx-background-color: #00E67615; -fx-border-color: #00E67655;" +
-                    " -fx-border-width: 1; -fx-text-fill: #00E676;" +
+            Button useBtn = new Button("GUNAKAN");
+            useBtn.setStyle("-fx-background-color: #2D7A4515; -fx-border-color: #2D7A4555;" +
+                    " -fx-border-width: 1; -fx-text-fill: #2D7A45;" +
                     " -fx-font-family: 'Courier New'; -fx-font-size: 11px;" +
                     " -fx-padding: 3 6; -fx-cursor: hand;");
             useBtn.setOnAction(e -> {
@@ -387,7 +645,7 @@ public static class InventoryViewImpl {
     private void showAlert(String message) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION, message, ButtonType.OK);
         alert.setHeaderText(null);
-        alert.getDialogPane().setStyle("-fx-background-color: #0C1220; -fx-font-family: 'Courier New';");
+        alert.getDialogPane().setStyle("-fx-background-color: #150E08; -fx-font-family: 'Courier New';");
         alert.showAndWait();
     }
 }
@@ -400,7 +658,7 @@ public static class MercenaryViewImpl {
 
     private final GameEngine  engine;
     private final SceneRouter router;
-    private String activeTab = "ROSTER";
+    private String activeTab = "REGU";
 
     MercenaryViewImpl(GameEngine engine, SceneRouter router) {
         this.engine = engine;
@@ -416,18 +674,18 @@ public static class MercenaryViewImpl {
                 engine.getPlayer().getGold(), 0));
 
         HBox tabBar = new HBox(0);
-        tabBar.setStyle("-fx-background-color: #0C1220;" +
-                        "-fx-border-color: #1C2E44; -fx-border-width: 0 0 1 0;");
-        for (String tab : new String[]{"ROSTER", "HIRE"}) {
+        tabBar.setStyle("-fx-background-color: #150E08;" +
+                        "-fx-border-color: #3A2810; -fx-border-width: 0 0 1 0;");
+        for (String tab : new String[]{"REGU", "REKRUT"}) {
             Button btn = new Button(tab);
             boolean active = tab.equals(activeTab);
             btn.setStyle(
-                "-fx-background-color: " + (active ? "#00E5FF11" : "transparent") + ";" +
+                "-fx-background-color: " + (active ? "#C8860A11" : "transparent") + ";" +
                 "-fx-text-fill: " + (active ? UIFactory.CYAN : UIFactory.DIM) + ";" +
                 "-fx-font-family: 'Courier New'; -fx-font-size: 11px; -fx-font-weight: bold;" +
                 "-fx-padding: 10 24;" +
                 "-fx-border-color: transparent transparent " +
-                    (active ? "#00E5FF" : "transparent") + " transparent;" +
+                    (active ? "#C8860A" : "transparent") + " transparent;" +
                 "-fx-border-width: 0 0 2 0; -fx-cursor: hand;"
             );
             final String t = tab;
@@ -435,9 +693,9 @@ public static class MercenaryViewImpl {
             tabBar.getChildren().add(btn);
         }
         Label crewBadge = new Label("  CREW: " + engine.getActiveMercs().size() + "/2  ");
-        crewBadge.setStyle("-fx-background-color: #00E5FF11; -fx-text-fill: #00E5FF;" +
+        crewBadge.setStyle("-fx-background-color: #C8860A11; -fx-text-fill: #C8860A;" +
                            "-fx-font-family: 'Courier New'; -fx-font-size: 10px;" +
-                           "-fx-padding: 2 8; -fx-border-color: #00E5FF44; -fx-border-width: 1;");
+                           "-fx-padding: 2 8; -fx-border-color: #C8860A44; -fx-border-width: 1;");
         HBox.setMargin(crewBadge, new Insets(8, 8, 8, 8));
         tabBar.getChildren().add(crewBadge);
         top.getChildren().add(tabBar);
@@ -448,11 +706,11 @@ public static class MercenaryViewImpl {
     }
 
     private ScrollPane buildCenter() {
-        VBox content = activeTab.equals("HIRE") ? buildHireTab() : buildRosterTab();
+        VBox content = activeTab.equals("REKRUT") ? buildHireTab() : buildRosterTab();
         ScrollPane scroll = new ScrollPane(content);
         scroll.setFitToWidth(true);
         scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scroll.setStyle("-fx-background-color: #050810; -fx-background: #050810;" +
+        scroll.setStyle("-fx-background-color: #0A0604; -fx-background: #0A0604;" +
                         "-fx-border-color: transparent;");
         return scroll;
     }
@@ -464,7 +722,7 @@ public static class MercenaryViewImpl {
         if (owned.isEmpty()) {
             Label none = new Label("No mercenaries hired yet.\nVisit HIRE tab to recruit crew.");
             none.setWrapText(true);
-            none.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New';" +
+            none.setStyle("-fx-text-fill: #6A5840; -fx-font-family: 'Courier New';" +
                           "-fx-font-size: 11px; -fx-padding: 20;");
             list.getChildren().add(none);
         } else {
@@ -477,8 +735,8 @@ public static class MercenaryViewImpl {
         boolean isActive = engine.getActiveMercs().contains(merc);
         VBox card = new VBox(6);
         card.setPadding(new Insets(12));
-        card.setStyle("-fx-background-color: " + (isActive ? "#0A180A" : "#0C1220") + ";" +
-                      "-fx-border-color: " + (isActive ? UIFactory.GREEN : "#1C2E44") + ";" +
+        card.setStyle("-fx-background-color: " + (isActive ? "#0A180A" : "#150E08") + ";" +
+                      "-fx-border-color: " + (isActive ? UIFactory.GREEN : "#3A2810") + ";" +
                       "-fx-border-width: 1 1 1 3;");
         HBox header = new HBox(10);
         header.setAlignment(Pos.CENTER_LEFT);
@@ -487,12 +745,12 @@ public static class MercenaryViewImpl {
                            "; -fx-font-family: 'Courier New'; -fx-font-size: 13px; -fx-font-weight: bold;");
         HBox.setHgrow(nameLabel, Priority.ALWAYS);
         Label roleLabel = new Label("[" + merc.getRole().name() + "]");
-        roleLabel.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+        roleLabel.setStyle("-fx-text-fill: #6A5840; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
         Label loyaltyLabel = new Label("♥ " + merc.getLoyaltyTitle());
         loyaltyLabel.setStyle("-fx-text-fill: #FF6B6B; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
         header.getChildren().addAll(nameLabel, roleLabel, loyaltyLabel);
         Label subtitle = new Label(merc.getMercenaryType().subtitle);
-        subtitle.setStyle("-fx-text-fill: #8899AA; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
+        subtitle.setStyle("-fx-text-fill: #A09070; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
         HBox statsRow = new HBox(16);
         statsRow.getChildren().addAll(
             miniStat("HP",  String.valueOf((int)merc.getStats().get(StatType.MAX_HP))),
@@ -507,13 +765,13 @@ public static class MercenaryViewImpl {
                 merc.getCurrentHp(),     merc.getStats().get(StatType.MAX_HP),
                 merc.getCurrentShield(), merc.getStats().get(StatType.MAX_SHIELD),
                 merc.getCurrentMp(),     merc.getStats().get(StatType.MAX_MP));
-        Button toggleBtn = isActive ? UIFactory.btnDanger("REMOVE FROM CREW")
-                                    : UIFactory.btnPrimary("ADD TO CREW");
+        Button toggleBtn = isActive ? UIFactory.btnDanger("KELUARKAN DARI REGU")
+                                    : UIFactory.btnPrimary("TAMBAH KE REGU");
         toggleBtn.setMaxWidth(Double.MAX_VALUE);
         toggleBtn.setOnAction(e -> {
             if (isActive) engine.removeFromActiveParty(merc.getMercenaryType());
             else if (!engine.addToActiveParty(merc.getMercenaryType()))
-                router.addSystemChat("Crew is full! Remove one first.");
+                router.addSystemChat("Regu penuh! Keluarkan satu guildmate dulu.");
             router.showMercenary();
         });
         card.getChildren().addAll(header, subtitle, statsRow, vitals, toggleBtn);
@@ -524,7 +782,7 @@ public static class MercenaryViewImpl {
         VBox list = new VBox(8);
         list.setPadding(new Insets(10, 16, 10, 16));
         Label gold = new Label("Your Gold: ⚙ " + engine.getPlayer().getGold());
-        gold.setStyle("-fx-text-fill: #FFD600; -fx-font-family: 'Courier New';" +
+        gold.setStyle("-fx-text-fill: #FFB830; -fx-font-family: 'Courier New';" +
                       "-fx-font-size: 12px; -fx-font-weight: bold; -fx-padding: 0 0 8 0;");
         list.getChildren().add(gold);
         for (MercenaryType type : MercenaryType.values()) {
@@ -541,8 +799,8 @@ public static class MercenaryViewImpl {
         boolean canAfford = engine.getPlayer().getGold() >= cost;
         VBox card = new VBox(6);
         card.setPadding(new Insets(12));
-        card.setStyle("-fx-background-color: #0C1220; -fx-border-color: " +
-                      (owned ? UIFactory.GREEN : canAfford ? "#1C2E4488" : "#1C2E4444") +
+        card.setStyle("-fx-background-color: #150E08; -fx-border-color: " +
+                      (owned ? UIFactory.GREEN : canAfford ? "#3A281088" : "#3A281044") +
                       "; -fx-border-width: 1 1 1 3;");
         HBox header = new HBox(10);
         header.setAlignment(Pos.CENTER_LEFT);
@@ -551,7 +809,7 @@ public static class MercenaryViewImpl {
                            "; -fx-font-family: 'Courier New'; -fx-font-size: 13px; -fx-font-weight: bold;");
         HBox.setHgrow(nameLabel, Priority.ALWAYS);
         Label roleLabel = new Label(type.subtitle);
-        roleLabel.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+        roleLabel.setStyle("-fx-text-fill: #6A5840; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
         header.getChildren().addAll(nameLabel, roleLabel);
         HBox statsRow = new HBox(16);
         statsRow.getChildren().addAll(
@@ -572,22 +830,22 @@ public static class MercenaryViewImpl {
             bottomRow.getChildren().add(ob);
         } else {
             Label priceLabel = new Label("⚙ " + cost + " gold");
-            priceLabel.setStyle("-fx-text-fill: " + (canAfford ? "#FFD600" : "#5A6A80") +
+            priceLabel.setStyle("-fx-text-fill: " + (canAfford ? "#FFB830" : "#6A5840") +
                                 "; -fx-font-family: 'Courier New'; -fx-font-size: 12px; -fx-font-weight: bold;");
             HBox.setHgrow(priceLabel, Priority.ALWAYS);
-            Button hireBtn = new Button("HIRE");
+            Button hireBtn = new Button("REKRUT");
             hireBtn.setDisable(!canAfford);
-            hireBtn.setStyle("-fx-background-color: " + (canAfford ? "#FFD60022" : "transparent") + ";" +
-                             "-fx-border-color: " + (canAfford ? "#FFD600" : "#1C2E44") + ";" +
-                             "-fx-border-width: 1; -fx-text-fill: " + (canAfford ? "#FFD600" : "#5A6A80") + ";" +
+            hireBtn.setStyle("-fx-background-color: " + (canAfford ? "#FFB83022" : "transparent") + ";" +
+                             "-fx-border-color: " + (canAfford ? "#FFB830" : "#3A2810") + ";" +
+                             "-fx-border-width: 1; -fx-text-fill: " + (canAfford ? "#FFB830" : "#6A5840") + ";" +
                              "-fx-font-family: 'Courier New'; -fx-font-size: 11px;" +
                              "-fx-padding: 6 16; -fx-cursor: " + (canAfford ? "hand" : "default") + ";");
             hireBtn.setOnAction(e -> {
                 if (engine.hireMercenary(type)) {
-                    router.addSystemChat(type.displayName + " joined the crew!");
+                    router.addSystemChat(type.displayName + " bergabung dengan regu!");
                     router.showMercenary();
                 } else {
-                    router.addSystemChat("Not enough gold!");
+                    router.addSystemChat("Emas tidak cukup!");
                 }
             });
             bottomRow.getChildren().addAll(priceLabel, hireBtn);
@@ -600,9 +858,9 @@ public static class MercenaryViewImpl {
         VBox box = new VBox(0);
         box.setAlignment(Pos.CENTER);
         Label n = new Label(name);
-        n.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+        n.setStyle("-fx-text-fill: #6A5840; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
         Label v = new Label(value);
-        v.setStyle("-fx-text-fill: #00E5FF; -fx-font-family: 'Courier New';" +
+        v.setStyle("-fx-text-fill: #C8860A; -fx-font-family: 'Courier New';" +
                    "-fx-font-size: 11px; -fx-font-weight: bold;");
         box.getChildren().addAll(n, v);
         return box;
@@ -626,55 +884,154 @@ public static class EventViewImpl {
     }
 
     Parent build() {
-        VBox root = UIFactory.screenRoot();
-        root.getChildren().add(UIFactory.headerBar("EVENT", null));
+        BorderPane root = UIFactory.screenRootBorder();
 
-        // Scrollable content area
-        VBox scrollContent = new VBox(12);
-        scrollContent.setPadding(new Insets(20, 20, 16, 20));
-
-        // Category badge
+        // ── TOP: header dengan kategori event ─────────────
         String catColor = switch (event.getCategory()) {
-            case POSITIVE -> UIFactory.GREEN;
-            case NEGATIVE -> UIFactory.RED;
-            case CHOICE   -> UIFactory.CYAN;
-            case NEUTRAL  -> UIFactory.DIM;
+            case POSITIVE -> "#2D7A45";
+            case NEGATIVE -> "#CC3300";
+            case CHOICE   -> "#C8860A";
+            case NEUTRAL  -> "#6A5840";
         };
-        Label catBadge = new Label("[ " + event.getCategory().name() + " ]");
-        catBadge.setStyle("-fx-text-fill: " + catColor + "; -fx-font-family: 'Courier New'; -fx-font-size: 12px;");
+        String catIcon = switch (event.getCategory()) {
+            case POSITIVE -> "✦";
+            case NEGATIVE -> "☠";
+            case CHOICE   -> "◈";
+            case NEUTRAL  -> "—";
+        };
+        String catName = switch (event.getCategory()) {
+            case POSITIVE -> "KEBERUNTUNGAN";
+            case NEGATIVE -> "BAHAYA";
+            case CHOICE   -> "PILIHAN GAIB";
+            case NEUTRAL  -> "PERISTIWA";
+        };
 
-        // Title
-        Label title = new Label(event.getTitle());
-        title.setStyle(
+        VBox topBar = new VBox(4);
+        topBar.setPadding(new Insets(6, 12, 6, 12));
+        topBar.setStyle("-fx-background-color: #0F0A06;" +
+                        "-fx-border-color: " + catColor + "44;" +
+                        "-fx-border-width: 0 0 2 0;");
+
+        HBox topRow = new HBox(10);
+        topRow.setAlignment(Pos.CENTER_LEFT);
+
+        Button back = new Button("← KEMBALI");
+        back.setStyle("-fx-background-color: transparent; -fx-border-color: #3A2810;" +
+                      "-fx-border-width: 1; -fx-text-fill: #5A3A10;" +
+                      "-fx-font-family: 'Courier New'; -fx-font-size: 10px;" +
+                      "-fx-padding: 3 8; -fx-cursor: hand;");
+        back.setOnAction(e -> router.showDungeonMap());
+
+        Label catBadge = new Label(catIcon + "  " + catName);
+        catBadge.setStyle(
+            "-fx-background-color: " + catColor + "22;" +
+            "-fx-border-color: " + catColor + ";" +
+            "-fx-border-width: 1;" +
+            "-fx-text-fill: " + catColor + ";" +
+            "-fx-font-family: 'Courier New'; -fx-font-size: 10px;" +
+            "-fx-font-weight: bold; -fx-padding: 3 10;"
+        );
+        HBox.setHgrow(catBadge, Priority.ALWAYS);
+        topRow.getChildren().addAll(back, catBadge);
+
+        Label titleLbl = new Label(event.getTitle());
+        titleLbl.setWrapText(true);
+        titleLbl.setStyle(
             "-fx-text-fill: " + catColor + ";" +
             "-fx-font-family: 'Courier New', monospace;" +
-            "-fx-font-size: 18px;" +
+            "-fx-font-size: 20px;" +
             "-fx-font-weight: bold;" +
-            "-fx-effect: dropshadow(gaussian, " + catColor + ", 6, 0.3, 0, 0);"
+            "-fx-effect: dropshadow(gaussian, " + catColor + ", 14, 0.6, 0, 0)" +
+            "          , dropshadow(gaussian, " + catColor + ", 5, 0.3, 0, 0);"
         );
-        title.setWrapText(true);
+        topBar.getChildren().addAll(topRow, titleLbl);
+        root.setTop(topBar);
 
-        // Narrative
-        VBox narrativePanel = UIFactory.panel();
+        // ── CENTER: narrative + ornamen ────────────────────
+        VBox scrollContent = new VBox(16);
+        scrollContent.setPadding(new Insets(8, 12, 8, 12));
+
+        // Ornamen pembatas atas
+        Label ornTop = new Label("─────  " + catIcon + "  ─────────────────────────────────");
+        ornTop.setStyle("-fx-text-fill: " + catColor + "44; -fx-font-family: 'Courier New';" +
+                        "-fx-font-size: 11px;");
+
+        // Narrative panel — parchment style
+        VBox narrativePanel = new VBox(0);
+        narrativePanel.setStyle(
+            "-fx-background-color: #150E08;" +
+            "-fx-border-color: " + catColor + "33;" +
+            "-fx-border-width: 1 1 1 3;" +
+            "-fx-padding: 14;"
+        );
         Label narrative = new Label(event.getNarrative());
         narrative.setWrapText(true);
-        narrative.setStyle("-fx-text-fill: #8899AA; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
+        narrative.setStyle(
+            "-fx-text-fill: #A09070;" +
+            "-fx-font-family: 'Courier New'; -fx-font-size: 12px;" +
+            "-fx-line-spacing: 4;"
+        );
         narrativePanel.getChildren().add(narrative);
 
-        scrollContent.getChildren().addAll(catBadge, title, narrativePanel);
+        scrollContent.getChildren().addAll(ornTop, narrativePanel);
 
-        // Choices section
+        ScrollPane scroll = new ScrollPane(scrollContent);
+        scroll.setFitToWidth(true);
+        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scroll.setStyle("-fx-background-color: #0A0604; -fx-background: #0A0604;" +
+                        "-fx-border-color: transparent;");
+        root.setCenter(scroll);
+
+        // ── BOTTOM: pilihan aksi ────────────────────────────
         VBox choicesBox = new VBox(8);
-        choicesBox.setPadding(new Insets(8, 0, 0, 0));
+        choicesBox.setPadding(new Insets(6, 12, 8, 12));
+        choicesBox.setStyle(
+            "-fx-background-color: #0F0A06;" +
+            "-fx-border-color: #3A2810; -fx-border-width: 1 0 0 0;"
+        );
 
         if (event.hasChoices()) {
-            Label choiceTitle = UIFactory.sectionTitle("CHOOSE YOUR ACTION:");
+            Label choiceTitle = new Label("── PILIH TINDAKANMU ──");
+            choiceTitle.setStyle("-fx-text-fill: #5A3A10; -fx-font-family: 'Courier New';" +
+                                 "-fx-font-size: 10px; -fx-letter-spacing: 2;" +
+                                 "-fx-padding: 0 0 6 0;");
             choicesBox.getChildren().add(choiceTitle);
 
-            for (int i = 0; i < event.getChoices().length; i++) {
+            DungeonEvent.EventChoice[] choices = event.getChoices();
+            for (int i = 0; i < choices.length; i++) {
                 final int idx = i;
-                DungeonEvent.EventChoice choice = event.getChoices()[i];
-                Button btn = UIFactory.btnPrimary("▶  " + choice.label);
+                DungeonEvent.EventChoice choice = choices[i];
+
+                Button btn = new Button("▶  " + choice.label);
+                btn.setMaxWidth(Double.MAX_VALUE);
+                btn.setStyle(
+                    "-fx-background-color: #1A1008;" +
+                    "-fx-border-color: #3A2810;" +
+                    "-fx-border-width: 1 1 1 3;" +
+                    "-fx-text-fill: #A09070;" +
+                    "-fx-font-family: 'Courier New'; -fx-font-size: 12px;" +
+                    "-fx-padding: 10 14; -fx-cursor: hand;" +
+                    "-fx-alignment: CENTER_LEFT;"
+                );
+                btn.setOnMouseEntered(ev -> btn.setStyle(
+                    "-fx-background-color: " + catColor + "11;" +
+                    "-fx-border-color: " + catColor + ";" +
+                    "-fx-border-width: 1 1 1 3;" +
+                    "-fx-text-fill: " + catColor + ";" +
+                    "-fx-font-family: 'Courier New'; -fx-font-size: 12px;" +
+                    "-fx-padding: 10 14; -fx-cursor: hand;" +
+                    "-fx-alignment: CENTER_LEFT;" +
+                    "-fx-effect: dropshadow(gaussian, " + catColor + ", 6, 0.2, 0, 0);"
+                ));
+                btn.setOnMouseExited(ev -> btn.setStyle(
+                    "-fx-background-color: #1A1008;" +
+                    "-fx-border-color: #3A2810;" +
+                    "-fx-border-width: 1 1 1 3;" +
+                    "-fx-text-fill: #A09070;" +
+                    "-fx-font-family: 'Courier New'; -fx-font-size: 12px;" +
+                    "-fx-padding: 10 14; -fx-cursor: hand;" +
+                    "-fx-alignment: CENTER_LEFT;"
+                ));
                 btn.setOnAction(e -> {
                     engine.resolveEventChoice(event, idx);
                     router.showDungeonMap();
@@ -682,21 +1039,12 @@ public static class EventViewImpl {
                 choicesBox.getChildren().add(btn);
             }
         } else {
-            Button okBtn = UIFactory.btnPrimary("CONTINUE");
+            Button okBtn = UIFactory.btnPrimary("▶  LANJUTKAN PERJALANAN");
+            okBtn.setMaxWidth(Double.MAX_VALUE);
             okBtn.setOnAction(e -> router.showDungeonMap());
             choicesBox.getChildren().add(okBtn);
         }
-
-        scrollContent.getChildren().add(choicesBox);
-
-        // Wrap dalam ScrollPane agar choices tidak terpotong
-        ScrollPane scroll = new ScrollPane(scrollContent);
-        scroll.setFitToWidth(true);
-        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scroll.setStyle("-fx-background-color: #050810; -fx-background: #050810;" +
-                        "-fx-border-color: transparent;");
-        VBox.setVgrow(scroll, Priority.ALWAYS);
-        root.getChildren().add(scroll);
+        root.setBottom(choicesBox);
 
         UIFactory.fadeIn(root, 400);
         return root;
@@ -727,35 +1075,58 @@ public static class ShopViewImpl {
     }
 
     Parent build() {
-        VBox root = UIFactory.screenRoot();
-        root.getChildren().add(UIFactory.headerWithResources(
-                "SHOP", () -> router.showDungeonMap(),
-                engine.getPlayer().getGold(), 0));
+        BorderPane root = UIFactory.screenRootBorder();
 
-        // Merchant header
-        VBox header = new VBox(4);
-        header.setPadding(new Insets(12, 16, 8, 16));
-        header.setStyle("-fx-background-color: #0C1220; -fx-border-color: #1C2E44; -fx-border-width: 0 0 1 0;");
+        // ── TOP: header ────────────────────────────────────
+        VBox topSection = new VBox(0);
 
-        Label merchantName = new Label("⚙ WANDERING MERCHANT");
-        merchantName.setStyle(
-            "-fx-text-fill: #FFAA00; -fx-font-family: 'Courier New';" +
-            "-fx-font-size: 14px; -fx-font-weight: bold;"
-        );
-        Label merchantQuote = new Label("\"I have just what you need... for the right price.\"");
-        merchantQuote.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 12px;");
-        header.getChildren().addAll(merchantName, merchantQuote);
-        root.getChildren().add(header);
+        HBox header = new HBox(10);
+        header.setPadding(new Insets(10, 16, 10, 16));
+        header.setAlignment(Pos.CENTER_LEFT);
+        header.setStyle("-fx-background-color: #0F0A06;" +
+                        "-fx-border-color: #3A2810; -fx-border-width: 0 0 1 0;");
 
-        // Shop items
-        Label itemsTitle = UIFactory.sectionTitle("FOR SALE");
-        itemsTitle.setPadding(new Insets(10, 16, 4, 16));
-        root.getChildren().add(itemsTitle);
+        Button back = new Button("← KEMBALI");
+        back.setStyle("-fx-background-color: transparent; -fx-border-color: #3A2810;" +
+                      "-fx-border-width: 1; -fx-text-fill: #5A3A10;" +
+                      "-fx-font-family: 'Courier New'; -fx-font-size: 10px;" +
+                      "-fx-padding: 3 8; -fx-cursor: hand;");
+        back.setOnAction(e -> router.showDungeonMap());
 
+        Label titleLbl = new Label("🧙  PASAR GAIB");
+        titleLbl.setStyle("-fx-text-fill: #FFB830; -fx-font-family: 'Courier New';" +
+                          "-fx-font-size: 14px; -fx-font-weight: bold;" +
+                          "-fx-effect: dropshadow(gaussian, #C8860A, 6, 0.3, 0, 0);");
+        HBox.setHgrow(titleLbl, Priority.ALWAYS);
+
+        Label goldLbl = new Label("⚙ " + UIFactory.formatNumber(engine.getPlayer().getGold()));
+        goldLbl.setStyle("-fx-text-fill: #FFB830; -fx-font-family: 'Courier New';" +
+                         "-fx-font-size: 12px; -fx-font-weight: bold;");
+        header.getChildren().addAll(back, titleLbl, goldLbl);
+
+        // Merchant info
+        VBox merchantInfo = new VBox(4);
+        merchantInfo.setPadding(new Insets(10, 16, 10, 16));
+        merchantInfo.setStyle("-fx-background-color: #150E08;" +
+                              "-fx-border-color: #3A2810; -fx-border-width: 0 0 1 0;");
+
+        Label merchantName = new Label("⚙ PEDAGANG GAIB");
+        merchantName.setStyle("-fx-text-fill: #FFB830; -fx-font-family: 'Courier New';" +
+                              "-fx-font-size: 13px; -fx-font-weight: bold;");
+        Label merchantQuote = new Label("\"Aku punya apa yang kau butuhkan... dengan harga yang tepat.\"");
+        merchantQuote.setStyle("-fx-text-fill: #6A5840; -fx-font-family: 'Courier New';" +
+                               "-fx-font-size: 11px; -fx-font-style: italic;");
+        merchantInfo.getChildren().addAll(merchantName, merchantQuote);
+
+        Label itemsTitle = UIFactory.sectionTitle("── BARANG DAGANGAN ──");
+        itemsTitle.setPadding(new Insets(8, 16, 4, 16));
+
+        topSection.getChildren().addAll(header, merchantInfo, itemsTitle);
+        root.setTop(topSection);
+
+        // ── CENTER: item list ──────────────────────────────
         VBox itemList = new VBox(8);
         itemList.setPadding(new Insets(8, 16, 8, 16));
-        // Tidak pakai setVgrow(ALWAYS) — itemList sudah di dalam ScrollPane
-
         for (arclightcity.item.Item item : shopItems) {
             itemList.getChildren().add(buildShopRow(item));
         }
@@ -763,18 +1134,20 @@ public static class ShopViewImpl {
         ScrollPane scroll = new ScrollPane(itemList);
         scroll.setFitToWidth(true);
         scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scroll.setStyle("-fx-background-color: #050810; -fx-background: #050810; -fx-border-color: transparent;");
-        VBox.setVgrow(scroll, Priority.ALWAYS);
-        root.getChildren().add(scroll);
+        scroll.setStyle("-fx-background-color: #0A0604; -fx-background: #0A0604;" +
+                        "-fx-border-color: transparent;");
+        root.setCenter(scroll);
 
-        // Leave button
+        // Bottom leave button
         VBox bottom = new VBox(0);
         bottom.setPadding(new Insets(10, 16, 12, 16));
-        bottom.setStyle("-fx-border-color: #1C2E44; -fx-border-width: 1 0 0 0;");
-        Button leave = UIFactory.btnPrimary("← LEAVE SHOP");
+        bottom.setStyle("-fx-background-color: #0F0A06;" +
+                        "-fx-border-color: #3A2810; -fx-border-width: 1 0 0 0;");
+        Button leave = UIFactory.btnPrimary("← TINGGALKAN PASAR");
+        leave.setMaxWidth(Double.MAX_VALUE);
         leave.setOnAction(e -> router.showDungeonMap());
         bottom.getChildren().add(leave);
-        root.getChildren().add(bottom);
+        root.setBottom(bottom);
 
         UIFactory.fadeIn(root, 300);
         return root;
@@ -796,7 +1169,7 @@ public static class ShopViewImpl {
         row.setPadding(new Insets(10, 12, 10, 12));
         row.setAlignment(Pos.CENTER_LEFT);
         row.setStyle(
-            "-fx-background-color: #0C1220;" +
+            "-fx-background-color: #150E08;" +
             "-fx-border-color: " + UIFactory.rarityColor(item.getRarity()) + "33;" +
             "-fx-border-width: 1 1 1 3;"
         );
@@ -832,7 +1205,7 @@ public static class ShopViewImpl {
             .reduce("", (a, b) -> a.isEmpty() ? b : a + "  " + b);
 
         Label statLabel = new Label(stats.isEmpty() ? item.getDescription() : stats);
-        statLabel.setStyle("-fx-text-fill: #8899AA; -fx-font-family: 'Courier New'; -fx-font-size: 12px;");
+        statLabel.setStyle("-fx-text-fill: #A09070; -fx-font-family: 'Courier New'; -fx-font-size: 12px;");
         info.getChildren().addAll(name, statLabel);
 
         // Price + Buy button
@@ -841,17 +1214,17 @@ public static class ShopViewImpl {
 
         Label priceLabel = new Label("⚙ " + price);
         priceLabel.setStyle(
-            "-fx-text-fill: #FFD600; -fx-font-family: 'Courier New';" +
+            "-fx-text-fill: #FFB830; -fx-font-family: 'Courier New';" +
             "-fx-font-size: 12px; -fx-font-weight: bold;"
         );
 
         boolean canAfford = engine.getPlayer().getGold() >= price;
-        Button buyBtn = new Button("BUY");
+        Button buyBtn = new Button("BELI");
         buyBtn.setStyle(
-            "-fx-background-color: " + (canAfford ? "#FFD60022" : "#1C2E4422") + ";" +
-            "-fx-border-color: " + (canAfford ? "#FFD600" : "#5A6A80") + ";" +
+            "-fx-background-color: " + (canAfford ? "#FFB83022" : "#3A281022") + ";" +
+            "-fx-border-color: " + (canAfford ? "#FFB830" : "#6A5840") + ";" +
             "-fx-border-width: 1;" +
-            "-fx-text-fill: " + (canAfford ? "#FFD600" : "#5A6A80") + ";" +
+            "-fx-text-fill: " + (canAfford ? "#FFB830" : "#6A5840") + ";" +
             "-fx-font-family: 'Courier New'; -fx-font-size: 12px;" +
             "-fx-padding: 4 10; -fx-cursor: " + (canAfford ? "hand" : "default") + ";"
         );
@@ -892,7 +1265,7 @@ public static class VictoryViewImpl {
 
         // ── TOP: header kemenangan ─────────────────────────
         VBox header = new VBox(6);
-        header.setPadding(new Insets(16, 16, 16, 16));
+        header.setPadding(new Insets(8, 12, 8, 12));
         header.setAlignment(Pos.CENTER);
         header.setStyle("-fx-background-color: #0F0A06;" +
                         "-fx-border-color: #C8860A44; -fx-border-width: 0 0 2 0;");
@@ -945,8 +1318,24 @@ public static class VictoryViewImpl {
         HBox lootRow = buildRewardRow("Item Loot",
             result.getLootItemIds().size() + " item", "#A09070");
 
+        // Tampilkan loot dari bag (item terakhir ditambahkan)
+        VBox lootDetail = new VBox(2);
+        lootDetail.setPadding(new Insets(2, 0, 4, 12));
+        int lootCount = result.getLootItemIds().size();
+        if (lootCount > 0) {
+            var allItems = engine.getInventory().getAllItems();
+            int start = Math.max(0, allItems.size() - lootCount);
+            allItems.subList(start, allItems.size()).forEach(item -> {
+                String rc = UIFactory.rarityColor(item.getRarity());
+                Label il = new Label("  ✦ " + item.getFullName());
+                il.setStyle("-fx-text-fill: " + rc + "; -fx-font-family: 'Courier New';" +
+                            "-fx-font-size: 10px;");
+                lootDetail.getChildren().add(il);
+            });
+        }
+
         int levels = result.getLevelsGained();
-        rewards.getChildren().addAll(rwdTitle, expRow, goldRow, lootRow);
+        rewards.getChildren().addAll(rwdTitle, expRow, goldRow, lootRow, lootDetail);
 
         if (levels > 0) {
             HBox lvlRow = buildRewardRow("Level Up!", "+" + levels + " Level", "#FF8833");
@@ -976,7 +1365,7 @@ public static class VictoryViewImpl {
 
         // ── BOTTOM: navigation ─────────────────────────────
         VBox nav = new VBox(8);
-        nav.setPadding(new Insets(12, 16, 14, 16));
+        nav.setPadding(new Insets(6, 12, 8, 12));
         nav.setStyle("-fx-background-color: #0F0A06;" +
                      "-fx-border-color: #3A2810; -fx-border-width: 1 0 0 0;");
 
@@ -985,7 +1374,7 @@ public static class VictoryViewImpl {
         cont.setStyle(
             "-fx-background-color: #C8860A22; -fx-border-color: #FFB830; -fx-border-width: 1;" +
             "-fx-text-fill: #FFB830; -fx-font-family: 'Courier New'; -fx-font-size: 13px;" +
-            "-fx-font-weight: bold; -fx-padding: 12 20; -fx-cursor: hand;" +
+            "-fx-font-weight: bold; -fx-padding: 8 14; -fx-cursor: hand;" +
             "-fx-effect: dropshadow(gaussian, #C8860A, 8, 0.3, 0, 0);"
         );
         cont.setOnAction(e -> router.showDungeonMap());
@@ -1040,7 +1429,7 @@ public static class GameOverViewImpl {
 
         // ── TOP: header ────────────────────────────────────
         VBox header = new VBox(4);
-        header.setPadding(new Insets(16, 16, 16, 16));
+        header.setPadding(new Insets(8, 12, 8, 12));
         header.setAlignment(Pos.CENTER);
         header.setStyle("-fx-background-color: #0F0A06;" +
                         "-fx-border-color: #3A2810; -fx-border-width: 0 0 1 0;");
@@ -1064,7 +1453,7 @@ public static class GameOverViewImpl {
 
         // ── CENTER: stats ──────────────────────────────────
         VBox content = new VBox(16);
-        content.setPadding(new Insets(20, 20, 20, 20));
+        content.setPadding(new Insets(8, 12, 8, 12));
         content.setAlignment(Pos.TOP_CENTER);
 
         var player = engine.getPlayer();
@@ -1125,7 +1514,7 @@ public static class GameOverViewImpl {
             "-fx-border-width: 1;" +
             "-fx-text-fill: #FF5533;" +
             "-fx-font-family: 'Courier New'; -fx-font-size: 14px; -fx-font-weight: bold;" +
-            "-fx-padding: 12 20; -fx-cursor: hand;"
+            "-fx-padding: 8 14; -fx-cursor: hand;"
         );
         retry.setOnAction(e -> {
             engine.createCharacter(player.getName(), player.getBackground());
@@ -1159,7 +1548,9 @@ public static class GameOverViewImpl {
         root.setBottom(actions);
 
         // Animasi flicker judul
-        FadeTransition flicker = new FadeTransition(Duration.millis(150), fallen);
+        javafx.animation.FadeTransition flicker =
+            new javafx.animation.FadeTransition(
+                javafx.util.Duration.millis(150), fallen);
         flicker.setFromValue(1.0); flicker.setToValue(0.7);
         flicker.setAutoReverse(true); flicker.setCycleCount(4);
         flicker.play();

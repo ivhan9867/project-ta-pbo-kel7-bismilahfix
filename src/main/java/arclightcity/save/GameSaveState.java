@@ -25,7 +25,7 @@ import java.util.*;
  */
 public class GameSaveState implements Serializable {
 
-    private static final long serialVersionUID = 20260430L;
+    private static final long serialVersionUID = 20260506L; // v0.5.9 - updated save format
 
     // ── Meta ────────────────────────────────────────────────
     public String    saveId;         // "MANUAL" atau "AUTO"
@@ -122,10 +122,13 @@ public class GameSaveState implements Serializable {
 
     /** Summary singkat untuk ditampilkan di main menu */
     public String getSummary() {
-        if (player == null) return "Empty";
-        return player.name + "  LV." + player.level +
-               "  Floor " + progress.deepestFloorReached +
-               "  [" + savedAt + "]";
+        if (player == null) return "EMPTY";
+        long playMin = progress.totalPlaytimeMs / 60000;
+        String timeStr = savedAt != null ? savedAt : "—";
+        return player.name + "  LV." + player.level + "\n" +
+               "Lantai " + player.dungeonDepth + "  |  " +
+               String.format("%02d:%02d", playMin/60, playMin%60) + "\n" +
+               timeStr;
     }
 
     @Override

@@ -78,7 +78,15 @@ public class CombatView {
 
     // v0.3: Floating damage texts
     private record FloatingText(String text, String color,
-                                double x, double y, long startMs) {}
+                                double x, double y, long startMs,
+                                int duration, double rise) {
+        // Convenience constructor with defaults
+        FloatingText(String text, String color, double x, double y, long startMs) {
+            this(text, color, x, y, startMs,
+                text.startsWith("⚡") ? 1800 : text.startsWith("✦") ? 1600 : 1400,
+                text.startsWith("⚡") ? 75 : text.startsWith("✦") ? 65 : 55);
+        }
+    }
     private final java.util.List<FloatingText> floatingTexts
             = new java.util.ArrayList<>();
     private Canvas   floatCanvas;   // overlay untuk floating damage numbers
@@ -90,23 +98,27 @@ public class CombatView {
         this.cm     = engine.getActiveCombat();
     }
 
+    private javafx.scene.layout.BorderPane combatRoot;
+
     public Parent build() {
         // BorderPane: top=fixed headers, center=scrollable battle area, bottom=action panel
         BorderPane root = UIFactory.screenRootBorder();
+        combatRoot = root;
 
         // ── TOP: TopBar + TurnOrderBar (fixed) ───────────
         VBox topSection = new VBox(0);
         topSection.getChildren().add(buildTopBar());
 
         turnOrderBar = new HBox(6);
-        turnOrderBar.setPadding(new Insets(5, 12, 5, 12));
-        turnOrderBar.setMinHeight(36);
+        turnOrderBar.setPadding(new Insets(3, 10, 3, 10));
+        turnOrderBar.setMinHeight(28);
         turnOrderBar.setMaxHeight(36);
         turnOrderBar.setAlignment(Pos.CENTER_LEFT);
         turnOrderBar.setStyle(
-            "-fx-background-color: #080D18;" +
-            "-fx-border-color: #1C2E44;" +
-            "-fx-border-width: 0 0 1 0;"
+            "-fx-background-color: linear-gradient(to right, #1A0806, #0F0604, #1A0806);" +
+            "-fx-border-color: #CC330055;" +
+            "-fx-border-width: 0 0 1 0;" +
+            "-fx-effect: dropshadow(gaussian, #CC330033, 4, 0.2, 0, 1);"
         );
         topSection.getChildren().add(turnOrderBar);
         root.setTop(topSection);
@@ -119,11 +131,11 @@ public class CombatView {
 
         // Enemy area — wrapped in StackPane for floating damage overlay
         VBox enemySection = new VBox(6);
-        enemySection.setPadding(new Insets(6, 12, 4, 12));
-        enemySection.setStyle("-fx-border-color: #1C2E44; -fx-border-width: 0 0 1 0;");
-        Label enemySectionTitle = UIFactory.sectionTitle("◆ ENEMIES");
+        enemySection.setPadding(new Insets(4, 10, 3, 10));
+        enemySection.setStyle("-fx-border-color: #3A2810; -fx-border-width: 0 0 1 0;");
+        Label enemySectionTitle = UIFactory.sectionTitle("◆ LAWAN");
         enemySectionTitle.setPadding(new Insets(0, 0, 4, 0));
-        enemyContainer = new VBox(6);
+        enemyContainer = new VBox(4);
         enemySection.getChildren().addAll(enemySectionTitle, enemyContainer);
 
         // StackPane untuk floating damage overlay di atas enemy section
@@ -135,34 +147,37 @@ public class CombatView {
 
         // Ally area
         VBox allySection = new VBox(6);
-        allySection.setPadding(new Insets(6, 12, 4, 12));
-        allySection.setStyle("-fx-border-color: #1C2E44; -fx-border-width: 0 0 1 0;");
-        Label allySectionTitle = UIFactory.sectionTitle("◈ ALLIES");
+        allySection.setPadding(new Insets(4, 10, 3, 10));
+        allySection.setStyle("-fx-border-color: #3A2810; -fx-border-width: 0 0 1 0;");
+        Label allySectionTitle = UIFactory.sectionTitle("◈ SEKUTU");
         allySectionTitle.setPadding(new Insets(0, 0, 4, 0));
-        allyContainer = new HBox(8);
+        allyContainer = new HBox(6);
         allySection.getChildren().addAll(allySectionTitle, allyContainer);
         battleArea.getChildren().add(allySection);
 
         // Status effects
         battleArea.getChildren().add(buildStatusPanel());
 
-        // Wrap dalam ScrollPane agar battle area bisa discroll jika konten panjang
+        // Wrap dalam ScrollPane tapi dibatasi — cukup untuk 1-2 musuh tanpa scroll
+        // jika ada lebih banyak musuh, baru perlu scroll
         ScrollPane battleScroll = new ScrollPane(battleArea);
         battleScroll.setFitToWidth(true);
         battleScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        battleScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         battleScroll.setStyle(
-            "-fx-background-color: #050810;" +
-            "-fx-background: #050810;" +
+            "-fx-background-color: #0A0604;" +
+            "-fx-background: #0A0604;" +
             "-fx-border-color: transparent;"
         );
+        battleArea.setStyle("-fx-background-color: linear-gradient(to bottom, #140A06, #0A0602, #120806);");
         root.setCenter(battleScroll);
 
         // ── BOTTOM: action panel (selalu terlihat) ────────
         actionPanel = new VBox(8);
-        actionPanel.setPadding(new Insets(8, 12, 10, 12));
+        actionPanel.setPadding(new Insets(5, 10, 7, 10));
         actionPanel.setStyle(
-            "-fx-background-color: #0C1220;" +
-            "-fx-border-color: #1C2E44;" +
+            "-fx-background-color: #150E08;" +
+            "-fx-border-color: #3A2810;" +
             "-fx-border-width: 1 0 0 0;"
         );
         root.setBottom(actionPanel);
@@ -189,30 +204,47 @@ public class CombatView {
         HBox bar = new HBox(8);
         bar.setAlignment(Pos.CENTER_LEFT);
         bar.setPadding(new Insets(8, 12, 8, 12));
-        bar.setStyle("-fx-background-color: #0C1220; -fx-border-color: #1C2E44; -fx-border-width: 0 0 1 0;");
+        bar.setStyle("-fx-background-color: #0F0A06;" +
+                     "-fx-border-color: #3A2810; -fx-border-width: 0 0 1 0;");
 
-        Button escapeBtn = new Button("ESCAPE");
+        // Escape/flee button
+        Button escapeBtn = new Button("↩ KABUR");
         escapeBtn.setStyle(
-            "-fx-background-color: transparent; -fx-border-color: #FF1744; -fx-border-width: 1;" +
-            "-fx-text-fill: #FF1744; -fx-font-family: 'Courier New'; -fx-font-size: 11px;" +
-            "-fx-padding: 4 10; -fx-cursor: hand;"
+            "-fx-background-color: transparent;" +
+            "-fx-border-color: #CC3300; -fx-border-width: 1;" +
+            "-fx-text-fill: #CC3300; -fx-font-family: 'Courier New'; -fx-font-size: 10px;" +
+            "-fx-padding: 3 8; -fx-cursor: hand;"
         );
         escapeBtn.setOnAction(e -> {
             boolean fled = engine.attemptFlee();
-            if (!fled) addLog("❌ Flee failed!", "#FF6B6B");
+            if (!fled) addLog("❌ Kabur gagal!", "#CC3300");
         });
 
-        turnLabel = new Label("TURN 0");
-        turnLabel.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
+        // Combat title
+        Label combatTitle = new Label("⚔  PERTEMPURAN");
+        // Animasi flicker pada judul combat
+        boolean isBoss = cm != null && cm.getEnemies().stream()
+            .anyMatch(e -> e instanceof arclightcity.entity.enemy.Boss);
+        if (isBoss) UIFactory.flicker(combatTitle);
+        combatTitle.setStyle("-fx-text-fill: #CC3300; -fx-font-family: 'Courier New';" +
+                             "-fx-font-size: 12px; -fx-font-weight: bold;" +
+                             "-fx-effect: dropshadow(gaussian, #CC3300, 6, 0.3, 0, 0);");
+
+        // Turn label - center
+        turnLabel = new Label("GILIRAN 0");
+        turnLabel.setStyle("-fx-text-fill: #5A3A10; -fx-font-family: 'Courier New';" +
+                           "-fx-font-size: 11px;");
         HBox.setHgrow(turnLabel, Priority.ALWAYS);
         turnLabel.setAlignment(Pos.CENTER);
 
+        // Current actor
         currentActorLabel = new Label("—");
         currentActorLabel.setStyle(
-            "-fx-text-fill: #00E5FF; -fx-font-family: 'Courier New'; -fx-font-size: 11px; -fx-font-weight: bold;"
+            "-fx-text-fill: #FFB830; -fx-font-family: 'Courier New';" +
+            "-fx-font-size: 11px; -fx-font-weight: bold;"
         );
 
-        bar.getChildren().addAll(escapeBtn, turnLabel, currentActorLabel);
+        bar.getChildren().addAll(escapeBtn, combatTitle, turnLabel, currentActorLabel);
         return bar;
     }
 
@@ -222,18 +254,20 @@ public class CombatView {
 
     private VBox buildCombatLog() {
         VBox wrapper = new VBox();
-        wrapper.setPrefHeight(150);  // naik dari 130 → memanfaatkan +100px
+        wrapper.setPrefHeight(80);   // compact untuk 720px tanpa scroll
         wrapper.setMaxHeight(150);
-        wrapper.setStyle("-fx-background-color: #050810; -fx-border-color: #1C2E44; -fx-border-width: 0 0 1 0;");
+        wrapper.setStyle("-fx-background-color: #0A0604; -fx-border-color: #3A2810; -fx-border-width: 0 0 1 0;");
 
         logContainer = new VBox(2);
         logContainer.setPadding(new Insets(6, 10, 6, 10));
 
         logScroll = new ScrollPane(logContainer);
         logScroll.setFitToWidth(true);
-        logScroll.setPrefHeight(150);
+        logScroll.setPrefHeight(0);
+        logScroll.setVisible(false);
+        logScroll.setManaged(false);
         logScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        logScroll.setStyle("-fx-background-color: #050810; -fx-background: #050810; -fx-border-color: transparent;");
+        logScroll.setStyle("-fx-background-color: #0A0604; -fx-background: #0A0604; -fx-border-color: transparent;");
 
         wrapper.getChildren().add(logScroll);
         return wrapper;
@@ -265,7 +299,7 @@ public class CombatView {
     private HBox buildStatusPanel() {
         HBox panel = new HBox(4);
         panel.setPadding(new Insets(6, 12, 6, 12));
-        panel.setStyle("-fx-background-color: #080D18; -fx-border-color: #1C2E44; -fx-border-width: 0 0 1 0;");
+        panel.setStyle("-fx-background-color: #0F0A06; -fx-border-color: #3A2810; -fx-border-width: 0 0 1 0;");
         panel.setAlignment(Pos.CENTER_LEFT);
 
         Player player = engine.getPlayer();
@@ -274,8 +308,8 @@ public class CombatView {
         }
 
         if (panel.getChildren().isEmpty()) {
-            Label none = new Label("No active effects");
-            none.setStyle("-fx-text-fill: #2A3A50; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+            Label none = new Label("Tidak ada efek aktif");
+            none.setStyle("-fx-text-fill: #3A2810; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
             panel.getChildren().add(none);
         }
 
@@ -303,7 +337,7 @@ public class CombatView {
 
         // Update turn info
         if (turnLabel != null) {
-            turnLabel.setText("TURN " + cm.getTotalTurns());
+            turnLabel.setText("Giliran " + cm.getTotalTurns());
         }
         Entity actor = cm.getCurrentActor();
         if (currentActorLabel != null && actor != null) {
@@ -319,31 +353,34 @@ public class CombatView {
         boolean isCurrentActor = cm.getCurrentActor() != null
                 && cm.getCurrentActor().getId().equals(enemy.getId());
 
-        String borderColor = isCurrentActor ? UIFactory.RED : "#2A3A50";
+        String borderColor = isCurrentActor ? UIFactory.RED : "#3A2810";
+        String cardBg = isCurrentActor
+            ? "linear-gradient(to bottom right, #2A0808, #180606)"
+            : "linear-gradient(to bottom, #150606, #100505)";
         card.setStyle(
-            "-fx-background-color: " + (isCurrentActor ? "#1C0808" : "#100808") + ";" +
+            "-fx-background-color: " + cardBg + ";" +
             "-fx-border-color: " + borderColor + ";" +
-            "-fx-border-width: " + (isCurrentActor ? "2" : "1") + " " +
-                                   (isCurrentActor ? "2" : "1") + " " +
-                                   (isCurrentActor ? "2" : "1") + " 3;" +
-            (isCurrentActor ? "-fx-effect: dropshadow(gaussian, #FF1744, 10, 0.4, 0, 0);" : "")
+            "-fx-border-width: 0 0 0 4;" +
+            (isCurrentActor
+                ? "-fx-effect: dropshadow(gaussian, #CC3300AA, 18, 0.5, 0, 0);"
+                : "-fx-effect: dropshadow(gaussian, #44000044, 4, 0.1, 0, 0);")
         );
 
         // Name + badges row
         HBox nameRow = new HBox(8);
         nameRow.setAlignment(Pos.CENTER_LEFT);
 
-        String nameColor = enemy.isAlive() ? UIFactory.RED : "#5A6A80";
+        String nameColor = enemy.isAlive() ? UIFactory.RED : "#6A5840";
         Label nameLabel = new Label(enemy.getName());
         nameLabel.setStyle("-fx-text-fill: " + nameColor +
                 "; -fx-font-family: 'Courier New'; -fx-font-size: 14px; -fx-font-weight: bold;");
 
         if (enemy instanceof Enemy e) {
             Label levelBadge = new Label("Lv." + e.getFloorLevel());
-            levelBadge.setStyle("-fx-text-fill: #8899AA; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
+            levelBadge.setStyle("-fx-text-fill: #A09070; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
             Label typeBadge = new Label(e.getRace().displayName);
             typeBadge.setStyle(
-                "-fx-background-color: #1C2E4488; -fx-text-fill: #8899AA;" +
+                "-fx-background-color: #3A281088; -fx-text-fill: #A09070;" +
                 "-fx-font-family: 'Courier New'; -fx-font-size: 10px; -fx-padding: 2 6;"
             );
             HBox.setHgrow(nameLabel, Priority.ALWAYS);
@@ -355,25 +392,25 @@ public class CombatView {
         // Target select mode: highlight style + konten tetap ditampilkan
         if (targetSelectMode && enemy.isAlive()) {
             card.setStyle(
-                "-fx-background-color: #FFD60011;" +
-                "-fx-border-color: #FFD600;" +
+                "-fx-background-color: #FFB83011;" +
+                "-fx-border-color: #FFB830;" +
                 "-fx-border-width: 2;" +
-                "-fx-effect: dropshadow(gaussian, #FFD600, 12, 0.4, 0, 0);" +
+                "-fx-effect: dropshadow(gaussian, #FFB830, 12, 0.4, 0, 0);" +
                 "-fx-cursor: hand;"
             );
             card.setOnMouseClicked(e -> handleTargetSelect(enemy));
             card.setOnMouseEntered(e -> card.setStyle(
-                "-fx-background-color: #FFD60022;" +
-                "-fx-border-color: #FFD600;" +
+                "-fx-background-color: #FFB83022;" +
+                "-fx-border-color: #FFB830;" +
                 "-fx-border-width: 2;" +
-                "-fx-effect: dropshadow(gaussian, #FFD600, 18, 0.6, 0, 0);" +
+                "-fx-effect: dropshadow(gaussian, #FFB830, 18, 0.6, 0, 0);" +
                 "-fx-cursor: hand;"
             ));
             card.setOnMouseExited(e -> card.setStyle(
-                "-fx-background-color: #FFD60011;" +
-                "-fx-border-color: #FFD600;" +
+                "-fx-background-color: #FFB83011;" +
+                "-fx-border-color: #FFB830;" +
                 "-fx-border-width: 2;" +
-                "-fx-effect: dropshadow(gaussian, #FFD600, 12, 0.4, 0, 0);" +
+                "-fx-effect: dropshadow(gaussian, #FFB830, 12, 0.4, 0, 0);" +
                 "-fx-cursor: hand;"
             ));
 
@@ -384,9 +421,9 @@ public class CombatView {
                     enemy.getCurrentMp(),     enemy.getStats().get(StatType.MAX_MP));
 
             // Label TARGET di atas nama
-            Label targetHint = new Label("▶ SELECT TARGET");
+            Label targetHint = new Label("▶ PILIH TARGET");
             targetHint.setStyle(
-                "-fx-text-fill: #FFD600; -fx-font-family: 'Courier New';" +
+                "-fx-text-fill: #FFB830; -fx-font-family: 'Courier New';" +
                 "-fx-font-size: 9px; -fx-font-weight: bold;"
             );
             card.getChildren().addAll(targetHint, nameRow, bars);
@@ -397,7 +434,7 @@ public class CombatView {
         if (!enemy.isAlive()) {
             card.setOpacity(0.3);
             Label deadLabel = new Label("✕ DEFEATED");
-            deadLabel.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
+            deadLabel.setStyle("-fx-text-fill: #6A5840; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
             card.getChildren().addAll(nameRow, deadLabel);
             return card;
         }
@@ -428,14 +465,14 @@ public class CombatView {
         boolean isPlayer = ally instanceof Player;
 
         String borderColor = isCurrentActor ? UIFactory.CYAN
-                : isPlayer ? "#00E5FF55" : "#1C2E44";
+                : isPlayer ? "#C8860A55" : "#3A2810";
         card.setStyle(
-            "-fx-background-color: #080D18;" +
+            "-fx-background-color: #0F0A06;" +
             "-fx-border-color: " + borderColor + ";" +
             "-fx-border-width: " + (isCurrentActor ? "2" : "1") + " " +
                                    (isCurrentActor ? "2" : "1") + " " +
                                    (isCurrentActor ? "2" : "1") + " 3;" +
-            (isCurrentActor ? "-fx-effect: dropshadow(gaussian, #00E5FF, 10, 0.4, 0, 0);" : "")
+            (isCurrentActor ? "-fx-effect: dropshadow(gaussian, #C8860A, 10, 0.4, 0, 0);" : "")
         );
 
         // Name
@@ -443,7 +480,7 @@ public class CombatView {
                 ? ally.getName()
                 : (ally instanceof Mercenary m ? m.getMercenaryType().displayName : ally.getName());
         Label nameLabel = new Label(nameStr.toUpperCase());
-        String nameColor = !ally.isAlive() ? "#5A6A80" : isPlayer ? UIFactory.CYAN : UIFactory.TEXT;
+        String nameColor = !ally.isAlive() ? "#6A5840" : isPlayer ? UIFactory.CYAN : UIFactory.TEXT;
         nameLabel.setStyle("-fx-text-fill: " + nameColor +
                 "; -fx-font-family: 'Courier New'; -fx-font-size: 12px; -fx-font-weight: bold;");
         nameLabel.setWrapText(true);
@@ -451,7 +488,7 @@ public class CombatView {
         // Role badge
         if (!isPlayer && ally instanceof Mercenary m) {
             Label roleBadge = new Label("[" + m.getRole().name() + "]");
-            roleBadge.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+            roleBadge.setStyle("-fx-text-fill: #6A5840; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
 
             // Vital bars
             VBox bars = UIFactory.compactVitalBars(
@@ -505,11 +542,11 @@ public class CombatView {
             HBox hint = new HBox(8);
             hint.setAlignment(Pos.CENTER);
             Label hintLabel = new Label("▶ Click an enemy to target  ");
-            hintLabel.setStyle("-fx-text-fill: #FFD600; -fx-font-family: 'Courier New';" +
+            hintLabel.setStyle("-fx-text-fill: #FFB830; -fx-font-family: 'Courier New';" +
                                "-fx-font-size: 12px; -fx-font-weight: bold;");
             Button cancelTarget = new Button("✕ CANCEL");
-            cancelTarget.setStyle("-fx-background-color: transparent; -fx-border-color: #5A6A80;" +
-                                  "-fx-border-width: 1; -fx-text-fill: #5A6A80;" +
+            cancelTarget.setStyle("-fx-background-color: transparent; -fx-border-color: #6A5840;" +
+                                  "-fx-border-width: 1; -fx-text-fill: #6A5840;" +
                                   "-fx-font-family: 'Courier New'; -fx-font-size: 10px; -fx-cursor: hand;");
             cancelTarget.setOnAction(e -> {
                 targetSelectMode = false;
@@ -526,7 +563,7 @@ public class CombatView {
             HBox processingRow = new HBox(8);
             processingRow.setAlignment(Pos.CENTER);
             Label waiting = new Label("⟳ Processing...");
-            waiting.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
+            waiting.setStyle("-fx-text-fill: #6A5840; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
             processingRow.getChildren().add(waiting);
 
             // Speed control tetap tampil saat AI turn
@@ -545,31 +582,31 @@ public class CombatView {
         HBox row1 = new HBox(8);
         row1.setAlignment(Pos.CENTER);
 
-        // ATTACK — enter target select mode
-        Button attackBtn = buildActionBtn("⚔ ATTACK", UIFactory.RED, () -> {
-            addLog("▶ Click an enemy to attack", UIFactory.YELLOW);
+        // SERANG — enter target select mode
+        Button attackBtn = buildActionBtn("⚔  SERANG", UIFactory.RED, () -> {
+            addLog("▶ Klik musuh untuk menyerang", UIFactory.YELLOW);
             targetSelectMode = true;
             pendingSkillId   = null;
             refreshCombatants();
             refreshActionPanel();
         });
 
-        Button skillBtn = buildActionBtn("★ SKILL", UIFactory.CYAN, () -> showSkillMenu());
-        Button itemBtn  = buildActionBtn("⊞ ITEM",  UIFactory.GREEN, () -> showItemMenu());
+        Button skillBtn = buildActionBtn("★  JURUS", UIFactory.CYAN, () -> showSkillMenu());
+        Button itemBtn  = buildActionBtn("⊞  ITEM",  UIFactory.GREEN, () -> showItemMenu());
 
         row1.getChildren().addAll(attackBtn, skillBtn, itemBtn);
 
-        // Row 2: Defend + Flee
+        // Row 2: Bertahan + Kabur
         HBox row2 = new HBox(8);
         row2.setAlignment(Pos.CENTER);
 
-        Button defendBtn = buildActionBtn("🛡 DEFEND", UIFactory.PURPLE, () -> {
+        Button defendBtn = buildActionBtn("🛡  BERTAHAN", UIFactory.PURPLE, () -> {
             engine.submitCombatAction(CombatAction.defend());
         });
 
-        Button fleeBtn = buildActionBtn("↩ FLEE", "#5A6A80", () -> {
+        Button fleeBtn = buildActionBtn("↩  KABUR", "#6A5840", () -> {
             boolean fled = engine.attemptFlee();
-            if (!fled) addLog("Cannot escape!", "#FF6B6B");
+            if (!fled) addLog("Kabur gagal! Terus bertarung.", UIFactory.RED);
         });
 
         HBox.setHgrow(defendBtn, Priority.ALWAYS);
@@ -601,13 +638,13 @@ public class CombatView {
 
             String slotStyle;
             if (ready) {
-                slotStyle = "-fx-background-color: #00E5FF11; -fx-border-color: #00E5FF55;" +
+                slotStyle = "-fx-background-color: #C8860A11; -fx-border-color: #C8860A55;" +
                             " -fx-border-width: 1 1 1 2; -fx-cursor: hand;";
             } else if (skillId != null) {
-                slotStyle = "-fx-background-color: #1C2E4411; -fx-border-color: #1C2E44;" +
+                slotStyle = "-fx-background-color: #3A281011; -fx-border-color: #3A2810;" +
                             " -fx-border-width: 1;";
             } else {
-                slotStyle = "-fx-background-color: #0C1220; -fx-border-color: #1C2E4433;" +
+                slotStyle = "-fx-background-color: #150E08; -fx-border-color: #3A281033;" +
                             " -fx-border-width: 1;";
             }
             slot.setStyle(slotStyle);
@@ -616,7 +653,7 @@ public class CombatView {
             String displayName = skillId != null ? getSkillDisplayName(skillId) : "—";
             Label nameLabel = new Label(displayName);
             nameLabel.setStyle(
-                "-fx-text-fill: " + (ready ? UIFactory.CYAN : skillId != null ? "#5A6A80" : "#2A3A50") + ";" +
+                "-fx-text-fill: " + (ready ? UIFactory.CYAN : skillId != null ? "#6A5840" : "#3A2810") + ";" +
                 "-fx-font-family: 'Courier New'; -fx-font-size: 11px; -fx-font-weight: bold;" +
                 "-fx-alignment: center; -fx-text-alignment: center;"
             );
@@ -626,7 +663,7 @@ public class CombatView {
             // CD / Status
             Label cdLabel = new Label(cd > 0 ? "CD: " + cd + "t" : skillId != null ? "READY" : "EMPTY");
             cdLabel.setStyle(
-                "-fx-text-fill: " + (cd > 0 ? UIFactory.ORANGE : skillId != null ? "#00E67688" : "#2A3A50") + ";" +
+                "-fx-text-fill: " + (cd > 0 ? UIFactory.ORANGE : skillId != null ? "#2D7A4588" : "#3A2810") + ";" +
                 "-fx-font-family: 'Courier New'; -fx-font-size: 10px;"
             );
 
@@ -637,7 +674,7 @@ public class CombatView {
                 slot.setOnMouseClicked(e -> submitSkillAction(sid));
                 // Hover effect
                 slot.setOnMouseEntered(e -> slot.setStyle(
-                    "-fx-background-color: #00E5FF22; -fx-border-color: #00E5FF;" +
+                    "-fx-background-color: #C8860A22; -fx-border-color: #C8860A;" +
                     " -fx-border-width: 1 1 1 2; -fx-cursor: hand;"));
                 slot.setOnMouseExited(e -> slot.setStyle(slotStyle));
             }
@@ -712,14 +749,14 @@ public class CombatView {
         popup.setId("skill-popup");
         popup.setPadding(new Insets(12));
         popup.setStyle(
-            "-fx-background-color: #0C1220EE;" +
-            "-fx-border-color: #00E5FF55;" +
+            "-fx-background-color: #150E08EE;" +
+            "-fx-border-color: #C8860A55;" +
             "-fx-border-width: 1;" +
-            "-fx-effect: dropshadow(gaussian, #00E5FF, 12, 0.2, 0, 0);"
+            "-fx-effect: dropshadow(gaussian, #C8860A, 12, 0.2, 0, 0);"
         );
 
         Label title = new Label("◈ SELECT SKILL");
-        title.setStyle("-fx-text-fill: #00E5FF; -fx-font-family: 'Courier New';" +
+        title.setStyle("-fx-text-fill: #C8860A; -fx-font-family: 'Courier New';" +
                        "-fx-font-size: 12px; -fx-font-weight: bold;");
         popup.getChildren().add(title);
 
@@ -737,9 +774,9 @@ public class CombatView {
             btn.setMaxWidth(Double.MAX_VALUE);
             btn.setDisable(!ready);
 
-            String c = ready ? "#00E5FF" : "#5A6A80";
+            String c = ready ? "#C8860A" : "#6A5840";
             btn.setStyle(
-                "-fx-background-color: " + (ready ? "#00E5FF11" : "transparent") + ";" +
+                "-fx-background-color: " + (ready ? "#C8860A11" : "transparent") + ";" +
                 "-fx-border-color: " + c + "55;" +
                 "-fx-border-width: 1 1 1 3;" +
                 "-fx-text-fill: " + c + ";" +
@@ -749,7 +786,7 @@ public class CombatView {
 
             // Tooltip deskripsi
             Tooltip tip = new Tooltip(info.description());
-            tip.setStyle("-fx-background-color: #0C1220; -fx-text-fill: #8899AA;" +
+            tip.setStyle("-fx-background-color: #150E08; -fx-text-fill: #A09070;" +
                          "-fx-font-family: 'Courier New'; -fx-font-size: 10px;");
             btn.setTooltip(tip);
 
@@ -764,8 +801,8 @@ public class CombatView {
         }
 
         Button cancel = new Button("✕  CANCEL");
-        cancel.setStyle("-fx-background-color: transparent; -fx-border-color: #5A6A8066;" +
-                        "-fx-border-width: 1; -fx-text-fill: #5A6A80;" +
+        cancel.setStyle("-fx-background-color: transparent; -fx-border-color: #6A584066;" +
+                        "-fx-border-width: 1; -fx-text-fill: #6A5840;" +
                         "-fx-font-family: 'Courier New'; -fx-font-size: 10px; -fx-cursor: hand;");
         cancel.setOnAction(e -> actionPanel.getChildren()
                 .removeIf(n -> "skill-popup".equals(n.getId())));
@@ -805,11 +842,11 @@ public class CombatView {
         VBox popup = new VBox(6);
         popup.setId("item-popup");
         popup.setPadding(new Insets(12));
-        popup.setStyle("-fx-background-color: #0C1220EE; -fx-border-color: #00E67655;" +
+        popup.setStyle("-fx-background-color: #150E08EE; -fx-border-color: #2D7A4555;" +
                        "-fx-border-width: 1;");
 
         Label title = new Label("⊞ USE ITEM");
-        title.setStyle("-fx-text-fill: #00E676; -fx-font-family: 'Courier New';" +
+        title.setStyle("-fx-text-fill: #2D7A45; -fx-font-family: 'Courier New';" +
                        "-fx-font-size: 12px; -fx-font-weight: bold;");
         popup.getChildren().add(title);
 
@@ -817,8 +854,8 @@ public class CombatView {
             Button btn = new Button("▶  " + cons.getName() +
                     " ×" + cons.getStackCount());
             btn.setMaxWidth(Double.MAX_VALUE);
-            btn.setStyle("-fx-background-color: #00E67611; -fx-border-color: #00E67655;" +
-                         "-fx-border-width: 1 1 1 3; -fx-text-fill: #00E676;" +
+            btn.setStyle("-fx-background-color: #2D7A4511; -fx-border-color: #2D7A4555;" +
+                         "-fx-border-width: 1 1 1 3; -fx-text-fill: #2D7A45;" +
                          "-fx-font-family: 'Courier New'; -fx-font-size: 11px;" +
                          "-fx-padding: 8 10; -fx-cursor: hand;");
             btn.setOnAction(e -> {
@@ -832,8 +869,8 @@ public class CombatView {
         }
 
         Button cancel = new Button("✕  CANCEL");
-        cancel.setStyle("-fx-background-color: transparent; -fx-border-color: #5A6A8066;" +
-                        "-fx-border-width: 1; -fx-text-fill: #5A6A80;" +
+        cancel.setStyle("-fx-background-color: transparent; -fx-border-color: #6A584066;" +
+                        "-fx-border-width: 1; -fx-text-fill: #6A5840;" +
                         "-fx-font-family: 'Courier New'; -fx-font-size: 10px; -fx-cursor: hand;");
         cancel.setOnAction(e -> actionPanel.getChildren()
                 .removeIf(n -> "item-popup".equals(n.getId())));
@@ -850,31 +887,42 @@ public class CombatView {
 
     private SkillInfo getSkillInfo(String skillId) {
         return switch (skillId) {
-            case "POWER_STRIKE"  -> new SkillInfo("Pukulan Harimau",
-                    "Pukulan keras pendekar: 1.8× ATK damage.", 15, false);
-            case "TEBASAN"       -> new SkillInfo("Tebasan Pamungkas",
-                    "Tebasan maut — instant kill jika HP < 25%. Else 1.5× damage.", 25, false);
-            case "DEEP_HACK"     -> new SkillInfo("Santet Digital",
-                    "Kutukan cyber: HACK debuff (-30% ATK) selama 3 giliran.", 20, false);
-            case "VIRUS_UPLOAD"  -> new SkillInfo("Upload Santet",
-                    "Kutukan mengalir: Cyber damage tiap giliran selama 4 turn.", 18, false);
-            case "PHANTOM_SHOT"  -> new SkillInfo("Panah Bayangan",
-                    "Panah tak terlihat: Crit chance tinggi. Masuk mode sembunyi.", 20, false);
-            case "SHADOW_STEP"   -> new SkillInfo("Langkah Gaib",
-                    "Serangan dari bayang-bayang: 2× crit damage, abaikan armor.", 22, false);
-            case "IRON_SHIELD"   -> new SkillInfo("Tameng Baja",
-                    "Buff BLOK selama 2 giliran. Kurangi damage secara drastis.", 18, false);
-            case "SHOCKWAVE"     -> new SkillInfo("Gempa Bumi",
-                    "Getaran bumi menghantam semua musuh sekaligus (AoE).", 24, true);
-            case "ENERGY_DRAIN"  -> new SkillInfo("Serap Tenaga",
-                    "Sedot MP dari target, pulihkan MP sendiri.", 10, false);
-            case "BIO_IRRADIATE" -> new SkillInfo("Racun Semesta",
-                    "AoE Energy DOT + debuff CORRODE ke semua musuh.", 28, true);
-            case "EMP_BURST"     -> new SkillInfo("Ledakan Petir",
-                    "AoE Cyber + STUN musuh jenis Android selama 1 giliran.", 30, true);
-            case "FIELD_BARRIER" -> new SkillInfo("Rajah Pelindung",
-                    "Pasang rajah shield pada semua sekutu.", 25, true);
-            default              -> new SkillInfo(skillId.replace("_", " "),
+            case "POWER_STRIKE"       -> new SkillInfo("Pukulan Harimau",
+                    "Pukulan keras: 1.8× ATK fisik.", 15, false);
+            case "TEBASAN"            -> new SkillInfo("Tebasan Pamungkas",
+                    "Instant kill jika HP < 25%. Else 1.5× damage.", 25, false);
+            case "SHOCKWAVE"          -> new SkillInfo("Gempa Bumi",
+                    "AoE fisik ke semua musuh sekaligus.", 24, true);
+            case "SOVEREIGN_STRIKE"   -> new SkillInfo("Tebasan Agung",
+                    "Ultimate: 3× ATK, abaikan semua armor.", 35, false);
+            case "PHANTOM_SHOT"       -> new SkillInfo("Panah Bayangan",
+                    "Crit chance tinggi, masuk sembunyi.", 20, false);
+            case "SHADOW_STEP"        -> new SkillInfo("Langkah Gaib",
+                    "2× crit damage, abaikan armor.", 22, false);
+            case "NULL_FIELD"         -> new SkillInfo("Bidang Bayangan",
+                    "Hapus buff musuh + evasion +30% 2 giliran.", 28, false);
+            case "NULL_PROTOCOL"      -> new SkillInfo("Protokol Nol",
+                    "AoE Void: semua musuh -50% DEF 3 giliran.", 35, true);
+            case "IRON_SHIELD"        -> new SkillInfo("Tameng Baja",
+                    "Buff BLOK 2 giliran, kurangi damage drastis.", 18, false);
+            case "FIELD_BARRIER"      -> new SkillInfo("Rajah Pelindung",
+                    "Shield barrier ke semua sekutu.", 25, true);
+            case "ENERGY_DRAIN"       -> new SkillInfo("Serap Tenaga",
+                    "Sedot MP musuh, pulihkan HP + MP sendiri.", 10, false);
+            case "DATA_FRAGMENTATION" -> new SkillInfo("Pecah Jiwa",
+                    "AoE besar + stun 1 giliran.", 30, true);
+            case "DEEP_HACK",
+                 "VIRUS_UPLOAD"       -> new SkillInfo("Santet Digital",
+                    "Kutukan cyber: ATK debuff -30% 3 giliran.", 20, false);
+            case "CORRUPT"            -> new SkillInfo("Korupsi",
+                    "Energy + debuff CORRODE ke target.", 22, false);
+            case "VOID_RUPTURE"       -> new SkillInfo("Robek Kekosongan",
+                    "AoE Energy damage ke semua musuh.", 26, true);
+            case "BIO_IRRADIATE"      -> new SkillInfo("Racun Semesta",
+                    "AoE Energy DOT + debuff ke semua.", 28, true);
+            case "EMP_BURST"          -> new SkillInfo("Ledakan Petir",
+                    "AoE Cyber + stun 1 giliran.", 30, true);
+            default -> new SkillInfo(skillId.replace("_", " "),
                     "Jurus khusus.", 15, false);
         };
     }
@@ -886,15 +934,15 @@ public class CombatView {
     private void handleCombatEvent(CombatEvent event) {
         String color = switch (event.getType()) {
             case CRITICAL_HIT      -> UIFactory.YELLOW;
-            case DAMAGE_DEALT      -> "#FF6B6B";
+            case DAMAGE_DEALT      -> "#FF5533";
             case HEAL_RECEIVED     -> UIFactory.GREEN;
             case EFFECT_APPLIED    -> UIFactory.ORANGE;
             case EFFECT_TICK       -> UIFactory.ORANGE;
             case ENTITY_DIED       -> UIFactory.RED;
             case BOSS_PHASE_CHANGE -> UIFactory.PURPLE;
             case BOSS_ENRAGE       -> UIFactory.RED;
-            case TURN_START        -> "#2A3A50";
-            default                -> "#5A6A80";
+            case TURN_START        -> "#3A2810";
+            default                -> "#6A5840";
         };
         addLog(event.getMessage(), color);
         refreshCombatants();
@@ -976,19 +1024,48 @@ public class CombatView {
 
     public void startCombatLoop() {
         if (cm == null) return;
-        // Clear log dari combat sebelumnya
         if (logContainer != null) logContainer.getChildren().clear();
-        addLog("⚔ Combat begins!", UIFactory.CYAN);
+        addLog("⚔ Pertempuran dimulai!", UIFactory.RED);
         aiTurnPending    = false;
         targetSelectMode = false;
-        combatSpeedMs    = 1200; // default: comfortable reading speed
+        combatSpeedMs    = 1200;
 
-        Timeline firstTurn = new Timeline(new KeyFrame(Duration.millis(300), e -> {
+        // Cek apakah ada boss — tampilkan dialog intro
+        boolean hasBoss = cm.getEnemies().stream()
+            .anyMatch(e -> e instanceof arclightcity.entity.enemy.Boss);
+        if (hasBoss) {
+            router.emitChat(MercenaryDialogue.Trigger.COMBAT_BOSS_START);
+            // Tampilkan persona dialog intro boss
+            cm.getEnemies().stream()
+                .filter(e -> e instanceof arclightcity.entity.enemy.Boss)
+                .findFirst()
+                .ifPresent(e -> {
+                    arclightcity.entity.enemy.Boss boss =
+                        (arclightcity.entity.enemy.Boss) e;
+                    String bossColor = switch (boss.getRace()) {
+                        case DEMON  -> "#CC3300";
+                        case DIVINE -> "#FFB830";
+                        case GIANT  -> "#7755BB";
+                        default     -> "#C8860A";
+                    };
+                    java.util.List<PersonaDialogBox.DialogLine> lines =
+                        boss instanceof arclightcity.entity.enemy.Theresa
+                            ? PersonaDialogBox.theresaPhaseLines(1)
+                            : PersonaDialogBox.bossIntroLines(boss.getName(), bossColor);
+                    javafx.application.Platform.runLater(() -> {
+                        if (combatRoot != null)
+                            PersonaDialogBox.show(
+                                (javafx.scene.layout.Pane) combatRoot, lines, null);
+                    });
+                });
+        }
+
+        Timeline firstTurn = new Timeline(new KeyFrame(Duration.millis(hasBoss ? 2500 : 300), e -> {
             boolean ongoing = cm.processTurn();
             refreshCombatants();
             refreshActionPanel();
             refreshTurnOrderBar();
-            if (!ongoing) addLog("Combat ended immediately.", "#5A6A80");
+            if (!ongoing) addLog("Pertempuran berakhir seketika.", "#6A5840");
         }));
         firstTurn.play();
     }
@@ -1006,7 +1083,7 @@ public class CombatView {
         turnOrderBar.getChildren().clear();
 
         Label lbl = new Label("NEXT ›");
-        lbl.setStyle("-fx-text-fill: #2A3A50; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+        lbl.setStyle("-fx-text-fill: #3A2810; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
         turnOrderBar.getChildren().add(lbl);
 
         List<Entity> upcoming = cm.getTurnQueue().getUpcomingTurns(6);
@@ -1045,7 +1122,7 @@ public class CombatView {
 
             if (i < upcoming.size() - 1) {
                 Label sep = new Label("›");
-                sep.setStyle("-fx-text-fill: #1C2E44; -fx-font-size: 9px;");
+                sep.setStyle("-fx-text-fill: #3A2810; -fx-font-size: 9px;");
                 turnOrderBar.getChildren().add(sep);
             }
         }
@@ -1057,7 +1134,7 @@ public class CombatView {
         HBox.setHgrow(bar, Priority.ALWAYS);
 
         Label lbl = new Label("SPD:");
-        lbl.setStyle("-fx-text-fill: #2A3A50; -fx-font-family: 'Courier New'; -fx-font-size: 9px;");
+        lbl.setStyle("-fx-text-fill: #3A2810; -fx-font-family: 'Courier New'; -fx-font-size: 9px;");
         bar.getChildren().add(lbl);
 
         for (int[] spec : new int[][]{{1, 1200}, {2, 500}, {0, 50}}) {
@@ -1067,9 +1144,9 @@ public class CombatView {
 
             Button b = new Button(text);
             b.setStyle(
-                "-fx-background-color: " + (active ? "#00E5FF22" : "transparent") + ";" +
-                "-fx-border-color: " + (active ? "#00E5FF" : "#1C2E44") + ";" +
-                "-fx-border-width: 1; -fx-text-fill: " + (active ? "#00E5FF" : "#5A6A80") + ";" +
+                "-fx-background-color: " + (active ? "#C8860A22" : "transparent") + ";" +
+                "-fx-border-color: " + (active ? "#C8860A" : "#3A2810") + ";" +
+                "-fx-border-width: 1; -fx-text-fill: " + (active ? "#C8860A" : "#6A5840") + ";" +
                 "-fx-font-family: 'Courier New'; -fx-font-size: 9px; -fx-padding: 2 5; -fx-cursor: hand;"
             );
             final int speedMs = ms;
@@ -1083,18 +1160,6 @@ public class CombatView {
     // FLOATING DAMAGE NUMBERS
     // ════════════════════════════════════════════════════
 
-    /** Spawn angka floating di atas canvas enemy area */
-    private void spawnFloat(String text, String color, int enemyIndex) {
-        if (floatCanvas == null) return;
-        // Posisi X: spread berdasarkan index enemy (estimasi card ~180px wide)
-        double x = 60 + (enemyIndex * 180) + (Math.random() * 60 - 30);
-        double y = 40 + (Math.random() * 20);
-        floatingTexts.add(new FloatingText(text, color, x, y, System.currentTimeMillis()));
-        if (floatLoop == null || floatLoop.getStatus() != Animation.Status.RUNNING) {
-            startFloatLoop();
-        }
-    }
-
     private void startFloatLoop() {
         floatLoop = new Timeline(new KeyFrame(Duration.millis(16), e -> drawFloats()));
         floatLoop.setCycleCount(Timeline.INDEFINITE);
@@ -1107,22 +1172,47 @@ public class CombatView {
         gc.clearRect(0, 0, floatCanvas.getWidth(), floatCanvas.getHeight());
 
         long now = System.currentTimeMillis();
-        floatingTexts.removeIf(ft -> (now - ft.startMs()) > 1400);
+        floatingTexts.removeIf(ft -> (now - ft.startMs()) > ft.duration());
 
         for (FloatingText ft : floatingTexts) {
-            double elapsed = (now - ft.startMs()) / 1400.0; // 0→1
-            double yOffset = elapsed * 55;             // melayang ke atas 55px
-            double alpha   = elapsed < 0.5 ? 1.0 : (1.0 - elapsed) * 2; // fade out
+            double elapsed = (now - ft.startMs()) / (double) ft.duration();
+            double yOffset = elapsed * ft.rise();
+            double alpha   = elapsed < 0.3 ? 1.0 : Math.max(0, (1.0 - elapsed) * 1.4);
 
             try {
-                Color c = Color.web(ft.color(), alpha);
-                gc.setFill(c);
-                // Ukuran font: crit lebih besar
-                boolean isCrit = ft.text().contains("!");
+                Color baseColor = Color.web(ft.color(), alpha);
+                gc.setFill(baseColor);
+
+                boolean isCrit  = ft.text().startsWith("⚡");
+                boolean isHeal  = ft.text().startsWith("+");
+                boolean isDot   = ft.text().startsWith("☠");
+                boolean isSkill = ft.text().startsWith("✦");
+                boolean isMiss  = ft.text().equals("MENGHINDAR") || ft.text().equals("MISS");
+
+                double fontSize = isCrit ? 22 : isSkill ? 20 : isMiss ? 14 : 16;
+                double wobble   = isCrit ? Math.sin(elapsed * 12) * 4 : 0;
+
                 gc.setFont(Font.font("Courier New",
-                        javafx.scene.text.FontWeight.BOLD, isCrit ? 18 : 14));
+                    isCrit || isSkill ? javafx.scene.text.FontWeight.BOLD
+                                      : javafx.scene.text.FontWeight.NORMAL,
+                    fontSize));
                 gc.setTextAlign(javafx.scene.text.TextAlignment.CENTER);
-                gc.fillText(ft.text(), ft.x(), ft.y() - yOffset);
+
+                // Shadow/glow effect untuk crit dan skill
+                if (isCrit || isSkill) {
+                    Color shadow = Color.web(ft.color(), alpha * 0.4);
+                    gc.setFill(shadow);
+                    gc.fillText(ft.text(), ft.x() + wobble + 2, ft.y() - yOffset + 2);
+                    gc.setFill(baseColor);
+                }
+
+                gc.fillText(ft.text(), ft.x() + wobble, ft.y() - yOffset);
+
+                // Outline putih untuk keterbacaan
+                gc.setStroke(Color.web("#00000088", alpha));
+                gc.setLineWidth(1.5);
+                gc.strokeText(ft.text(), ft.x() + wobble, ft.y() - yOffset);
+
             } catch (Exception ignored) {}
         }
 
@@ -1136,50 +1226,119 @@ public class CombatView {
     private void handleFloatingDamage(CombatEvent event) {
         if (floatCanvas == null || cm == null) return;
 
-        String msg   = event.getMessage();
+        String msg = event.getMessage();
         if (msg == null) return;
 
-        String color;
-        String displayText;
+        // Posisi X berdasarkan target entity
+        double x = getEntityX(event.getTargetId());
+        double y = 30 + (Math.random() * 20);
+
+        String text  = null;
+        String color = null;
 
         switch (event.getType()) {
+            case CRITICAL_HIT -> {
+                double dmg = extractDamage(msg);
+                text  = "⚡ " + (int)dmg + "!";
+                color = "#FFD700"; // gold untuk crit
+                // Extra spread untuk crit
+                x += (Math.random() * 30 - 15);
+            }
             case DAMAGE_DEALT -> {
-                // Extract angka dari pesan "X hits Y for Z damage"
-                java.util.regex.Matcher m =
-                    java.util.regex.Pattern.compile("for (\\d+)").matcher(msg);
-                if (!m.find()) return;
-                int dmg = Integer.parseInt(m.group(1));
-                boolean isCrit = msg.contains("CRIT") || msg.contains("critical");
-                color       = isCrit ? "#FFD600" : "#FF6B6B";
-                displayText = isCrit ? dmg + "!" : String.valueOf(dmg);
+                double dmg = extractDamage(msg);
+                if (dmg > 0) {
+                    text  = "-" + (int)dmg;
+                    // Warna berdasarkan damage type
+                    if (msg.contains("Fisik"))   color = "#FF6644";
+                    else if (msg.contains("Cyber"))  color = "#44AAFF";
+                    else if (msg.contains("Energi")) color = "#AA44FF";
+                    else color = "#FF8844";
+                }
+            }
+            case DAMAGE_EVADED -> {
+                text  = "MENGHINDAR";
+                color = "#88CCFF";
+            }
+            case DAMAGE_BLOCKED -> {
+                double blocked = extractDamage(msg);
+                text  = "🛡 " + (int)blocked;
+                color = "#6699CC";
             }
             case HEAL_RECEIVED -> {
-                java.util.regex.Matcher m =
-                    java.util.regex.Pattern.compile("(\\d+)").matcher(msg);
-                if (!m.find()) return;
-                color       = UIFactory.GREEN;
-                displayText = "+" + m.group(1);
+                double heal = extractDamage(msg);
+                text  = "+" + (int)heal;
+                color = "#44FF88";
+                y = 50; // heal muncul lebih bawah
             }
             case EFFECT_TICK -> {
-                java.util.regex.Matcher m =
-                    java.util.regex.Pattern.compile("(\\d+)").matcher(msg);
-                if (!m.find()) return;
-                color       = UIFactory.ORANGE;
-                displayText = m.group(1);
+                double dmg = extractDamage(msg);
+                text  = "☠ " + (int)dmg;
+                color = "#AA4400";
+            }
+            case SKILL_USED -> {
+                // Skill indicator - muncul di atas user
+                double ux = getEntityX(event.getActorId());
+                String skillText = extractSkillName(msg);
+                if (skillText != null) {
+                    spawnFloat("✦ " + skillText, "#FFB830", ux, 20);
+                }
+                return;
+            }
+            case EFFECT_APPLIED -> {
+                text  = "⚑ " + extractStatusName(msg);
+                color = "#FF8833";
+            }
+            case ENTITY_DIED -> {
+                text  = "💀";
+                color = "#CC3300";
+                y = 10;
             }
             default -> { return; }
         }
 
-        // Spawn di posisi enemy yang terkena (estimasi dari posisi di container)
-        int enemyIdx = 0;
-        List<Entity> enemies = cm.getAllEnemies(); // getAllEnemies() returns List<Entity>
+        if (text != null) spawnFloat(text, color, x, y);
+    }
+
+    private void spawnFloat(String text, String color, double x, double y) {
+        floatingTexts.add(new FloatingText(text, color, x, y, System.currentTimeMillis()));
+        if (floatLoop == null || floatLoop.getStatus() != Animation.Status.RUNNING) {
+            startFloatLoop();
+        }
+    }
+
+    private double getEntityX(String entityId) {
+        if (entityId == null || cm == null) return 100 + Math.random() * 200;
+        // Cari index enemy atau ally
+        var enemies = cm.getEnemies();
         for (int i = 0; i < enemies.size(); i++) {
-            if (msg.contains(enemies.get(i).getName())) {
-                enemyIdx = i;
-                break;
+            if (enemies.get(i).getId().equals(entityId)) {
+                return 80 + i * 160 + Math.random() * 40 - 20;
             }
         }
-        spawnFloat(displayText, color, enemyIdx);
+        // Ally: posisi di bawah
+        return 100 + Math.random() * 200;
+    }
+
+    private double extractDamage(String msg) {
+        try {
+            java.util.regex.Matcher m =
+                java.util.regex.Pattern.compile("([0-9]+\\.?[0-9]*)").matcher(msg);
+            if (m.find()) return Double.parseDouble(m.group(1));
+        } catch (Exception ignored) {}
+        return 0;
+    }
+
+    private String extractSkillName(String msg) {
+        if (msg == null) return null;
+        // "X menggunakan Pukulan Harimau"
+        int idx = msg.lastIndexOf(" ");
+        return idx > 0 ? msg.substring(idx + 1) : null;
+    }
+
+    private String extractStatusName(String msg) {
+        if (msg == null) return "Status";
+        int idx = msg.lastIndexOf(":");
+        return idx > 0 ? msg.substring(idx + 1).trim() : "Status";
     }
 
     private Entity getFirstAliveEnemy() {

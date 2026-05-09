@@ -14,11 +14,11 @@ import javafx.util.Duration;
 import java.util.*;
 
 /**
- * MercChatPanel — panel chat mercenary di sisi kanan layar (300px).
+ * MercChatPanel — panel chat mercenary di sisi kanan layar (340px).
  *
  * Layout:
  *   ┌─────────────────────────┐
- *   │ ◈ BISIK KAWULA            │  ← header
+ *   │ ◈ ✦ BISIK GUILDMATE            │  ← header
  *   ├─────────────────────────┤
  *   │ [chat scroll area]      │
  *   │ > KiraVoss:             │
@@ -81,7 +81,7 @@ public class MercChatPanel extends VBox {
         pulse.setCycleCount(Timeline.INDEFINITE);
         pulse.play();
 
-        Label headerLabel = new Label("BISIK KAWULA");
+        Label headerLabel = new Label("✦ BISIK GUILDMATE");
         headerLabel.setStyle(
             "-fx-text-fill: #6A5840;" +
             "-fx-font-family: 'Courier New';" +
@@ -118,8 +118,8 @@ public class MercChatPanel extends VBox {
         getChildren().add(scrollPane);
 
         // Welcome message
-        addSystemMessage("BISIK KAWULA ONLINE");
-        addSystemMessage("Menunggu kawula berbicara...");
+        addSystemMessage("✦ BISIK GUILDMATE ONLINE");
+        addSystemMessage("Guildmate siap menemanimu......");
     }
 
     // ── Public API ────────────────────────────────────────────
@@ -129,10 +129,16 @@ public class MercChatPanel extends VBox {
      */
     public void addMercMessage(MercenaryDialogue.ChatMessage msg) {
         Platform.runLater(() -> {
-            VBox bubble = buildMercBubble(msg);
-            messageContainer.getChildren().add(bubble);
-            trimMessages();
-            scrollToBottom();
+            try {
+                VBox bubble = buildMercBubble(msg);
+                messageContainer.getChildren().add(bubble);
+                trimMessages();
+                scrollToBottom();
+            } catch (Exception e) {
+                // Jika gagal (panel belum siap), retry setelah 500ms
+                new Timeline(new KeyFrame(Duration.millis(500),
+                    ev -> addMercMessage(msg))).play();
+            }
         });
     }
 
@@ -191,68 +197,88 @@ public class MercChatPanel extends VBox {
     public void clear() {
         Platform.runLater(() -> {
             messageContainer.getChildren().clear();
-            addSystemMessage("BISIK KAWULA ONLINE");
+            addSystemMessage("✦ BISIK GUILDMATE ONLINE");
         });
     }
 
     // ── Message Builder ───────────────────────────────────────
 
     private VBox buildMercBubble(MercenaryDialogue.ChatMessage msg) {
-        String color = MERC_COLORS.getOrDefault(msg.mercType(), "#5A6A80");
+        String color = MERC_COLORS.getOrDefault(msg.mercType(), "#C8860A");
 
-        VBox bubble = new VBox(3);
+        // Container
+        HBox container = new HBox(8);
+        container.setPadding(new Insets(6, 8, 6, 8));
+        container.setAlignment(Pos.TOP_LEFT);
+        container.setMaxWidth(Double.MAX_VALUE);
+
+        // Portrait box (circle + icon + nama di bawah)
+        VBox portrait = new VBox(2);
+        portrait.setAlignment(Pos.TOP_CENTER);
+        portrait.setMinWidth(44);
+        portrait.setMaxWidth(44);
+
+        // Avatar circle dengan inisial
+        javafx.scene.layout.StackPane avatarStack = new javafx.scene.layout.StackPane();
+        Circle avatarBg = new Circle(18, Color.web(color + "22"));
+        avatarBg.setStroke(Color.web(color));
+        avatarBg.setStrokeWidth(1.5);
+
+        String initials = msg.mercName().length() >= 2
+            ? msg.mercName().substring(0, 2).toUpperCase()
+            : msg.mercName().toUpperCase();
+        Label avatarLbl = new Label(initials);
+        avatarLbl.setStyle("-fx-text-fill: " + color + "; -fx-font-family: 'Courier New';" +
+                           "-fx-font-size: 9px; -fx-font-weight: bold;");
+        avatarStack.getChildren().addAll(avatarBg, avatarLbl);
+
+        // Nama di bawah avatar
+        String shortName = msg.mercName().contains(" ")
+            ? msg.mercName().split(" ")[0] : msg.mercName();
+        Label nameLbl = new Label(shortName);
+        nameLbl.setStyle("-fx-text-fill: " + color + "; -fx-font-family: 'Courier New';" +
+                         "-fx-font-size: 8px; -fx-font-weight: bold; -fx-alignment: CENTER;");
+        nameLbl.setMaxWidth(44);
+        nameLbl.setAlignment(Pos.CENTER);
+
+        portrait.getChildren().addAll(avatarStack, nameLbl);
+
+        // Message bubble di kanan
+        VBox bubble = new VBox(2);
+        HBox.setHgrow(bubble, Priority.ALWAYS);
         bubble.setPadding(new Insets(6, 8, 6, 8));
         bubble.setStyle(
             "-fx-background-color: " + color + "0D;" +
             "-fx-border-color: " + color + "33;" +
-            "-fx-border-width: 0 0 0 2;"
-        );
-        bubble.setMaxWidth(Double.MAX_VALUE);
-
-        // Name row
-        HBox nameRow = new HBox(6);
-        nameRow.setAlignment(Pos.CENTER_LEFT);
-
-        Circle avatar = new Circle(4, Color.web(color));
-
-        Label nameLabel = new Label(msg.mercName().toUpperCase());
-        nameLabel.setStyle(
-            "-fx-text-fill: " + color + ";" +
-            "-fx-font-family: 'Courier New';" +
-            "-fx-font-size: 11px;" +
-            "-fx-font-weight: bold;"
+            "-fx-border-width: 1 1 1 2;"
         );
 
+        // Time stamp
         Label timeLabel = new Label(getCurrentTime());
-        timeLabel.setStyle(
-            "-fx-text-fill: #3A2810;" +
-            "-fx-font-family: 'Courier New';" +
-            "-fx-font-size: 8px;"
-        );
-        HBox.setHgrow(nameLabel, Priority.ALWAYS);
-
-        nameRow.getChildren().addAll(avatar, nameLabel, timeLabel);
+        timeLabel.setStyle("-fx-text-fill: #3A2810; -fx-font-family: 'Courier New'; -fx-font-size: 8px;");
 
         // Message text
         Label textLabel = new Label(msg.text());
         textLabel.setWrapText(true);
-        textLabel.setMaxWidth(Double.MAX_VALUE);
+        textLabel.setMaxWidth(200);
         textLabel.setStyle(
             "-fx-text-fill: #A09070;" +
             "-fx-font-family: 'Courier New';" +
-            "-fx-font-size: 11px;" +
-            "-fx-padding: 0 0 0 10;"
+            "-fx-font-size: 11px;"
         );
 
-        bubble.getChildren().addAll(nameRow, textLabel);
+        bubble.getChildren().addAll(timeLabel, textLabel);
+        container.getChildren().addAll(portrait, bubble);
 
-        // Fade in animation
-        bubble.setOpacity(0);
-        FadeTransition ft = new FadeTransition(Duration.millis(400), bubble);
+        // Wrap in VBox for fade animation
+        VBox wrapper = new VBox(container);
+        wrapper.setMaxWidth(Double.MAX_VALUE);
+        wrapper.setOpacity(0);
+        FadeTransition ft = new FadeTransition(Duration.millis(400), wrapper);
         ft.setToValue(1.0);
         ft.play();
 
-        return bubble;
+        return wrapper;
     }
 
     // ── Helpers ───────────────────────────────────────────────

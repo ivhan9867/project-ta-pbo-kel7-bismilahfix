@@ -567,11 +567,13 @@ public class CombatManager {
 
     /** Subscribe untuk menerima event satu per satu */
     public void addEventListener(Consumer<CombatEvent> listener) {
+        eventListeners.clear(); // reset dulu baru tambah
         eventListeners.add(listener);
     }
 
     /** Subscribe untuk menerima batch event (hasil satu aksi) */
     public void addBatchListener(Consumer<List<CombatEvent>> listener) {
+        batchListeners.clear(); // reset dulu baru tambah
         batchListeners.add(listener);
     }
 
@@ -597,11 +599,19 @@ public class CombatManager {
         combatResultListeners.forEach(l -> l.accept(result));
     }
 
-    private final List<Consumer<CombatResult>> combatResultListeners = new ArrayList<>();
+    private final java.util.List<Consumer<CombatResult>> combatResultListeners
+        = new java.util.ArrayList<>(); // max 2: DungeonManager + CombatView
 
     /** Subscribe untuk menerima CombatResult saat battle selesai */
     public void addResultListener(Consumer<CombatResult> listener) {
+        // Max 2 listener (DungeonManager logic + CombatView UI)
+        // Reset jika sudah penuh untuk mencegah accumulate
+        if (combatResultListeners.size() >= 2) combatResultListeners.clear();
         combatResultListeners.add(listener);
+    }
+
+    public void clearResultListeners() {
+        combatResultListeners.clear();
     }
 
     // ════════════════════════════════════════════════════════

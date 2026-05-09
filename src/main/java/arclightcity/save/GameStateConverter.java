@@ -30,7 +30,10 @@ public class GameStateConverter {
         save.progress.lastSaveMs = System.currentTimeMillis();
 
         Player player = engine.getPlayer();
-        if (player == null) return save;
+        if (player == null) {
+            System.err.println("[SAVE] ERROR: player is null!");
+            return save;
+        }
 
         // ── Player data ──────────────────────────────────────
         save.player.name            = player.getName();
@@ -52,23 +55,40 @@ public class GameStateConverter {
         if (inv != null) {
             // Equipment yang diequip
             if (inv.getEquippedWeapon()     != null)
-                save.inventoryItems.add(equipToData(inv.getEquippedWeapon(), "WEAPON"));
+                save.inventoryItems.add(equipToData(inv.getEquippedWeapon(),     "WEAPON"));
             if (inv.getEquippedArmor()      != null)
-                save.inventoryItems.add(equipToData(inv.getEquippedArmor(), "ARMOR"));
+                save.inventoryItems.add(equipToData(inv.getEquippedArmor(),      "ARMOR"));
+            if (inv.getEquippedHelmet()     != null)
+                save.inventoryItems.add(equipToData(inv.getEquippedHelmet(),     "HELMET"));
+            if (inv.getEquippedBoots()      != null)
+                save.inventoryItems.add(equipToData(inv.getEquippedBoots(),      "BOOTS"));
+            if (inv.getEquippedRing1()      != null)
+                save.inventoryItems.add(equipToData(inv.getEquippedRing1(),      "RING_1"));
+            if (inv.getEquippedRing2()      != null)
+                save.inventoryItems.add(equipToData(inv.getEquippedRing2(),      "RING_2"));
             if (inv.getEquippedAccessory1() != null)
                 save.inventoryItems.add(equipToData(inv.getEquippedAccessory1(), "ACC1"));
             if (inv.getEquippedAccessory2() != null)
                 save.inventoryItems.add(equipToData(inv.getEquippedAccessory2(), "ACC2"));
 
-            // Semua item di bag (equipment + consumable + material)
+            // Semua item di bag
+            int bagCount = 0;
             for (Item item : inv.getAllBagItems()) {
-                if (item instanceof Equipment eq)
+                if (item instanceof Equipment eq) {
                     save.inventoryItems.add(equipToData(eq, null));
-                else if (item instanceof Consumable c)
+                    bagCount++;
+                } else if (item instanceof Consumable c) {
                     save.inventoryItems.add(consumableToData(c));
-                else if (item instanceof Material m)
+                    bagCount++;
+                } else if (item instanceof Material m) {
                     save.inventoryItems.add(materialToData(m));
+                    bagCount++;
+                }
             }
+            System.out.println("[SAVE] Saved " + save.inventoryItems.size() +
+                " items total (" + bagCount + " in bag)");
+        } else {
+            System.err.println("[SAVE] ERROR: inventory is null!");
         }
 
         // ── Mercenaries ──────────────────────────────────────
@@ -80,6 +100,8 @@ public class GameStateConverter {
             md.currentMp     = merc.getCurrentMp();
             md.currentShield = merc.getCurrentShield();
             md.isActive      = engine.getActiveMercs().contains(merc);
+            md.isActive = engine.getActiveMercs().stream()
+                .anyMatch(m -> m.getMercenaryType() == merc.getMercenaryType());
             save.ownedMercs.add(md);
         }
 
@@ -102,13 +124,16 @@ public class GameStateConverter {
 
         if (eq instanceof Weapon w) {
             d.itemClass = "Weapon";
-            d.subType   = w.getWeaponType().name();
+            d.subType   = w.getWeaponType() != null ? w.getWeaponType().name() : "KATANA";
         } else if (eq instanceof Armor a) {
             d.itemClass = "Armor";
-            d.subType   = a.getArmorType().name();
+            d.subType   = a.getArmorType() != null ? a.getArmorType().name() : "MEDIUM";
         } else {
             d.itemClass = "Accessory";
+            d.subType   = "ACCESSORY"; // default untuk Accessory
         }
+        System.out.println("[SAVE] equipToData: " + eq.getName() +
+            " class=" + d.itemClass + " subType=" + d.subType + " slot=" + d.slot);
 
         eq.getBaseStats().forEach((k, v)  -> d.baseStats.put(k.name(), v));
         eq.getBonusStats().forEach((k, v) -> d.bonusStats.put(k.name(), v));
@@ -143,8 +168,14 @@ public class GameStateConverter {
     public static void restoreFromSave(GameEngine engine, GameSaveState save) {
         if (save == null || save.player == null) return;
 
-        PlayerBackground bg = PlayerBackground.valueOf(save.player.background);
+        PlayerBackground bg = PlayerBackground.ASUNA;
         engine.createCharacterFromSave(save.player.name, bg, save.player);
+
+        // Restore floor number ke DungeonManager
+        int savedDepth = save.player.dungeonDepth;
+        if (savedDepth > 0) {
+            engine.getDungeonManager().setCurrentFloorNumber(savedDepth);
+        }
 
         restoreInventory(engine, save);
         restoreMercenaries(engine, save);
@@ -156,75 +187,145 @@ public class GameStateConverter {
 
     private static void restoreInventory(GameEngine engine, GameSaveState save) {
         Inventory inv = engine.getInventory();
-        if (inv == null) return;
+        if (inv == null) {
+            System.err.println("[LOAD] ERROR: inventory is null during restore!");
+            return;
+        }
+
+        System.out.println("[LOAD] Restoring " + save.inventoryItems.size() + " items...");
+        int restored = 0, failed = 0;
 
         for (GameSaveState.ItemData d : save.inventoryItems) {
             try {
                 Item item = dataToItem(d);
-                if (item == null) continue;
+                if (item == null) {
+                    System.err.println("[LOAD] dataToItem returned null for: " + d.name + " class=" + d.itemClass);
+                    failed++;
+                    continue;
+                }
 
                 if (d.slot != null && item instanceof Equipment eq) {
                     switch (d.slot) {
                         case "WEAPON" -> inv.forceEquipWeapon(eq);
                         case "ARMOR"  -> inv.forceEquipArmor(eq);
+                        case "HELMET" -> inv.forceEquipHelmet(eq);
+                        case "BOOTS"  -> inv.forceEquipBoots(eq);
+                        case "RING_1" -> inv.forceEquipRing1(eq);
+                        case "RING_2" -> inv.forceEquipRing2(eq);
                         case "ACC1"   -> inv.forceEquipAccessory1(eq);
                         case "ACC2"   -> inv.forceEquipAccessory2(eq);
                     }
                 } else {
-                    inv.addItem(item);
+                    boolean added = inv.addItem(item);
+                    if (!added) {
+                        System.err.println("[LOAD] addItem failed for: " + d.name + " (bag full?)");
+                        failed++;
+                        continue;
+                    }
                 }
+                restored++;
+                System.out.println("[LOAD] ✓ Restored: " + d.name + " slot=" + d.slot);
             } catch (Exception e) {
-                System.err.println("[Converter] Skip item: " + d.name + " — " + e.getMessage());
+                System.err.println("[LOAD] ✗ Exception restoring " + d.name + ": " + e.getMessage());
+                failed++;
             }
+        }
+        System.out.println("[LOAD] Done: " + restored + " restored, " + failed + " failed");
+    }
+
+    private static Weapon.WeaponType safeWeaponType(String name) {
+        if (name == null) return Weapon.WeaponType.KATANA;
+        try { return Weapon.WeaponType.valueOf(name); }
+        catch (IllegalArgumentException e) {
+            // Fallback untuk weapon type lama (BLADE, GUN, dll)
+            return switch (name) {
+                case "BLADE"         -> Weapon.WeaponType.KATANA;
+                case "HEAVY"         -> Weapon.WeaponType.ODACHI;
+                case "GUN"           -> Weapon.WeaponType.SHADOW_BLADE;
+                case "CYBER_TOOL"    -> Weapon.WeaponType.GOLOK_RUNE;
+                case "ENERGY_EMITTER"-> Weapon.WeaponType.KUJANG_BLADE;
+                default              -> Weapon.WeaponType.KATANA;
+            };
         }
     }
 
     private static Item dataToItem(GameSaveState.ItemData d) {
         if (d == null || d.itemClass == null) return null;
-        Item.Rarity rarity = Item.Rarity.valueOf(d.rarity);
 
-        return switch (d.itemClass) {
-            case "Weapon" -> {
-                var stats = parseStats(d.baseStats);
-                var w = new Weapon(d.name, "", rarity,
-                        Weapon.WeaponType.valueOf(d.subType), stats);
-                applyEquipData(w, d);
-                yield w;
-            }
-            case "Armor" -> {
-                var stats = parseStats(d.baseStats);
-                var a = new Armor(d.name, "", rarity,
-                        Armor.ArmorType.valueOf(d.subType), stats);
-                applyEquipData(a, d);
-                yield a;
-            }
-            case "Accessory" -> {
-                var stats = parseStats(d.baseStats);
-                var acc = new Accessory(d.name, "", rarity, stats);
-                applyEquipData(acc, d);
-                yield acc;
-            }
-            case "Consumable" -> {
-                var c = new Consumable(d.name, "", rarity,
-                        Consumable.ConsumableType.valueOf(d.subType), d.effectValue);
-                for (int i = 1; i < d.quantity; i++) c.addStack();
-                yield c;
-            }
-            case "Material" -> {
-                var m = new Material(d.name, "", rarity,
-                        Material.MaterialType.valueOf(d.subType));
-                if (d.quantity > 1) m.addQuantity(d.quantity - 1);
-                yield m;
-            }
-            default -> null;
-        };
+        Item.Rarity rarity;
+        try {
+            rarity = Item.Rarity.valueOf(d.rarity);
+        } catch (Exception e) {
+            rarity = Item.Rarity.COMMON;
+        }
+
+        try {
+            return switch (d.itemClass) {
+                case "Weapon" -> {
+                    var stats = parseStats(d.baseStats);
+                    var w = new Weapon(d.name, "", rarity,
+                            safeWeaponType(d.subType), stats);
+                    applyEquipData(w, d);
+                    yield w;
+                }
+                case "Armor" -> {
+                    var stats = parseStats(d.baseStats);
+                    Armor.ArmorType armorType = safeArmorType(d.subType);
+                    var a = new Armor(d.name, "", rarity, armorType, stats);
+                    applyEquipData(a, d);
+                    yield a;
+                }
+                case "Accessory" -> {
+                    var stats = parseStats(d.baseStats);
+                    var acc = new Accessory(d.name, "", rarity, stats);
+                    applyEquipData(acc, d);
+                    yield acc;
+                }
+                case "Consumable" -> {
+                    Consumable.ConsumableType cType = safeConsumableType(d.subType);
+                    var c = new Consumable(d.name, "", rarity, cType, d.effectValue);
+                    for (int i = 1; i < d.quantity; i++) c.addStack();
+                    yield c;
+                }
+                case "Material" -> {
+                    Material.MaterialType mType = safeMaterialType(d.subType);
+                    var m = new Material(d.name, "", rarity, mType);
+                    if (d.quantity > 1) m.addQuantity(d.quantity - 1);
+                    yield m;
+                }
+                default -> null;
+            };
+        } catch (Exception e) {
+            System.err.println("[LOAD] dataToItem failed for '" + d.name +
+                "' class=" + d.itemClass + " subType=" + d.subType +
+                " error=" + e.getClass().getSimpleName() + ": " + e.getMessage());
+            return null;
+        }
+    }
+
+    private static Armor.ArmorType safeArmorType(String name) {
+        if (name == null) return Armor.ArmorType.MEDIUM;
+        try { return Armor.ArmorType.valueOf(name); }
+        catch (IllegalArgumentException e) { return Armor.ArmorType.MEDIUM; }
+    }
+
+    private static Consumable.ConsumableType safeConsumableType(String name) {
+        if (name == null) return Consumable.ConsumableType.HEALTH_PACK;
+        try { return Consumable.ConsumableType.valueOf(name); }
+        catch (IllegalArgumentException e) { return Consumable.ConsumableType.HEALTH_PACK; }
+    }
+
+    private static Material.MaterialType safeMaterialType(String name) {
+        if (name == null) return Material.MaterialType.SCRAP_METAL;
+        try { return Material.MaterialType.valueOf(name); }
+        catch (IllegalArgumentException e) { return Material.MaterialType.SCRAP_METAL; }
     }
 
     private static void applyEquipData(Equipment eq, GameSaveState.ItemData d) {
-        for (int i = 0; i < d.upgradeLevel; i++) eq.applyUpgrade();
-        // Restore bonus stats langsung (deterministic)
-        eq.getBonusStats().clear();
-        parseStats(d.bonusStats).forEach((k, v) -> eq.getBonusStats().put(k, v));
+        // Set level langsung tanpa trigger random stat bonus
+        eq.setUpgradeLevelDirect(d.upgradeLevel);
+        // Restore bonus stats persis seperti saat disimpan
+        eq.restoreBonusStats(parseStats(d.bonusStats));
     }
 
     private static Map<StatType, Double> parseStats(Map<String, Double> raw) {

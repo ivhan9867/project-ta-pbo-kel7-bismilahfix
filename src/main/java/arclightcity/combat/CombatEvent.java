@@ -113,7 +113,7 @@ public class CombatEvent {
     public static CombatEvent damage(String actorId, String actorName,
                                      String targetId, String targetName,
                                      double amount, DamageType type) {
-        String msg = String.format("%s hits %s for %.0f %s damage",
+        String msg = String.format("%s menyerang %s — %.0f damage %s",
                 actorName, targetName, amount, type.displayName);
         return new Builder(EventType.DAMAGE_DEALT)
                 .actor(actorId, actorName).target(targetId, targetName)
@@ -124,7 +124,7 @@ public class CombatEvent {
                                            String targetId, String targetName,
                                            double totalDmg, double shieldAbsorbed,
                                            DamageType type) {
-        String msg = String.format("%s hits %s for %.0f %s damage (🛡 %.0f absorbed by shield)",
+        String msg = String.format("%s menyerang %s — %.0f damage %s (🛡 %.0f diserap perisai)",
                 actorName, targetName, totalDmg, type.displayName, shieldAbsorbed);
         return new Builder(EventType.DAMAGE_DEALT)
                 .actor(actorId, actorName).target(targetId, targetName)
@@ -134,7 +134,7 @@ public class CombatEvent {
     public static CombatEvent critDamage(String actorId, String actorName,
                                          String targetId, String targetName,
                                          double amount, DamageType type) {
-        String msg = String.format("⚡ CRITICAL! %s hits %s for %.0f %s damage!",
+        String msg = String.format("⚡ TEBASAN KERAS! %s menyerang %s — %.0f damage %s!",
                 actorName, targetName, amount, type.displayName);
         return new Builder(EventType.CRITICAL_HIT)
                 .actor(actorId, actorName).target(targetId, targetName)
@@ -145,7 +145,7 @@ public class CombatEvent {
                                      String targetId, String targetName) {
         return new Builder(EventType.DAMAGE_EVADED)
                 .actor(actorId, actorName).target(targetId, targetName)
-                .message(targetName + " evades " + actorName + "'s attack!").build();
+                .message(targetName + " menghindar dari serangan " + actorName + "!").build();
     }
 
     public static CombatEvent blocked(String actorId, String actorName,
@@ -184,7 +184,7 @@ public class CombatEvent {
     public static CombatEvent death(String entityId, String entityName) {
         return new Builder(EventType.ENTITY_DIED)
                 .actor(entityId, entityName)
-                .message("💀 " + entityName + " has been defeated!").build();
+                .message("💀 " + entityName + " telah dikalahkan!").build();
     }
 
     public static CombatEvent skillUsed(String actorId, String actorName, String skillId) {

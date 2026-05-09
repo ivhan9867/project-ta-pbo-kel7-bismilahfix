@@ -1,43 +1,23 @@
 package arclightcity.ui.view;
-import arclightcity.item.Item;
-import arclightcity.entity.stats.StatType;
 
 import arclightcity.engine.GameEngine;
 import arclightcity.entity.player.Player;
+import arclightcity.entity.stats.StatType;
+import arclightcity.ui.ArclightApp;
+import arclightcity.ui.controller.SceneRouter;
+import arclightcity.ui.util.UIFactory;
 import javafx.animation.*;
 import javafx.geometry.*;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
-import javafx.scene.layout.BorderPane;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 import javafx.util.Duration;
-import arclightcity.ui.controller.SceneRouter;
-import arclightcity.ui.view.MercenaryDialogue;
-import arclightcity.ui.util.UIFactory;
 
 /**
- * HubView — hub utama setelah masuk game.
- * Mirip dengan main district screen di Arclight City asli.
- *
- * Layout:
- *   ┌─────────────────────────┐
- *   │  LV.X [NAME]    ⚙ GOLD │
- *   │  ████████░░░░░ 141K/146K│  ← EXP bar
- *   ├─────────────────────────┤
- *   │  HP ████████░░ 120/120  │
- *   │  SHD ██████░░  40/ 40   │
- *   │  MP  ████░░░░  60/ 60   │
- *   ├─────────────────────────┤
- *   │  ARCLIGHT CITY          │  ← district banner
- *   │  Floor depth: 0         │
- *   ├─────────────────────────┤
- *   │  [ ENTER DUNGEON ]      │
- *   │  [ MERCENARY ]          │
- *   │  [ INVENTORY ]          │
- *   │  [ PROFILE ]            │
- *   ├─────────────────────────┤
- *   │  [REWARDS][SHOP][CRAFT] │  ← bottom nav
- *   └─────────────────────────┘
+ * HubView — Markas Pendekar. Titik istirahat dan persiapan.
+ * Tema: Pendopo megah dengan ornamen batik kerajaan.
  */
 public class HubView {
 
@@ -51,290 +31,457 @@ public class HubView {
 
     public Parent build() {
         Player player = engine.getPlayer();
+        BorderPane root = UIFactory.screenRootBorder();
 
-        // ── Gunakan BorderPane agar bottom nav SELALU di bawah ──
-        // BorderPane.bottom = fixed, BorderPane.center = scrollable
-        BorderPane root = new BorderPane();
-        root.setStyle("-fx-background-color: #050810;");
-        root.setPrefSize(arclightcity.ui.ArclightApp.GAME_WIDTH,
-                         arclightcity.ui.ArclightApp.SCREEN_HEIGHT);
+        // ── TOP: Player identity bar ──────────────────────
+        root.setTop(buildIdentityBar(player));
 
-        // ── TOP: player bar (fixed) ───────────────────────────
-        root.setTop(buildPlayerBar(player));
+        // ── CENTER: Scrollable content ────────────────────
+        VBox center = new VBox(0);
 
-        // ── CENTER: scrollable content ────────────────────────
-        VBox scrollContent = new VBox(0);
-        scrollContent.setFillWidth(true);
-        scrollContent.getChildren().add(buildVitalsPanel(player));
-        scrollContent.getChildren().add(buildDistrictBanner(player));
+        // Vitals
+        center.getChildren().add(buildVitalsSection(player));
 
-        VBox navButtons = new VBox(10);
-        navButtons.setPadding(new Insets(16));
+        // District banner
+        center.getChildren().add(buildDistrictBanner(player));
 
-        Button enterDungeon = UIFactory.btnGold("▶  ENTER DUNGEON");
+        // Mythic fragment progress
+        long frags = getMythicFragmentCount();
+        center.getChildren().add(buildMythicBar(frags));
+
+        // Navigation grid
+        center.getChildren().add(buildNavGrid());
+
+        // Active crew
+        center.getChildren().add(buildCrewPreview(player));
+
+        ScrollPane scroll = new ScrollPane(center);
+        scroll.setFitToWidth(true);
+        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scroll.setStyle("-fx-background-color: #0A0604; -fx-background: #0A0604;" +
+                        "-fx-border-color: transparent;");
+        root.setCenter(scroll);
+
+        // ── BOTTOM: Quick action bar ──────────────────────
+        root.setBottom(buildQuickBar(player));
+
+        // Idle chat trigger
+        new Timeline(new KeyFrame(Duration.millis(600),
+            e -> router.emitChat(MercenaryDialogue.Trigger.HUB_IDLE))).play();
+
+        UIFactory.fadeIn(root, 400);
+        return root;
+    }
+
+    // ── Identity Bar ──────────────────────────────────────
+
+    private VBox buildIdentityBar(Player player) {
+        VBox bar = new VBox(0);
+        bar.setStyle("-fx-background-color: #0F0A06;" +
+                     "-fx-border-color: #3A2810; -fx-border-width: 0 0 1 0;");
+
+        // Top row: ornamen + judul
+        HBox topRow = new HBox(10);
+        topRow.setPadding(new Insets(10, 16, 8, 16));
+        topRow.setAlignment(Pos.CENTER_LEFT);
+
+        Label ornL = new Label("◆");
+        ornL.setStyle("-fx-text-fill: #3A2810; -fx-font-size: 14px;");
+
+        Label title = new Label("MYTHIC ITEM OBTAINED");
+        title.setStyle("-fx-text-fill: #5A3A10; -fx-font-family: 'Courier New';" +
+                       "-fx-font-size: 11px; -fx-font-weight: bold; -fx-letter-spacing: 3;");
+        HBox.setHgrow(title, Priority.ALWAYS);
+
+        Label ornR = new Label("◆");
+        ornR.setStyle("-fx-text-fill: #3A2810; -fx-font-size: 14px;");
+        topRow.getChildren().addAll(ornL, title, ornR);
+
+        // Player row
+        HBox playerRow = new HBox(12);
+        playerRow.setPadding(new Insets(0, 16, 12, 16));
+        playerRow.setAlignment(Pos.CENTER_LEFT);
+
+        // Avatar circle
+        StackPane avatar = new StackPane();
+        Circle avatarBg = new Circle(24, Color.web("#1A1008"));
+        avatarBg.setStroke(Color.web("#C8860A"));
+        avatarBg.setStrokeWidth(1.5);
+        Label avatarIcon = new Label("⚔");
+        avatarIcon.setStyle("-fx-font-size: 18px;");
+        avatar.getChildren().addAll(avatarBg, avatarIcon);
+
+        // Player info
+        VBox info = new VBox(3);
+        HBox.setHgrow(info, Priority.ALWAYS);
+
+        Label nameLabel = new Label(player.getName().toUpperCase());
+        nameLabel.setStyle("-fx-text-fill: #FFB830; -fx-font-family: 'Courier New';" +
+                           "-fx-font-size: 16px; -fx-font-weight: bold;" +
+                           "-fx-effect: dropshadow(gaussian, #C8860A, 6, 0.3, 0, 0);");
+
+        HBox badges = new HBox(8);
+        badges.setAlignment(Pos.CENTER_LEFT);
+
+        Label lvBadge = new Label("LV." + player.getLevel());
+        lvBadge.setStyle("-fx-background-color: #C8860A22; -fx-text-fill: #C8860A;" +
+                         "-fx-font-family: 'Courier New'; -fx-font-size: 11px;" +
+                         "-fx-font-weight: bold; -fx-padding: 2 6;" +
+                         "-fx-border-color: #C8860A44; -fx-border-width: 1;");
+
+        Label bgBadge = new Label(player.getBackground().name);
+        bgBadge.setStyle("-fx-background-color: #1A1008; -fx-text-fill: #6A5840;" +
+                         "-fx-font-family: 'Courier New'; -fx-font-size: 10px;" +
+                         "-fx-padding: 2 6; -fx-border-color: #3A2810; -fx-border-width: 1;");
+
+        int depth = player.getDungeonDepth();
+        String floorLabel = depth <= 0 ? "Lantai 1" : "Lantai " + depth;
+        Label depthBadge = new Label(floorLabel);
+        depthBadge.setStyle("-fx-background-color: #1A1008; -fx-text-fill: #5A3A10;" +
+                            "-fx-font-family: 'Courier New'; -fx-font-size: 10px;" +
+                            "-fx-padding: 2 6; -fx-border-color: #3A2810; -fx-border-width: 1;");
+
+        badges.getChildren().addAll(lvBadge, bgBadge, depthBadge);
+        info.getChildren().addAll(nameLabel, badges);
+
+        // Gold + Fragment
+        VBox resources = new VBox(4);
+        resources.setAlignment(Pos.CENTER_RIGHT);
+
+        Label gold = new Label("⚙ " + UIFactory.formatNumber(player.getGold()));
+        gold.setStyle("-fx-text-fill: #FFB830; -fx-font-family: 'Courier New';" +
+                      "-fx-font-size: 13px; -fx-font-weight: bold;");
+
+        long frags = getMythicFragmentCount();
+        Label fragLbl = new Label("✦ " + frags + "/5");
+        fragLbl.setStyle("-fx-text-fill: " + (frags > 0 ? "#FF6B00" : "#2A1808") +
+                         "; -fx-font-family: 'Courier New'; -fx-font-size: 11px;" +
+                         "-fx-font-weight: bold;");
+        fragLbl.setTooltip(new javafx.scene.control.Tooltip(
+            "Serpihan Red Essence: " + frags + "/5\n" +
+            "Kumpulkan dari 5 boss (F10/20/30/40/50)\n" +
+            "Untuk menempa Red Blossom Katana"));
+
+        resources.getChildren().addAll(gold, fragLbl);
+        playerRow.getChildren().addAll(avatar, info, resources);
+        bar.getChildren().addAll(topRow, playerRow);
+        return bar;
+    }
+
+    // ── Vitals Section ────────────────────────────────────
+
+    private VBox buildVitalsSection(Player player) {
+        VBox sec = new VBox(6);
+        sec.setPadding(new Insets(6, 12, 6, 12));
+        sec.setStyle("-fx-background-color: #0F0A06;" +
+                     "-fx-border-color: #3A2810; -fx-border-width: 0 0 1 0;");
+
+        // EXP bar
+        double expPct = player.getExpToNextLevel() > 0
+                ? player.getCurrentExp() / player.getExpToNextLevel() : 0;
+
+        HBox expRow = new HBox(8);
+        expRow.setAlignment(Pos.CENTER_LEFT);
+        Label expLbl = new Label("EXP");
+        expLbl.setStyle("-fx-text-fill: #5A3A10; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+        expLbl.setMinWidth(30);
+
+        ProgressBar expBar = new ProgressBar(expPct);
+        expBar.setPrefHeight(6);
+        HBox.setHgrow(expBar, Priority.ALWAYS);
+        expBar.setStyle("-fx-accent: #C8860A; -fx-background-color: #1A1008;" +
+                        "-fx-min-height: 6; -fx-max-height: 6;");
+
+        Label expVal = new Label(UIFactory.formatNumber((long)player.getCurrentExp()) +
+                                 " / " + UIFactory.formatNumber((long)player.getExpToNextLevel()));
+        expVal.setStyle("-fx-text-fill: #5A3A10; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+
+        expRow.getChildren().addAll(expLbl, expBar, expVal);
+
+        // HP + Shield + MP in one row
+        VBox vitals = UIFactory.compactVitalBars(
+            player.getCurrentHp(),     player.getStats().get(StatType.MAX_HP),
+            player.getCurrentShield(), player.getStats().get(StatType.MAX_SHIELD),
+            player.getCurrentMp(),     player.getStats().get(StatType.MAX_MP));
+
+        sec.getChildren().addAll(expRow, vitals);
+        return sec;
+    }
+
+    // ── District Banner ───────────────────────────────────
+
+    private HBox buildDistrictBanner(Player player) {
+        HBox banner = new HBox();
+        banner.setPadding(new Insets(10, 16, 10, 16));
+        banner.setAlignment(Pos.CENTER_LEFT);
+        banner.setStyle("-fx-background-color: #150E08;" +
+                        "-fx-border-color: #3A2810; -fx-border-width: 0 0 1 0;");
+
+        String district = getDistrictName(player.getDungeonDepth());
+
+        VBox info = new VBox(2);
+        Label districtLbl = new Label("◈ " + district);
+        districtLbl.setStyle("-fx-text-fill: #C8860A; -fx-font-family: 'Courier New';" +
+                             "-fx-font-size: 13px; -fx-font-weight: bold;");
+        Label subLbl = new Label("Lokasi markas saat ini — siap untuk terjun ke kedalaman");
+        subLbl.setStyle("-fx-text-fill: #3A2810; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+        info.getChildren().addAll(districtLbl, subLbl);
+        banner.getChildren().add(info);
+        return banner;
+    }
+
+    // ── Mythic Bar ────────────────────────────────────────
+
+    private HBox buildMythicBar(long frags) {
+        HBox bar = new HBox(10);
+        bar.setPadding(new Insets(8, 16, 8, 16));
+        bar.setAlignment(Pos.CENTER_LEFT);
+        bar.setStyle("-fx-background-color: #1A0A04;" +
+                     "-fx-border-color: #FF6B0044; -fx-border-width: 0 0 1 0;");
+
+        Label icon = new Label("✦");
+        icon.setStyle("-fx-text-fill: #FF6B00; -fx-font-size: 14px;" +
+                      "-fx-effect: dropshadow(gaussian, #FF6B00, 6, 0.5, 0, 0);");
+
+        Label lbl = new Label("SERPIHAN RED ESSENCE: " + frags + " / 5");
+        lbl.setStyle("-fx-text-fill: #FF8833; -fx-font-family: 'Courier New';" +
+                     "-fx-font-size: 12px; -fx-font-weight: bold;");
+        HBox.setHgrow(lbl, Priority.ALWAYS);
+
+        Label hint = new Label(frags >= 5 ? "✓ SIAP TEMPA!" : "Kalahkan boss di F10/20/30/40/50");
+        hint.setStyle("-fx-text-fill: " + (frags >= 3 ? "#FF6B00" : "#3A2810") +
+                      "; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+
+        // Progress dots
+        HBox dots = new HBox(4);
+        for (int i = 0; i < 5; i++) {
+            Circle dot = new Circle(5, Color.web(i < frags ? "#FF6B00" : "#2A1808"));
+            if (i < frags) dot.setEffect(new javafx.scene.effect.DropShadow(
+                6, Color.web("#FF6B00")));
+            dots.getChildren().add(dot);
+        }
+
+        bar.getChildren().addAll(icon, lbl, hint, dots);
+        return bar;
+    }
+
+    // ── Navigation Grid ───────────────────────────────────
+
+    private VBox buildNavGrid() {
+        VBox sec = new VBox(0);
+
+        Label secTitle = new Label("── TINDAKAN ──");
+        secTitle.setStyle("-fx-text-fill: #3A2810; -fx-font-family: 'Courier New';" +
+                          "-fx-font-size: 10px; -fx-padding: 10 16 6 16;");
+        sec.getChildren().add(secTitle);
+
+        // Primary action - masuk dungeon
+        Button enterDungeon = buildNavButton(
+            "▶  MASUK DUNGEON",
+            "Jelajahi lantai dungeon berikutnya",
+            "#FFB830", "#C8860A22", "#FFB830", true);
         enterDungeon.setOnAction(e -> {
             engine.startDungeonRun();
             router.emitChat(MercenaryDialogue.Trigger.HUB_ENTER_DUNGEON);
             router.showDungeonMap();
         });
-        Button mercenary = UIFactory.btnPrimary("◈  MERCENARY");
-        mercenary.setOnAction(e -> router.showMercenary());
-        Button inventory = UIFactory.btnPrimary("⊞  INVENTORY");
-        inventory.setOnAction(e -> router.showInventory());
-        Button profile = UIFactory.btnPrimary("☰  PROFILE");
+        sec.getChildren().add(enterDungeon);
+
+        // Masuk kota
+        Button enterCity = buildNavButton(
+            "🏙  MASUK KOTA",
+            "Toko senjata, jamu, bengkel empu & penadah barang",
+            "#A09070", "transparent", "#5A3A10", false);
+        enterCity.setOnAction(e -> router.showCity());
+        sec.getChildren().add(enterCity);
+
+        // Secondary actions - 2 per row
+        GridPane grid = new GridPane();
+        grid.setHgap(0);
+        grid.setVgap(0);
+        grid.setPadding(new Insets(0));
+
+        Button guildmate = buildNavButton("◈  GUILDMATE", "Kelola & rekrut guildmate",
+            "#A09070", "transparent", "#5A3A10", false);
+        guildmate.setOnAction(e -> router.showMercenary());
+
+        Button inv = buildNavButton("⊞  PERBENDAHARAAN", "Kelola senjata & item",
+            "#A09070", "transparent", "#5A3A10", false);
+        inv.setOnAction(e -> router.showInventory());
+
+        Button profile = buildNavButton("☰  PROFIL PENDEKAR", "Lihat stat & jurus",
+            "#A09070", "transparent", "#5A3A10", false);
         profile.setOnAction(e -> router.showProfile());
 
-        // SAVE button
-        Button saveBtn = new Button("💾  SAVE GAME");
-        saveBtn.setMaxWidth(Double.MAX_VALUE);
-        saveBtn.setStyle(
-            "-fx-background-color: #FFD60011;" +
-            "-fx-border-color: #FFD60066;" +
-            "-fx-border-width: 1;" +
-            "-fx-text-fill: #FFD600;" +
-            "-fx-font-family: 'Courier New'; -fx-font-size: 13px;" +
-            "-fx-padding: 10 20; -fx-cursor: hand;"
+        Button save = buildNavButton("💾  SIMPAN", "Simpan perkembangan",
+            "#5A3A10", "transparent", "#3A2810", false);
+        save.setOnAction(e -> router.showSaveLoad(true));
+
+        GridPane.setHgrow(guildmate, Priority.ALWAYS);
+        GridPane.setHgrow(inv, Priority.ALWAYS);
+        GridPane.setHgrow(profile, Priority.ALWAYS);
+        GridPane.setHgrow(save, Priority.ALWAYS);
+
+        grid.add(guildmate,  0, 0);
+        grid.add(inv,     1, 0);
+        grid.add(profile, 0, 1);
+        grid.add(save,    1, 1);
+
+        sec.getChildren().add(grid);
+        return sec;
+    }
+
+    private Button buildNavButton(String text, String subtitle,
+                                   String textColor, String bgColor,
+                                   String borderColor, boolean isPrimary) {
+        Button btn = new Button();
+        btn.setMaxWidth(Double.MAX_VALUE);
+
+        VBox content = new VBox(2);
+        content.setAlignment(Pos.CENTER_LEFT);
+        Label mainLbl = new Label(text);
+        mainLbl.setStyle("-fx-text-fill: " + textColor + "; -fx-font-family: 'Courier New';" +
+                         "-fx-font-size: " + (isPrimary ? "14" : "12") + "px; -fx-font-weight: bold;");
+        Label subLbl = new Label(subtitle);
+        subLbl.setStyle("-fx-text-fill: #3A2810; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+        content.getChildren().addAll(mainLbl, subLbl);
+
+        btn.setGraphic(content);
+        btn.setPadding(new Insets(isPrimary ? 10 : 7, 14, isPrimary ? 10 : 7, 14));
+        btn.setStyle(
+            "-fx-background-color: " + bgColor + ";" +
+            "-fx-border-color: " + borderColor + ";" +
+            "-fx-border-width: 0 0 1 0;" +
+            "-fx-cursor: hand; -fx-alignment: CENTER_LEFT;"
         );
-        saveBtn.setOnAction(e -> {
-            var result = engine.saveGame();
-            router.addSystemChat(result.success()
-                    ? "✅ " + result.message()
-                    : "❌ " + result.message());
+        btn.setOnMouseEntered(ev -> {
+            mainLbl.setStyle(mainLbl.getStyle().replace(textColor, "#FFB830"));
+            btn.setStyle(btn.getStyle().replace(bgColor, "#C8860A11"));
         });
-
-        navButtons.getChildren().addAll(enterDungeon, mercenary, inventory, profile, saveBtn);
-        scrollContent.getChildren().add(navButtons);
-
-        ScrollPane scrollPane = new ScrollPane(scrollContent);
-        scrollPane.setFitToWidth(true);
-        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-        scrollPane.setStyle(
-            "-fx-background-color: #050810;" +
-            "-fx-background: #050810;" +
-            "-fx-border-color: transparent;"
-        );
-        root.setCenter(scrollPane);
-
-        // ── BOTTOM: nav bar — selalu terlihat karena BorderPane.bottom ──
-        root.setBottom(buildBottomNav());
-
-        UIFactory.fadeIn(root, 400);
-
-        // Merc idle chat
-        new javafx.animation.Timeline(
-            new javafx.animation.KeyFrame(javafx.util.Duration.millis(800),
-                e -> router.emitChat(MercenaryDialogue.Trigger.HUB_IDLE))
-        ).play();
-
-        return root;
+        btn.setOnMouseExited(ev -> {
+            mainLbl.setStyle(mainLbl.getStyle().replace("#FFB830", textColor));
+            btn.setStyle(btn.getStyle().replace("#C8860A11", bgColor));
+        });
+        return btn;
     }
 
-    // ── Player info bar ──────────────────────────────────
+    // ── Crew Preview ──────────────────────────────────────
 
-    private VBox buildPlayerBar(Player player) {
-        VBox box = new VBox(4);
-        box.setPadding(new Insets(12, 16, 8, 16));
-        box.setStyle("-fx-background-color: #0C1220; -fx-border-color: #1C2E44; -fx-border-width: 0 0 1 0;");
+    private VBox buildCrewPreview(Player player) {
+        VBox sec = new VBox(0);
+        sec.setStyle("-fx-border-color: #3A2810; -fx-border-width: 1 0 0 0;");
 
-        // Name + level row
-        HBox nameRow = new HBox(8);
-        nameRow.setAlignment(Pos.CENTER_LEFT);
+        Label secTitle = new Label("── REGU AKTIF ──");
+        secTitle.setStyle("-fx-text-fill: #3A2810; -fx-font-family: 'Courier New';" +
+                          "-fx-font-size: 10px; -fx-padding: 10 16 6 16;");
+        sec.getChildren().add(secTitle);
 
-        Label levelBadge = new Label("LV." + player.getLevel());
-        levelBadge.setStyle(
-            "-fx-background-color: #00E5FF22;" +
-            "-fx-border-color: #00E5FF;" +
-            "-fx-border-width: 1;" +
-            "-fx-text-fill: #00E5FF;" +
-            "-fx-font-family: 'Courier New', monospace;" +
-            "-fx-font-size: 11px;" +
-            "-fx-font-weight: bold;" +
-            "-fx-padding: 2 6;"
-        );
+        var mercs = engine.getActiveMercs();
+        if (mercs.isEmpty()) {
+            Label none = new Label("  Tidak ada guildmate aktif — kunjungi menu GUILDMATE");
+            none.setStyle("-fx-text-fill: #3A2810; -fx-font-family: 'Courier New';" +
+                          "-fx-font-size: 11px; -fx-padding: 8 16 12 16;");
+            sec.getChildren().add(none);
+        } else {
+            for (var merc : mercs) {
+                HBox card = new HBox(10);
+                card.setPadding(new Insets(6, 12, 6, 12));
+                card.setAlignment(Pos.CENTER_LEFT);
+                card.setStyle("-fx-border-color: #2A1808; -fx-border-width: 0 0 1 0;");
 
-        Label nameLabel = new Label(player.getName().toUpperCase());
-        nameLabel.setStyle(
-            "-fx-text-fill: #E0E8F0;" +
-            "-fx-font-family: 'Courier New', monospace;" +
-            "-fx-font-size: 14px;" +
-            "-fx-font-weight: bold;"
-        );
+                Circle dot = new Circle(5, Color.web("#C8860A"));
+                VBox mInfo = new VBox(2);
+                HBox.setHgrow(mInfo, Priority.ALWAYS);
 
-        Label gold = new Label("⚙ " + UIFactory.formatNumber(player.getGold()));
-        gold.setStyle("-fx-text-fill: #FFD600; -fx-font-family: 'Courier New'; -fx-font-size: 13px; -fx-font-weight: bold;");
-        HBox.setHgrow(nameLabel, Priority.ALWAYS);
+                Label mName = new Label(merc.getMercenaryType().displayName.toUpperCase());
+                mName.setStyle("-fx-text-fill: #A09070; -fx-font-family: 'Courier New';" +
+                               "-fx-font-size: 12px; -fx-font-weight: bold;");
+                Label mRole = new Label(merc.getRole().name() + "  ♥ " + merc.getLoyaltyTitle());
+                mRole.setStyle("-fx-text-fill: #4A3820; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
+                mInfo.getChildren().addAll(mName, mRole);
 
-        // Mythic Fragment counter
-        long fragments = getMythicFragmentCount();
-        Label fragLabel = new Label("✦ " + fragments + "/3");
-        fragLabel.setStyle(
-            "-fx-text-fill: " + (fragments > 0 ? "#FF6B00" : "#3A2810") + ";" +
-            "-fx-font-family: 'Courier New'; -fx-font-size: 11px; -fx-font-weight: bold;"
-        );
-        fragLabel.setTooltip(new javafx.scene.control.Tooltip(
-            "Pecahan Mitik: " + fragments + "/3\n" +
-            (fragments >= 3 ? "SIAP CRAFT! Masuk dungeon dan kalahkan boss."
-                           : "Kalahkan boss untuk dapat Pecahan Mitik.\nKumpulkan 3 → auto craft Senjata Mythic!")
-        ));
+                VBox vitals = UIFactory.compactVitalBars(
+                    merc.getCurrentHp(),     merc.getStats().get(StatType.MAX_HP),
+                    merc.getCurrentShield(), merc.getStats().get(StatType.MAX_SHIELD),
+                    merc.getCurrentMp(),     merc.getStats().get(StatType.MAX_MP));
+                vitals.setMaxWidth(120);
 
-        nameRow.getChildren().addAll(levelBadge, nameLabel, fragLabel, gold);
-
-        // EXP bar
-        HBox expRow = new HBox(8);
-        expRow.setAlignment(Pos.CENTER_LEFT);
-
-        Label expLabel = new Label("EXP");
-        expLabel.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 12px;");
-
-        ProgressBar expBar = new ProgressBar(player.getExpPercent());
-        expBar.setPrefWidth(Double.MAX_VALUE);
-        expBar.setPrefHeight(5);
-        expBar.setStyle(
-            "-fx-accent: #FFD600;" +
-            "-fx-background-color: #1C1400;" +
-            "-fx-min-height: 5px; -fx-max-height: 5px;"
-        );
-        HBox.setHgrow(expBar, Priority.ALWAYS);
-
-        String expText = UIFactory.formatNumber((long)player.getCurrentExp()) + " / " +
-                         UIFactory.formatNumber((long)player.getExpToNextLevel());
-        Label expVal = new Label(expText);
-        expVal.setStyle("-fx-text-fill: #FFD600; -fx-font-family: 'Courier New'; -fx-font-size: 12px;");
-
-        expRow.getChildren().addAll(expLabel, expBar, expVal);
-
-        box.getChildren().addAll(nameRow, expRow);
-        return box;
-    }
-
-    // ── Vitals panel ─────────────────────────────────────
-
-    private VBox buildVitalsPanel(Player player) {
-        VBox box = new VBox(6);
-        box.setPadding(new Insets(10, 16, 10, 16));
-        box.setStyle("-fx-background-color: #080D18; -fx-border-color: #1C2E44; -fx-border-width: 0 0 1 0;");
-
-        box.getChildren().add(UIFactory.vitalBar("HEALTH",
-                UIFactory.RED,
-                player.getCurrentHp(),
-                player.getStats().get(StatType.MAX_HP)));
-
-        double maxShield = player.getStats().get(StatType.MAX_SHIELD);
-        if (maxShield > 0) {
-            box.getChildren().add(UIFactory.vitalBar("SHIELD",
-                    UIFactory.PURPLE,
-                    player.getCurrentShield(), maxShield));
+                card.getChildren().addAll(dot, mInfo, vitals);
+                sec.getChildren().add(card);
+            }
         }
-
-        box.getChildren().add(UIFactory.vitalBar("ENERGY",
-                "#2979FF",
-                player.getCurrentMp(),
-                player.getStats().get(StatType.MAX_MP)));
-
-        return box;
+        return sec;
     }
 
-    // ── District banner ───────────────────────────────────
+    // ── Quick Bar (Bottom) ────────────────────────────────
 
-    private VBox buildDistrictBanner(Player player) {
-        VBox box = new VBox(4);
-        box.setPadding(new Insets(12, 16, 12, 16));
-        box.setStyle(
-            "-fx-background-color: #0C1220;" +
-            "-fx-border-color: #1C2E44;" +
-            "-fx-border-width: 0 0 1 0;"
-        );
-
-        Label subtitle = new Label("ARCLIGHT CITY — SECTOR 7");
-        subtitle.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
-
-        Label district = new Label(getDistrictName(player.getDungeonDepth()));
-        district.setStyle(
-            "-fx-text-fill: #00E5FF;" +
-            "-fx-font-family: 'Courier New', monospace;" +
-            "-fx-font-size: 18px;" +
-            "-fx-font-weight: bold;" +
-            "-fx-effect: dropshadow(gaussian, #00E5FF, 8, 0.3, 0, 0);"
-        );
-
-        int depth = player.getDungeonDepth();
-        Label depthLabel = new Label("DEEPEST FLOOR: " + (depth > 0 ? depth : "NOT EXPLORED"));
-        depthLabel.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 12px;");
-
-        HBox mercInfo = new HBox(8);
-        mercInfo.setAlignment(Pos.CENTER_LEFT);
-        Label mercLabel = new Label("CREW: " + engine.getActiveMercs().size() + "/2 active");
-        mercLabel.setStyle("-fx-text-fill: #8899AA; -fx-font-family: 'Courier New'; -fx-font-size: 12px;");
-        mercInfo.getChildren().add(mercLabel);
-
-        box.getChildren().addAll(subtitle, district, depthLabel, mercInfo);
-        return box;
-    }
-
-    // ── Bottom nav ────────────────────────────────────────
-
-    private HBox buildBottomNav() {
-        HBox nav = new HBox(0);
-        nav.setAlignment(Pos.CENTER);
-        nav.setMinHeight(64);
-        nav.setMaxHeight(64);
-        nav.setPrefHeight(64);
-        nav.setStyle(
-            "-fx-background-color: #0C1220;" +
-            "-fx-border-color: #1C2E44;" +
-            "-fx-border-width: 1 0 0 0;" +
-            "-fx-padding: 6 0;"
-        );
+    private HBox buildQuickBar(Player player) {
+        HBox bar = new HBox(0);
+        bar.setStyle("-fx-background-color: #0F0A06;" +
+                     "-fx-border-color: #3A2810; -fx-border-width: 1 0 0 0;");
 
         String[][] items = {
-            {"⚙", "CRAFT"},
-            {"⊞", "INV"},
-            {"▷", "DUNGEON"},
-            {"◈", "CREW"},
-            {"☰", "PROFILE"}
+            {"⚔", "DUNGEON"},
+            {"◈", "GUILDMATE"},
+            {"⊞", "ITEM"},
+            {"☰", "PROFIL"}
         };
 
         Runnable[] actions = {
-            () -> router.addSystemChat("CRAFT SYSTEM — Coming Soon"),  // Craft
-            () -> router.showInventory(),
-            () -> { engine.startDungeonRun(); router.showDungeonMap(); },
-            () -> router.showMercenary(),
-            () -> router.showProfile()
+            () -> { engine.startDungeonRun();
+                    router.emitChat(MercenaryDialogue.Trigger.HUB_ENTER_DUNGEON);
+                    router.showDungeonMap(); },
+            router::showMercenary,
+            router::showInventory,
+            router::showProfile
         };
 
         for (int i = 0; i < items.length; i++) {
+            VBox btn = buildQuickBtn(items[i][0], items[i][1]);
             final int idx = i;
-            VBox navItem = new VBox(2);
-            navItem.setAlignment(Pos.CENTER);
-            navItem.setPrefWidth(84);
-            navItem.setPadding(new Insets(4));
-            navItem.setCursor(javafx.scene.Cursor.HAND);
-
-            Label icon = new Label(items[i][0]);
-            icon.setStyle("-fx-text-fill: #5A6A80; -fx-font-size: 16px;");
-            Label label = new Label(items[i][1]);
-            label.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
-
-            navItem.getChildren().addAll(icon, label);
-            navItem.setOnMouseClicked(e -> actions[idx].run());
-            navItem.setOnMouseEntered(e -> {
-                icon.setStyle("-fx-text-fill: #00E5FF; -fx-font-size: 16px;");
-                label.setStyle("-fx-text-fill: #00E5FF; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
-            });
-            navItem.setOnMouseExited(e -> {
-                icon.setStyle("-fx-text-fill: #5A6A80; -fx-font-size: 16px;");
-                label.setStyle("-fx-text-fill: #5A6A80; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
-            });
-
-            nav.getChildren().add(navItem);
+            btn.setOnMouseClicked(e -> actions[idx].run());
+            HBox.setHgrow(btn, Priority.ALWAYS);
+            bar.getChildren().add(btn);
+            if (i < items.length - 1) {
+                Region sep = new Region();
+                sep.setPrefWidth(1);
+                sep.setStyle("-fx-background-color: #3A2810;");
+                bar.getChildren().add(sep);
+            }
         }
-
-        return nav;
+        return bar;
     }
 
-    // District name berubah berdasarkan floor terdalam yang dicapai
+    private VBox buildQuickBtn(String icon, String label) {
+        VBox btn = new VBox(3);
+        btn.setAlignment(Pos.CENTER);
+        btn.setPadding(new Insets(8, 4, 8, 4));
+        btn.setCursor(javafx.scene.Cursor.HAND);
+        btn.setStyle("-fx-background-color: transparent;");
+
+        Label icn = new Label(icon);
+        icn.setStyle("-fx-text-fill: #6A5840; -fx-font-size: 16px;");
+        Label lbl = new Label(label);
+        lbl.setStyle("-fx-text-fill: #4A3820; -fx-font-family: 'Courier New'; -fx-font-size: 9px;");
+
+        btn.getChildren().addAll(icn, lbl);
+        btn.setOnMouseEntered(e -> {
+            icn.setStyle("-fx-text-fill: #FFB830; -fx-font-size: 16px;");
+            lbl.setStyle("-fx-text-fill: #C8860A; -fx-font-family: 'Courier New'; -fx-font-size: 9px;");
+            btn.setStyle("-fx-background-color: #C8860A11;");
+        });
+        btn.setOnMouseExited(e -> {
+            icn.setStyle("-fx-text-fill: #6A5840; -fx-font-size: 16px;");
+            lbl.setStyle("-fx-text-fill: #4A3820; -fx-font-family: 'Courier New'; -fx-font-size: 9px;");
+            btn.setStyle("-fx-background-color: transparent;");
+        });
+        return btn;
+    }
+
+    // ── Helpers ───────────────────────────────────────────
+
     private String getDistrictName(int depth) {
+        if (depth <= 0)  return "PENDOPO MARKAS";
         if (depth <= 3)  return "PASAR MALAM GAIB";
         if (depth <= 6)  return "CANDI TERLARANG";
         if (depth <= 10) return "HUTAN ANGKER";
@@ -342,8 +489,8 @@ public class HubView {
         return "KAHYANGAN RUSAK";
     }
 
-    // Hitung Mythic Fragment di inventory
     private long getMythicFragmentCount() {
+        if (engine.getInventory() == null) return 0;
         return engine.getInventory().getAllBagItems().stream()
             .filter(i -> i instanceof arclightcity.item.Material m
                       && m.getMaterialType() == arclightcity.item.Material.MaterialType.MYTHIC_FRAGMENT)

@@ -20,8 +20,12 @@ import java.util.Optional;
 public class SaveManager {
 
     // ── File names ────────────────────────────────────────────
-    private static final String MANUAL_FILENAME = "save_manual.dat";
-    private static final String AUTO_FILENAME   = "save_auto.dat";
+    public  static final String SLOT1_FILENAME  = "save_slot1.dat";
+    public  static final String SLOT2_FILENAME  = "save_slot2.dat";
+    public  static final String SLOT3_FILENAME  = "save_slot3.dat";
+    public  static final String AUTO_FILENAME   = "save_auto.dat";
+    // Alias untuk backward compat
+    private static final String MANUAL_FILENAME = SLOT1_FILENAME;
     private static final String SAVE_DIR_NAME   = "ArclightCity";
 
     // ── Result type ───────────────────────────────────────────
@@ -62,9 +66,32 @@ public class SaveManager {
 
     // ── Save ──────────────────────────────────────────────────
 
-    /** Simpan manual save */
+    /** Simpan ke slot tertentu (1-3) */
+    public static SaveResult saveSlot(GameSaveState state, int slot) {
+        String filename = switch (slot) {
+            case 2  -> SLOT2_FILENAME;
+            case 3  -> SLOT3_FILENAME;
+            default -> SLOT1_FILENAME;
+        };
+        return saveToFile(state, filename);
+    }
+
+    /** Simpan manual save (default ke slot 1) */
     public static SaveResult saveManual(GameSaveState state) {
-        return saveToFile(state, MANUAL_FILENAME);
+        return saveToFile(state, SLOT1_FILENAME);
+    }
+
+    /** Info auto-save */
+    public static String getAutoSaveSummary() {
+        return loadAuto().map(s -> s.getSummary()).orElse("EMPTY");
+    }
+
+    /** Hapus auto-save */
+    public static void deleteAutoSave() {
+        try {
+            java.nio.file.Path file = getSaveDirectory().resolve(AUTO_FILENAME);
+            java.nio.file.Files.deleteIfExists(file);
+        } catch (Exception ignored) {}
     }
 
     /** Simpan auto-save */
@@ -99,9 +126,37 @@ public class SaveManager {
 
     // ── Load ──────────────────────────────────────────────────
 
+    /** Load dari slot tertentu */
+    public static Optional<GameSaveState> loadSlot(int slot) {
+        String filename = switch (slot) {
+            case 2  -> SLOT2_FILENAME;
+            case 3  -> SLOT3_FILENAME;
+            default -> SLOT1_FILENAME;
+        };
+        return loadFromFile(filename);
+    }
+
+    /** Info save per slot */
+    public static String getSlotSummary(int slot) {
+        return loadSlot(slot).map(s -> s.getSummary()).orElse("EMPTY");
+    }
+
+    /** Hapus save di slot tertentu */
+    public static void deleteSlot(int slot) {
+        String filename = switch (slot) {
+            case 2  -> SLOT2_FILENAME;
+            case 3  -> SLOT3_FILENAME;
+            default -> SLOT1_FILENAME;
+        };
+        try {
+            java.nio.file.Path file = getSaveDirectory().resolve(filename);
+            java.nio.file.Files.deleteIfExists(file);
+        } catch (Exception ignored) {}
+    }
+
     /** Load manual save. Empty Optional jika tidak ada atau corrupt. */
     public static Optional<GameSaveState> loadManual() {
-        return loadFromFile(MANUAL_FILENAME);
+        return loadFromFile(SLOT1_FILENAME);
     }
 
     /** Load auto-save. */
@@ -140,8 +195,12 @@ public class SaveManager {
                 }
             }
         } catch (InvalidClassException e) {
-            // serialVersionUID mismatch — save dari versi lama
-            System.err.println("[SaveManager] Incompatible save version: " + e.getMessage());
+            // serialVersionUID mismatch — save dari versi lama, hapus otomatis
+            System.err.println("[SaveManager] Save version mismatch, deleting: " + e.getMessage());
+            try {
+                java.nio.file.Path file = getSaveDirectory().resolve(filename);
+                java.nio.file.Files.deleteIfExists(file);
+            } catch (Exception ignored) {}
         } catch (IOException | ClassNotFoundException e) {
             System.err.println("[SaveManager] Load failed (" + filename + "): " + e.getMessage());
         }

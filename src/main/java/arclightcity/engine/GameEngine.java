@@ -38,7 +38,7 @@ public class GameEngine {
 
     // ── Mercenary Roster (semua merc yang dimiliki player) ───
     private final List<Mercenary> ownedMercs   = new ArrayList<>();
-    private final List<Mercenary> activeMercs  = new ArrayList<>(); // max 2 dibawa
+    private final List<Mercenary> activeMercs  = new ArrayList<>(); // max 3 dibawa
 
     // ── State ─────────────────────────────────────────────────
     private GameState currentState = GameState.MAIN_MENU;
@@ -70,7 +70,7 @@ public class GameEngine {
         ownedMercs.clear();
         activeMercs.clear();
 
-        // Setup DungeonManager
+        // Selalu buat DungeonManager baru untuk clean state
         dungeonManager = new DungeonManager();
         wireDungeonListeners();
 
@@ -88,17 +88,10 @@ public class GameEngine {
         transitionTo(GameState.HUB);
     }
 
-    /** Auto-unlock 2 skill sesuai background dan langsung equip */
+    /** Auto-unlock 2 skill Asuna dan langsung equip */
     private void giveStarterSkills(PlayerBackground background) {
-        String[] skills = switch (background) {
-            case STREET_BRAWLER  -> new String[]{"POWER_STRIKE", "EXECUTE"};
-            case NETRUNNER       -> new String[]{"DEEP_HACK", "VIRUS_UPLOAD"};
-            case VETERAN_SOLDIER -> new String[]{"IRON_SHIELD", "SHOCKWAVE"};
-            case ENERGY_ADEPT    -> new String[]{"ENERGY_DRAIN", "BIO_IRRADIATE"};
-            case GHOST_OPERATIVE -> new String[]{"PHANTOM_SHOT", "SHADOW_STEP"};
-            case TECHWRIGHT      -> new String[]{"EMP_BURST", "FIELD_BARRIER"};
-        };
-
+        // Asuna adalah satu-satunya karakter — selalu dapat skill ini
+        String[] skills = background.getStarterSkillIds();
         for (String skillId : skills) {
             player.forceUnlockSkill(skillId);
             player.equipSkill(skillId);
@@ -126,6 +119,8 @@ public class GameEngine {
     // ── Wire Dungeon Listeners ────────────────────────────────
 
     private void wireDungeonListeners() {
+        // Set listener ke dungeonManager yang aktif saat ini
+        // Dipanggil setiap kali dungeonManager baru dibuat
         dungeonManager.setStateListener(event -> {
             if (onDungeonEvent != null) onDungeonEvent.accept(event);
 
@@ -156,31 +151,38 @@ public class GameEngine {
                     drops.forEach(inventory::addItem);
                 });
 
-                // Level up notification (CombatManager sudah apply exp,
-                // kita tinggal cek apakah level player naik)
+                // Level up notification
                 if (result.getLevelsGained() > 0 && onDungeonEvent != null) {
                     onDungeonEvent.accept(
                         arclightcity.dungeon.DungeonStateEvent.levelUp(
                             player.getLevel(), player.getSkillPoints()));
                 }
 
-                // Loyalty merc naik setelah victory
-                // (CombatManager sudah panggil completeMission, skip duplikat)
-
-                // Mythic Fragment drop saat boss dikalahkan
+                // Boss defeat notification + Mythic Fragment
                 boolean bossDefeated = result.getDefeatedEnemies().stream()
                         .anyMatch(e -> e instanceof arclightcity.entity.enemy.Boss);
                 if (bossDefeated) {
+                    String bossName = result.getDefeatedEnemies().stream()
+                        .filter(e -> e instanceof arclightcity.entity.enemy.Boss)
+                        .findFirst().map(e -> e.getName()).orElse("Boss");
+
+                    // Event boss defeat ke UI
+                    if (onDungeonEvent != null) {
+                        onDungeonEvent.accept(
+                            arclightcity.dungeon.DungeonStateEvent.bossDefeated(bossName));
+                    }
+
                     inventory.addItem(LootManager.generateMythicFragment());
-                    // Cek apakah sudah punya 3 fragment → auto-craft Mythic weapon
+                    // Cek apakah sudah punya 5 shard → craft Red Blossom Katana
                     long fragmentCount = inventory.getAllBagItems().stream()
                             .filter(i -> i instanceof arclightcity.item.Material m
                                       && m.getMaterialType() == arclightcity.item.Material.MaterialType.MYTHIC_FRAGMENT)
                             .count();
-                    if (fragmentCount >= 3) {
+                    if (fragmentCount >= 5) {
+                        // Hapus 5 shard, tambah Red Blossom Katana
                         int removed = 0;
                         for (arclightcity.item.Item item : new java.util.ArrayList<>(inventory.getAllBagItems())) {
-                            if (removed >= 3) break;
+                            if (removed >= 5) break;
                             if (item instanceof arclightcity.item.Material mat
                                     && mat.getMaterialType() == arclightcity.item.Material.MaterialType.MYTHIC_FRAGMENT) {
                                 inventory.removeItem(item.getId());
@@ -191,7 +193,7 @@ public class GameEngine {
                         if (onDungeonEvent != null)
                             onDungeonEvent.accept(
                                 arclightcity.dungeon.DungeonStateEvent.mythicCraft(
-                                    "Senjata Mythic berhasil di-craft dari 3 Pecahan Mitik!"));
+                                    "✦ RED BLOSSOM KATANA berhasil ditempa!"));
                     }
                 }
             }
@@ -214,9 +216,8 @@ public class GameEngine {
 
     public void startDungeonRun() {
         if (player == null) return;
-        // Buat DungeonManager baru setiap run untuk reset state penuh
-        dungeonManager = new DungeonManager();
-        wireDungeonListeners();
+        // Reset dungeon state tanpa buat DungeonManager baru
+        // agar listener yang sudah dipasang tidak berduplikat
         transitionTo(GameState.DUNGEON);
         dungeonManager.startDungeon(player, activeMercs);
     }
@@ -259,7 +260,7 @@ public class GameEngine {
     }
 
     public boolean addToActiveParty(MercenaryType type) {
-        if (activeMercs.size() >= 2) return false;
+        if (activeMercs.size() >= 3) return false;
         Mercenary merc = ownedMercs.stream()
                 .filter(m -> m.getMercenaryType() == type)
                 .findFirst().orElse(null);
@@ -368,6 +369,7 @@ public class GameEngine {
     // ════════════════════════════════════════════════════════
 
     public void setOnStateChange(Consumer<GameState> l)          { onStateChange = l; }
+
     public void setOnDungeonEvent(Consumer<DungeonStateEvent> l) { onDungeonEvent = l; }
     public void setOnCombatStart(Consumer<CombatManager> l)      { onCombatStart = l; }
     public void setOnCombatEnd(Consumer<CombatResult> l)         { onCombatEnd = l; }

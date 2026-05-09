@@ -54,14 +54,40 @@ public class DungeonManager {
     /**
      * Mulai dungeon run baru.
      */
+    /** Reset state dungeon untuk new game tanpa kehilangan listener */
+    public void resetState() {
+        this.currentFloor       = null;
+        this.currentFloorNumber = 0;
+        this.dungeonActive      = false;
+        this.player             = null;
+        this.activeMercs        = new ArrayList<>();
+    }
+
+    /** Dipakai saat load save — restore floor ke posisi tersimpan */
+    public void setCurrentFloorNumber(int floor) {
+        this.currentFloorNumber = Math.max(0, floor);
+    }
+
     public void startDungeon(Player player, List<Mercenary> mercs) {
         this.player      = player;
         this.activeMercs = new ArrayList<>(mercs);
-        currentFloorNumber = 0;
         dungeonActive    = true;
 
-        emit(DungeonStateEvent.dungeonStarted(player.getName()));
-        advanceToNextFloor();
+        int savedFloor = player.getDungeonDepth();
+
+        if (savedFloor <= 0) {
+            // Fresh start — mulai dari floor 1
+            currentFloorNumber = 0;
+            emit(DungeonStateEvent.dungeonStarted(player.getName()));
+            advanceToNextFloor();
+        } else {
+            // Lanjut dari floor yang sudah dicapai — JANGAN increment lagi
+            currentFloorNumber = savedFloor;
+            currentFloor = ProceduralGenerator.generateFloor(currentFloorNumber);
+            emit(DungeonStateEvent.dungeonStarted(player.getName()));
+            emit(DungeonStateEvent.floorEntered(currentFloorNumber, currentFloor.getTheme()));
+            enterRoom(0);
+        }
     }
 
     /**
@@ -190,7 +216,10 @@ public class DungeonManager {
         // Setup combat
         combatManager.setup(player, activeMercs, enemies);
 
-        // Listen hasil combat
+        // Reset listeners sebelum combat baru — cegah accumulate
+        combatManager.clearResultListeners();
+
+        // Listen hasil combat (slot 1: DungeonManager logic)
         combatManager.addResultListener(result -> {
             if (result.isVictory()) {
                 room.setCleared(true);
@@ -305,9 +334,16 @@ public class DungeonManager {
                 handleEnemyRoom(bonusRoom, false);
             }
             case OPEN_SHOP   -> handleShopRoom(room);
-            case REVEAL_MAP  -> emit(DungeonStateEvent.mapRevealed());
-            case NOTHING     -> emit(DungeonStateEvent.nothing());
-            default          -> { }
+            case REVEAL_MAP    -> {
+                // Reveal semua room di floor saat ini
+                if (currentFloor != null) {
+                    currentFloor.getRooms().forEach(r -> r.setVisited(true));
+                }
+                emit(DungeonStateEvent.mapRevealed());
+            }
+            case CALIBRATION  -> emit(DungeonStateEvent.calibrationAvailable(result.intValue));
+            case NOTHING      -> emit(DungeonStateEvent.nothing());
+            default           -> { }
         }
     }
 

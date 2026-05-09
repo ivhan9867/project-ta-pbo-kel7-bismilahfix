@@ -14,13 +14,11 @@ import arclightcity.ui.controller.SceneRouter;
 public class ArclightApp extends Application {
 
     // Total window size
-    public static final double SCREEN_WIDTH  = 860;
-    public static final double SCREEN_HEIGHT = 920; // +100px untuk combat layout
-
-    // Game area (kiri) — chat panel (kanan) = 860px total
-    public static final double GAME_WIDTH    = 560;
-    public static final double CHAT_WIDTH    = 300;
-
+    // ── Dimensi window 1280×720 (landscape, untuk cutscene video) ──
+    public static final double SCREEN_WIDTH  = 1280;
+    public static final double SCREEN_HEIGHT = 720;
+    public static final double GAME_WIDTH    = 940;  // area game (kiri)
+    public static final double CHAT_WIDTH    = 340;  // chat panel (kanan)
     private static GameEngine   engine;
     private static SceneRouter  router;
     private static Stage        primaryStage;
@@ -31,8 +29,12 @@ public class ArclightApp extends Application {
         engine       = new GameEngine();
         router       = new SceneRouter(stage, engine);
 
+        // Pasang semua engine listener SEKALI di sini
+        // Tidak boleh dipanggil lagi dari mana pun
+        router.initEngineListeners();
+
         // Setup stage
-        stage.setTitle("MYTHIC ITEM OBTAINED");
+        stage.setTitle("MYTHIC ITEM OBTAINED  v0.6.0");
         stage.setWidth(SCREEN_WIDTH);
         stage.setHeight(SCREEN_HEIGHT);
         stage.setResizable(false);

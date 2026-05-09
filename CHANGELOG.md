@@ -1,616 +1,414 @@
-# ⚡ ARCLIGHT CITY — CHANGELOG
+# MYTHIC ITEM OBTAINED — CHANGELOG
 
-> Format: `[Versi] — Tanggal`
-> Urutan: **terbaru di atas**, terlama di bawah.
-
----
-
-## [v0.3.7] — 2026-04-30
-
-### Added
-
-**Floating Damage Numbers (CombatView.java)**
-- Canvas overlay transparan di atas enemy section
-- Warna per tipe: merah=damage, kuning=crit, hijau=heal, orange=DOT
-- Crit: font lebih besar + tanda seru "150!"
-- Animasi: melayang ke atas 55px dalam 1.4 detik + fade out
-- Canvas `mouseTransparent=true` — tidak halangi klik enemy
-
-**Floor Transition Animation (DungeonMapView.java)**
-- Overlay hitam fade in → teks "DESCENDING / FLOOR X" → engine.descend() → fade out
-- Total durasi 1600ms, teks "SECTOR LOADED" hijau setelah descend selesai
-
-**Room Preview di Hover Tooltip (DungeonGridMap.java)**
-- Baris kedua di tooltip untuk ENEMY room: jumlah + nama enemy
-- REST room: info heal sesuai restUseCount yang tersisa
-- Tooltip height dan width dinamis sesuai konten
+> Urutan terbaru di atas. Format: `[vX.Y.Z] — tanggal`
 
 ---
 
-## [v0.3.6] — 2026-04-30
+## [v0.6.0] — 2026-05-07
 
-### Added
+### MAJOR — Combat Overhaul + System Polish
 
-**Mercenary Hire System (ViewsBundle.java)**
-- Tab HIRE di MercenaryView — daftar 7 merc dengan stats preview + harga
-- Tombol HIRE disabled jika gold kurang, badge "ALREADY IN ROSTER" jika sudah punya
-- Setelah hire: notifikasi chat panel
+**Combat Visual Overhaul**
+- Log pertempuran dihapus — diganti floating damage numbers yang kaya visual
+- Floating damage: 8 tipe visual berbeda (crit gold+wobble, heal hijau, DOT coklat, skill gold, evade biru, block, status, defeated)
+- Shadow/outline pada semua angka floating untuk keterbacaan
+- Durasi dan rise berbeda per tipe: crit 1800ms/75px, skill 1600ms/65px, normal 1400ms/55px
+- Enemy card: gradient background + left border tebal + glow merah saat giliran
+- Ally card: gradient gold saat aktif
+- Turn order bar: gradient merah + glow bawah
+- Action panel: gradient naik + border gold halus
+- battleArea: gradient 3 stop vertikal
 
-**Status Effect Tooltip (UIFactory.effectBadge)**
-- Hover badge → tooltip: nama, deskripsi, sisa durasi dalam turn
+**Fix Save/Load Item (Definitif)**
+- Root cause: `getBonusStats()` return unmodifiable map → UnsupportedOperationException
+- Fix: `Equipment.restoreBonusStats()` akses map internal langsung
+- Fix: `setUpgradeLevelDirect()` — tidak trigger random bonus saat load
+- `activeMercs` sekarang tersimpan dan di-restore → party langsung ready setelah load
 
-### Changed
+**Map Reveal (Event Dungeon)**
+- `revealAll()` di DungeonGridMap — reveal semua tiles sekaligus
+- Toast hijau + system chat saat peta terbuka
+- Room ditandai `visited = true` via `setVisited()`
 
-**MercenaryViewImpl — full rewrite ke BorderPane + tab ROSTER / HIRE**
-
----
-
-## [v0.3.5] — 2026-04-30
-
-### Fixed
-
-**[CRITICAL] EXP dan Gold tidak diterapkan setelah combat**
-- `setCombatEndListener` tidak memanggil `player.gainExp()` / `player.addGold()`
-- Fix: keduanya sekarang dipanggil, level up emit `DungeonStateEvent.LEVEL_UP`
-
-**Shop harga berubah tiap render**
-- `Math.random()` → deterministik dari `item.getId().hashCode()`
-
-**Combat log tidak di-clear saat combat baru**
-- `startCombatLoop()` sekarang clear logContainer di awal
-
-**GameOver retry tidak reset save**
-- `SaveManager.deleteAllSaves()` dipanggil saat retry
-
-### Added
-
-**Level Up Notification** — alert + system chat setelah naik level
-
-**Profile Tab EQUIPMENT** — slot equipped + item di bag dengan stats
-
-**Profile Tab SKILLS** — equip/unequip/unlock langsung dari UI, skill points badge
-
-**Player.addGold()** — method baru
-
-**DungeonStateEvent.LEVEL_UP** — type baru di enum
-
-**MercenaryDialogue — DUNGEON_ENTER_FLOOR trigger dipasang**
-
-### Changed
-
-**ProfileView — complete rewrite** ke BorderPane + 3 tab fungsional (STATS/EQUIPMENT/SKILLS)
-
-**SceneRouter — tambah `showProfile(String tab)` overload**
+**Lokalisasi Penuh Combat**
+- DamageType: Physical→Fisik, Energy→Energi, True→Mutlak, Heal→Pulih
+- CombatEvent: semua pesan bahasa Indonesia
+- "No active effects" → "Tidak ada efek aktif"
 
 ---
 
-## [v0.3.4] — 2026-04-30
+## [v0.5.8] — 2026-05-06
 
-### Added
+### UI Polish & Animation Update
 
-**Save/Load System — Java Serialization (package arclightcity.save)**
+**Toast Notification — Single Line**
+- Redesign dari VBox vertikal menjadi HBox horizontal satu baris
+- Format: `● JUDUL │ isi pesan` — tidak pernah wrap/melebar
+- Slide masuk dari kiri (180ms, ease-out), fade out otomatis 2.4 detik
+- Ukuran terkontrol, tidak mengganggu gameplay
 
-File baru:
-- `GameSaveState.java` — snapshot: PlayerData, MercData, ItemData, ProgressData
-- `SaveManager.java` — IO ke disk: `save_manual.dat` + `save_auto.dat` di `%APPDATA%\ArclightCity\`
-- `GameStateConverter.java` — konversi GameEngine ↔ GameSaveState
+**CombatView — Tanpa Scroll di 720px**
+- Hapus `ScrollPane` di battle area — konten langsung di `BorderPane.center`
+- Enemy section, ally section, dan log dikompakkan
+- Log area: 150px → 80px; turn bar: 36px → 28px
+- Combat sekarang muat penuh di 720px tanpa scroll
 
-GameEngine: `saveGame()`, `autoSave()`, `loadGame()`, `hasSave()`, `getSaveSummary()`
+**Animasi Baru (UIFactory)**
+- `goldPulse(node, color)` — opacity loop untuk elemen penting Hub
+- `flicker(node)` — kedip random, aktif di judul PERTEMPURAN saat boss
+- `typewriter(label, text, ms)` — teks muncul karakter per karakter
+- `scanlineEffect(panel)` — garis scan bergerak loop dari atas ke bawah
+- Judul "MYTHIC ITEM OBTAINED" di Hub: animasi gold pulse aktif
+- Judul combat saat boss: flicker effect
 
-Auto-save setiap `engine.descend()` dipanggil.
-
-UI: CONTINUE button aktif di Main Menu jika ada save, SAVE GAME button di Hub (kuning), hasil muncul di chat panel.
-
-Player: `setLevelDirect()`, `setExpDirect()`, `setGold()`, `setHpDirect()`, `setMpDirect()`, `setShieldDirect()`
-
-Inventory: `forceEquipWeapon/Armor/Accessory1/2()` untuk restore
-
----
-
-## [v0.3.3] — 2026-04-30
-
-### Fixed
-
-**[CRITICAL] Layout menyeluruh — semua konten tidak lagi tenggelam**
-
-Root cause: `UIFactory.screenRoot()` set `setMinSize(GAME_WIDTH, SCREEN_HEIGHT)` → VBox dipaksa overflow.
-
-Fix:
-1. `UIFactory.screenRoot()` — hapus `setMinSize`, tambah `setMaxHeight`
-2. `UIFactory.screenRootBorder()` — helper baru return `BorderPane`
-3. `CombatView` → BorderPane: top=header+turnbar, center=scrollable, bottom=actionPanel
-4. `DungeonMapView` → BorderPane: top=header+vitals, center=map+info, bottom=roomActions
-5. `wireEngineListeners()` dipindah ke `build()`
+**Fix Floor Display**
+- Hub tampil "Lantai 0" saat fresh start → sekarang "Lantai 1"
 
 ---
 
-## [v0.3.2] — 2026-04-30
+## [v0.5.7] — 2026-05-06
 
-### Fixed
+### Layout Adjustment untuk 1280×720
 
-**Enemy card kosong saat target select mode**
-- `return card` dipanggil sebelum konten ditambahkan
-- Fix: tambah label "▶ SELECT TARGET" + nameRow + bars sebelum return
+**Padding dikurangi di 5 view** (HubView, CharacterCreateView, ProfileView, CityView, ViewsBundle):
+- `Insets(20,20,20,20)` → `Insets(8,12,8,12)`
+- `Insets(16,16,16,16)` → `Insets(8,12,8,12)`
+- Button padding: `14 20` → `10 16`
 
-**Hub bottom nav tenggelam — definitif fix**
-- Root `VBox` → `BorderPane`: `setTop()` player bar, `setCenter()` ScrollPane, `setBottom()` nav
-- `BorderPane.bottom` dijamin selalu terlihat oleh JavaFX layout engine
+**HubView** — tambah `ScrollPane` di center, spacing antar section dikurangi
 
----
-
-## [v0.3.1] — 2026-04-30
-
-### Fixed
-
-**Combat screen terpotong — window terlalu pendek**
-- Window 820px → 920px (+100px vertikal)
-
-**Turn AI terlalu cepat**
-- Default `combatSpeedMs` 500ms → 1200ms
-- Speed buttons: `1×=1200ms`, `2×=500ms`, `SKIP=50ms`
-
-### Changed
-
-**Combat layout compact** — padding/spacing dikurangi, log 130 → 150px, turn bar fixed 36px
+**CombatView** — log area 150px → 100px, action panel padding lebih kecil
 
 ---
 
-## [v0.3.0] — 2026-04-30
+## [v0.5.6] — 2026-05-06
 
-### Fixed
+### Floor Bug Fix + Resolusi 1280×720
 
-**Hub bottom nav terpotong**
-- `buildBottomNav()` sekarang `setMinHeight(64)`, `setMaxHeight(64)`, `setPrefHeight(64)`
+**Bug Floor Skip (Critical Fix)**
+- Root cause: `startDungeon` set `currentFloorNumber = savedFloor` lalu langsung panggil `advanceToNextFloor()` → floor selalu +1 setiap masuk dungeon
+- Fix: cek `savedFloor <= 0` → fresh start (advance); `savedFloor > 0` → load floor langsung tanpa increment
 
-### Added
+**Resolusi 1280×720**
+- `SCREEN_WIDTH`: 860 → 1280
+- `SCREEN_HEIGHT`: 920 → 720
+- `GAME_WIDTH`: 560 → 940
+- `CHAT_WIDTH`: 300 → 340
+- Tile dungeon grid: 52px → 64px
+- Layout landscape siap untuk cutscene video ending
 
-**Turn Order Bar** — antrian giliran 6 entity dengan HP bar, warna per faction
-
-**Skill Selection Popup** — klik SKILL → popup daftar skill dengan deskripsi + CD
-
-**Target Selection Mode** — klik ATTACK/skill → enemy card border kuning glow, klik untuk target
-
-**Combat Speed Control** — tombol 1× / 2× / SKIP di atas action buttons
-
-**SkillInfo Database** — 12 skill dengan nama, deskripsi, MP cost, AoE flag
-
-### Changed
-
-**`refreshActionPanel`** — target select mode menggantikan seluruh panel saat aktif
-
-**`handleCombatEvent`** — AI delay pakai `combatSpeedMs`, refresh turn bar setiap event
-
-**`TurnQueue.getUpcomingTurns(n)`** — method baru, simulasi round berikutnya jika slot kurang
+**Toast Compact (awal)**
+- Ukuran max 280px, slide dari kiri, font lebih kecil
 
 ---
 
-## [v0.2.8.1] — 2026-04-30
+## [v0.5.5f] — 2026-05-06
 
-### Fixed
+### Fix COMBAT_WIN → COMBAT_VICTORY
 
-**EventView choices terpotong** — hapus spacer(), wrap dalam ScrollPane
-
-**ShopView VBox.setVgrow** tidak perlu pada itemList yang sudah di ScrollPane
-
-**VictoryView & GameOverView** — wrap content dalam ScrollPane untuk safety
+- `MercenaryDialogue.Trigger.COMBAT_WIN` tidak ada → diganti `COMBAT_VICTORY`
 
 ---
 
-## [v0.2.8] — 2026-04-30
+## [v0.5.5e] — 2026-05-06
 
-### Changed
+### Fix Level Up Hilang + Boss Defeat + Map Reset
 
-**Dungeon Grid Map — Visual Overhaul v3 (DungeonGridMap.java)**
+**Root Cause Level Up Hilang**
+- `CombatView.addResultListener` override listener `DungeonManager` karena pakai single slot
+- Fix: kembali ke list listener dengan cap 2, `DungeonManager.clearResultListeners()` sebelum tiap combat
 
-| Aspek | Sebelum | Sesudah |
-|-------|---------|---------|
-| Tile size | 42×42px | 52×52px |
-| Background | Flat | Dot grid 16px spacing |
-| Player | Statis | Breathing pulse 3 ring |
-| Reachable border | Statis | Marching ants bergerak |
-| Hover | Nama saja | Nama + info room |
-| Cleared tiles | Redup | Diagonal stroke + desaturated |
-| Boss tile | Border merah | Double outer ring |
-| Hidden tiles | Flat hitam | Cross-hatch pattern |
+**Boss Defeat Notification**
+- Tambah `DungeonStateEvent.Type.BOSS_DEFEATED` dan `MYTHIC_CRAFT`
+- Toast + system chat saat boss dikalahkan
+- `bossDefeated()` factory method di `DungeonStateEvent`
 
----
-
-## [v0.2.7.1] — 2026-04-29
-
-### Fixed
-
-**Hub bottom nav terpotong** — ScrollPane wrap area tengah, player bar + nav fixed
-
-**Combat action panel terpotong** — hapus spacer() + VBox.setVgrow(logScroll)
+**Map Reset saat Floor Baru**
+- `FLOOR_ENTERED` sekarang panggil `router.showDungeonMap()` dengan delay 300ms
 
 ---
 
-## [v0.2.7] — 2026-04-29
+## [v0.5.5d] — 2026-05-06
 
-### Changed
+### Fix Root Cause Notif Level Up Spam (Definitif)
 
-**Comprehensive UI Font Pass**
+**Root Cause Ditemukan**
+- `CombatManager.addResultListener` menggunakan `ArrayList.add` bukan replace
+- Setiap combat room memanggil `addResultListener` → list terus bertambah
+- 10 room combat = 10 listener → 10 notifikasi level up per combat
 
-| Elemen | Sebelum | Sesudah |
-|--------|---------|---------|
-| CSS root | 13px | 14px |
-| Enemy card nama | 11px | 14px |
-| Ally card lebar | 110px | 150px |
-| Skill slot | 72×44px | 110×52px |
-| Action button | 110px wide | 130px wide |
-| Combat log | 110px tall | 130px tall |
-| CharCreate lore | 10px | 12px |
+**Fix**
+- `combatResultListeners` (List) → `combatResultListener` (single Consumer)
+- `addResultListener` sekarang replace, bukan add
+- `addEventListener` dan `addBatchListener` juga: `clear()` sebelum `add()`
+- `DungeonManager.clearResultListeners()` sebelum setup tiap combat baru
 
----
+**Floor Start Fix**
+- `startDungeon` baca `player.getDungeonDepth()` bukan hardcode 0
 
-## [v0.2.6] — 2026-04-29
+**Armor Subtype Loot**
+- HELMET, BOOTS, RING bisa di-drop dari dungeon loot
+- `generateArmor(rarity, ArmorType)` dengan stat spesifik per slot
 
-### Added
-
-**Split Layout — 860×820px** — game area 560px (kiri) + chat panel 300px (kanan)
-
-**MercChatPanel** — panel chat 300px persistent semua screen, bubble per merc dengan warna unik
-
-**MercenaryDialogue** — 150+ dialog × 7 merc × 17 trigger, kepribadian unik tiap merc
-
-**Chat triggers** — HUB_IDLE, HUB_ENTER_DUNGEON, room type triggers, COMBAT_VICTORY/DEFEAT
-
-**CRAFT button → "Coming Soon" di chat**
+**Aksesori Slot UI**
+- Tambah baris aksesori (HBox wide) di bawah grid equipment inventory
 
 ---
 
-## [v0.2.5] — 2026-04-29
+## [v0.5.5c] — 2026-05-05
 
-### Fixed
+### Fix Notification Architecture (Level Up Definitif)
 
-**REST room tidak bisa dikunjungi lagi** — guard `enterRoom()` dikecualikan untuk REST
+**Arsitektur baru:**
+```
+ArclightApp.start()
+  → router.initEngineListeners()          ← SEKALI SELAMANYA
+      → DungeonMapView.wireEngineListeners()
+          → engine.setOnDungeonEvent(...)  ← satu closure, tidak pernah diganti
 
-**Skill slot selalu kosong** — `createCharacter()` memanggil `giveStarterSkills()`
-
-### Added
-
-**REST Diminishing Heal** — visit 1: +35%/+50%, visit 2: +20%/+30%, visit 3: +10%/+15%, visit 4+: nihil
-
-**Starter Skills per Background** — 2 skill langsung unlock + equip sesuai background
-
-**Shop Fungsional** — 4 item random, harga per rarity, BUY disable jika kurang gold
-
----
-
-## [v0.2.4] — 2026-04-29
-
-### Fixed
-
-**[CRITICAL] Backtrack re-trigger event** — guard cleared + koneksi symmetric `Floor.moveToRoom()`
-
----
-
-## [v0.2.3.1] — 2026-04-29
-
-### Fixed
-
-**[CRITICAL] ProceduralGenerator duplikat** — konten file di bawah class closing brace, brace 30:30 ✓
-
----
-
-## [v0.2.3] — 2026-04-29
-
-### Added
-
-**Full Grid Exploration** — COLS×ROWS tile, boss di tengah baris terakhir, cardinal connections
-
-**Fog of War 3 State** — Hidden / Visible / Visited
-
-**DESCEND terkunci** hingga boss dikalahkan
-
-**Map Legend**
-
----
-
-## [v0.2.2] — 2026-04-28
-
-### Fixed
-
-**[CRITICAL] ConcurrentModificationException** — iterate snapshot `activeEffects`
-
-### Added
-
-**Dungeon Grid Map v1** — Canvas 2D, animasi ease in-out, klik tile
-
----
-
-## [v0.2.1] — 2026-04-27
-
-### Fixed
-
-**[CRITICAL] Mercenary duplicate** — `clear()` sebelum tambah starter merc
-
-**Background putih ScrollPane** — `-fx-background: #050810`
-
-**Border equipment slot selalu hijau** — gunakan `rarityColor()` per item
-
-**Title terlalu blur** — DropShadow radius 20 → 6
-
----
-
-## [v0.2.0] — 2026-04-27
-
-### Fixed
-
-**[CRITICAL] AI Turn Loop Stacking** — guard `aiTurnPending`
-
-**[CRITICAL] DungeonManager tidak reset** — `startDungeonRun()` buat DungeonManager baru
-
-**Loot Room tidak generate item** — `LOOT_FOUND` → `LootManager.generateLoot()`
-
-### Added
-
-**Loot Popup**, **Rest Popup**, **`showInfoAlert()` helper**
-
----
-
-## [v0.1.0] — 2026-04-26
-
-### Release Awal
-
-Game end-to-end setelah migrasi NetBeans Ant → Maven.
-
-```bash
-cd ArclightCity
-mvn javafx:run
+createCharacter() / createCharacterFromSave()
+  → new DungeonManager()
+  → wireDungeonListeners()               ← internal state machine
 ```
 
----
-
-## [v0.4.0] — 2026-05-01
-
-### Changed — MAJOR: Konversi Tema Nusantara + Judul Baru
-
-**Judul Game: "Arclight City" → "Mythic Item Obtained"**
-- `ArclightApp.java`: stage title diubah
-- `pom.xml`: artifactId dan name diubah
-- `MainMenuView.java`: teks judul diubah
-
-**Tema UI: Cyberpunk Cyan → Nusantara Gold/Merah/Batik**
-- `arclight.css`: full rewrite — palette baru:
-  BG `#0A0604` (hitam hangat), gold utama `#C8860A`, gold terang `#FFB830`,
-  merah bata `#CC2200`, hijau tua `#44AA44`, teks kertas tua `#EDE0C8`
-- `UIFactory.java`: semua konstanta warna dikonversi ke palette Nusantara
-
-**Player Background → Asal Usul Nusantara (display name)**
-- Street Brawler → **Pendekar Betawi**
-- Netrunner → **Dukun Digital**
-- Veteran Soldier → **Prajurit Majapahit**
-- Energy Adept → **Pawang Neon**
-- Ghost Operative → **Mata-mata Demak**
-- Techwright → **Empu Modern**
-
-**Mercenary → Tokoh Nusantara (display name)**
-- Kira Voss → **Srikandi** (Pemanah Bayangan)
-- Tank-RX9 → **Gatot Kaca** (Ksatria Baja)
-- Sera Mend → **Nyai Roro** (Tabib Mistis)
-- Vector → **Rangga** (Pembunuh Bayaran)
-- Magnus Forge → **Bima** (Petarung Agung)
-- Echo Null → **Ki Ageng** (Dukun Tua)
-- Lyra Bloom → **Dewi Sri** (Penjaga Keseimbangan)
-
-**Enemy → Makhluk Mitologi Nusantara**
-- Street Thug → **Leak Pengembara**
-- Neon Serpent → **Naga Basuki**
-- Glitch Drone → **Genderuwo Mekanik**
-- Iron Clad → **Raksasa Kala**
-- Void Specter → **Kuntilanak Abadi**
-- Null King → **Batara Kala**
-
-**Floor Themes → Lokasi Nusantara**
-- Neon Slum → **Pasar Malam Gaib**
-- Corporate HQ → **Candi Terlarang**
-- Data Vault → **Hutan Angker**
-- Neon Wastes → **Goa Naga**
-- Void Rift → **Kahyangan Rusak**
-
-**MercChatPanel**
-- Header "CREW COMMS" → "BISIK KAWULA"
-- "Waiting for crew to speak" → "Menunggu kawula berbicara"
-- Warna bubble merc disesuaikan tema batik
-
-**Skill display names di CombatView**
-- POWER STRIKE → PUKULAN HARIMAU
-- PHANTOM SHOT → PANAH BAYANGAN
-- SHADOW STEP → LANGKAH GAIB
-- DEEP HACK → SANTET DIGITAL
-- EXECUTE → TEBASAN
-
-### Fixed (poin 1-10 dari audit)
-
-**Poin 2: Loyalty mercenary naik setelah combat victory**
-- `activeMercs.forEach(m -> m.completeMission())` dipanggil di `setCombatEndListener`
-
-**Poin 3: Hub district name dinamis berdasarkan floor depth**
-- Floor 0-3: Pasar Malam Gaib | 4-6: Candi Terlarang | 7-10: Hutan Angker
-- 11-15: Goa Naga | 16+: Kahyangan Rusak
+- `wireEngineListeners()` dihapus dari `build()` → dipanggil hanya dari `ArclightApp`
+- `showToast()` dipindah ke `SceneRouter` (punya akses scene yang benar)
+- `DungeonManager.resetState()` untuk new game tanpa hapus listener
 
 ---
 
-## [v0.4.1] — 2026-05-01
+## [v0.5.5b] — 2026-05-05
 
-### Added
+### Fix 10 Bug Sekaligus
 
-**[CONTENT] 15 Enemy Baru (total 20 enemy + 5 boss)**
-
-Standard enemies baru (Floor 1-6):
-- **Tuyul Pencuri** — SPIRIT, steal gold saat hit, evasion 20%
-- **Wewe Gombel** — SPIRIT, steal buff dari player, medium threat
-- **Pocong Listrik** — SPIRIT, shock + AoE shockwave saat desperate
-- **Banaspati** — SPIRIT, burn DOT AoE setiap giliran
-- **Babi Ngepet** — BEAST, HP tinggi 150, gold reward 80 (tertinggi standard)
-
-Elite enemies baru (Floor 5-17):
-- **Rangda Merah** — DEMON, Physical DEF 50 (praktis kebal fisik)
-- **Barong Rusak** — BEAST, toggle ATK/DEF mode setiap turn
-- **Leyak Api** — SPIRIT, AoE burn setiap giliran, evasion 15%
-- **Garuda Korup** — BEAST, evasion 25%, crit tinggi, dive AoE
-- **Detya Wesi** — GIANT, armor stacking +8 DEF per turn, HP 280
-
-Boss baru (milestone floors):
-- **Nyi Roro Kidul** — Floor 8, DIVINE, AoE Energy + debuff kurse (HP 800)
-- **Rangda Agung** — Floor 12, DEMON, Null Field + AoE curse (HP 1100)
-- **Garuda Mahaguru** — Floor 16, DIVINE, 4 fase, evasion 30%, crit 25% (HP 1600)
-- **Semar Pamungkas** — Floor 20, DIVINE, FINAL BOSS, HP 3000, random skill setiap turn,
-  HP regen 20/turn, guaranteed Mythic Fragment ×2
-
-**[SYSTEM] EnemyRace baru — SPIRIT, GIANT, DEMON, DIVINE**
-
-**[SYSTEM] Enemy helper methods baru (Enemy.java)**
-- `getHighestAtkTarget()` — target dengan ATK tertinggi
-- `getFastestTarget()` — target dengan SPEED tertinggi
-
-**[SYSTEM] Encounter generation per floor range**
-- Floor 1-3: Leak Pengembara, Tuyul Pencuri, Naga Basuki
-- Floor 4-6: Wewe Gombel, Banaspati, Pocong Listrik
-- Floor 7-10: Babi Ngepet, Barong Rusak, Leyak Api
-- Floor 11-15: Garuda Korup, Detya Wesi, Rangda Merah
-- Floor 16+: Garuda Korup, Detya Wesi (hard), Garuda Mahaguru
-
-**[SYSTEM] Boss per floor milestone**
-- Floor ≤5: Batara Kala | ≤8: Nyi Roro Kidul | ≤12: Rangda Agung
-- ≤16: Garuda Mahaguru | ≥20: Semar Pamungkas
-
-**[FEATURE] Tier MYTHIC — Rarity ke-6 (Item.java)**
-- Warna: `#FF6B00` (oranye api)
-- Stat multiplier: 5.0× (vs Legendary 3.0×)
-- Upgrade slots: 25 (vs Legendary 15)
-- **TIDAK bisa drop dari loot biasa** — hanya dari boss/craft/trade
-
-**[FEATURE] Mythic Weapon System (LootManager.java)**
-- 10 Mythic weapon unik dengan stat jauh di atas Legendary
-- Keris Naga Raja, Cakra Wisnu, Tombak Inti Bumi, Kujang Bintang,
-  Golok Roh Purba, Trisula Samudra, Panah Angin Sakti, Cemeti Kilat,
-  Mandau Dayak Agung, Pedang Surya
-- `generateMythicDrop()` — pilih random 1 dari 10
-- `generateMythicFragment()` — material untuk craft
-
-**[FEATURE] Mythic Fragment Craft System (GameEngine.java)**
-- Setiap boss dikalahkan → guaranteed 1 Mythic Fragment masuk inventory
-- Kumpulkan 3 Fragment → auto-craft 1 Mythic weapon random
-
-**[FEATURE] Material.MaterialType.MYTHIC_FRAGMENT**
-
-**[CONTENT] Nama weapon dikonversi ke Nusantara (LootManager.java)**
-- Physical: Keris Pamor, Golok Siluman, Tombak Rajawali, Kujang Sakti, Mandau Dayak
-- Cyber: Santet Kristal, Rajah Perusak, Ilmu Hitam Runcing, Keris Cyber, Tombak Roh Data
-- Energy: Cakra Neon, Panah Petir, Trisula Energi, Lembing Surya, Cahaya Kahyangan
+| Bug | Fix |
+|-----|-----|
+| `getEquippedSkillIds` duplicate | Hapus definisi duplikat di Player |
+| `dungeonEventListenerSet` not found | Hapus `setOnDungeonEvent` yang pakai field tidak ada |
+| Save: HELMET/BOOTS/RING hilang saat load | Tambah 4 slot ke save dan restore |
+| `forceEquipHelmet/Boots/Ring` not found | Tambah method di Inventory |
+| Teks English di DungeonMap | Lokalisasi 6 string |
+| Filter AKSESORI salah | Cek `instanceof Accessory` terpisah dari `Armor` |
+| Filter label pakai internal name | Array `labels[]` terpisah untuk display |
+| Klik item list tidak ada popup | Tambah `setOnMouseClicked` dengan `showItemDetailPopup` |
+| Hub tidak refresh setelah kota | Simplifikasi showHub |
+| Hover hilang dari item row | Re-add `setOnMouseEntered/Exited` |
 
 ---
 
-## [v0.3.7d] — 2026-05-01
+## [v0.5.5] — 2026-05-05
 
-### Fixed — Critical
+### Tab JURUS + Skill Tree Redesign
 
-**[BUG ROOT CAUSE] MercChatPanel tidak pernah tertrigger sejak versi pertama (SceneRouter.java)**
+**Tab JURUS ProfileView (Clean)**
+- Hapus semua unlock lama dengan poin
+- SP Banner + tombol "🌳 POHON JURUS ▶"
+- Daftar Jurus Aktif (dengan tombol LEPAS)
+- Daftar Jurus Terbuka Tidak Aktif (dengan tombol AKTIFKAN)
 
-Root cause ditemukan setelah audit mendalam:
+**SkillTreeView Redesign**
+- Circle lebih besar (radius 28), pulse animation untuk node terbuka
+- Garis konektor berwarna per cabang (merah/gold/ungu)
+- Equip dot di pojok circle jika skill aktif
+- Tooltip lengkap dengan instruksi klik
+- Klik toggle equip/unequip langsung refresh
 
-Setiap kali navigasi antar screen, `setSceneWithChat()` membuat `new HBox()` baru dan `new Scene()` baru, lalu menambahkan `chatPanel` ke HBox tersebut.
+**MercChat Fix**
+- Hapus cek `getScene() == null` yang terlalu ketat
+- Try-catch dengan retry 500ms jika panel belum siap
 
-Di JavaFX, sebuah Node hanya boleh memiliki satu parent. Ketika `chatPanel` ditambahkan ke HBox baru, JavaFX **otomatis melepaskan `chatPanel` dari parent lamanya**. Akibatnya:
-- `messageContainer` (VBox internal chatPanel) kehilangan parent-nya
-- Semua pesan yang dikirim via `addMercMessage()` diterima tapi tidak pernah ter-render ke screen yang tampil
-- Panel terlihat kosong atau hanya menampilkan welcome message awal
+---
 
-Fix definitif — **arsitektur Single Persistent Scene**:
-- `persistentLayout` (HBox): dibuat SEKALI di constructor, tidak pernah diganti
-- `gameArea` (StackPane): hanya isinya yang diganti saat navigasi, bukan container-nya
-- `chatPanel`: selalu ada di `persistentLayout`, tidak pernah dipindahkan
-- Scene dibuat SEKALI di constructor SceneRouter, `stage.setScene()` tidak pernah dipanggil lagi
-- `showWithChat()`: ganti `gameArea.getChildren().setAll(content)` — bukan buat scene baru
-- `showFullWidth()`: sembunyikan chatPanel via `setVisible(false)` untuk main menu
-- Semua `emitChat()` dan `addSystemChat()` dibungkus `Platform.runLater()` agar eksekusi setelah JavaFX render selesai
+## [v0.5.4] — 2026-05-05
 
-### Fixed — Poin 1-8
+### Bug Fix Batch
 
-**[POIN 1] Inkonsistensi tema Nusantara — consumable names**
-- Health Pack → **Jamu Kunyit** (heal HP)
-- MP Injector → **Tirta Mahkota** (restore MP)
-- Antidote → **Daun Suruh Sakti** (cleanse DOT)
-- Stim Pack → **Sesajen Kekuatan** (buff item)
+**Notif Level Up Spam** — `startDungeonRun` tidak lagi buat `DungeonManager` baru
+**Equip langsung update** — `router.showInventory()` setelah equip
+**Filter tab Nusantara** — SEMUA/SENJATA/BAJU/HELM/SEPATU/CINCIN/AKSESORI/KONSUMABLE/MATERIAL
+**Filter AKSESORI fix** — match `instanceof Accessory` sebelum `instanceof Armor`
+**Loot HELM/BOOTS/RING** — `generateEquipment` roll 6 slot termasuk armor subtype
 
-**[POIN 1] Inkonsistensi tema Nusantara — armor & accessory names**
-- Armor: Baju Zirah Majapahit, Tameng Naga, Kain Batik Pelindung, Rompi Rajah, Zirah Gaib, Perisai Garuda, Baju Besi Empu
-- Accessory: Gelang Rajah, Kalung Garuda, Cincin Semar, Jimat Naga, Amulet Kahyangan, Gelang Kala, Cincin Pamor, Keris Mini
+---
 
-**[POIN 1] DungeonEvent narratives dikonversi ke Nusantara**
-- "Calibration Terminal / MegaCorp" → "Altar Kalibrasi kuno"
-- "Neon Fountain / cairan neon" → "Sumber Mata Air Gaib"
-- "Data Cache / modul memori" → "Gulungan Ilmu Kuno / rontal"
-- "Electric Trap" → "Jebakan Petir Raksasa / rajah"
-- "Security Alarm / korporat" → "Gong Peringatan / pasukan gaib"
-- "Neon Burn / pipa energi neon" → "Api Banaspati"
-- "Mystery Container" → "Peti Misterius"
-- "Wandering Merchant" → "Pedagang Gaib"
-- "Corrupted Cache / virus digital" → "Harta Terkutuk / kutukan"
+## [v0.5.3] — 2026-05-05
 
-**[POIN 2] Skill descriptions dikonversi ke Nusantara (CombatView.SkillInfo)**
-- Power Strike → Pukulan Harimau
-- Execute → Tebasan Pamungkas
-- Deep Hack → Santet Digital
-- Virus Upload → Upload Santet
-- Phantom Shot → Panah Bayangan
-- Shadow Step → Langkah Gaib
-- Iron Shield → Tameng Baja
-- Shockwave → Gempa Bumi
-- Energy Drain → Serap Tenaga
-- Bio Irradiate → Racun Semesta
-- EMP Burst → Ledakan Petir
-- Field Barrier → Rajah Pelindung
+### Equipment 8 Slot + Item Detail Popup + Save Fix
 
-**[POIN 5] Mythic visual eksklusif di inventory (ViewsBundle.java)**
-- Item Mythic: nama dengan glow oranye `dropshadow(gaussian, #FF6B00, 8, 0.5, 0, 0)`
-- Badge `✦ MYTHIC ✦` dengan glow menggantikan `[Mythic]` biasa
+**Equipment Slots Lengkap (8 Slot)**
+- ⚔ Senjata, 🛡 Baju Besi, 👑 Helm, 👢 Sepatu, 💍 Cincin 1, 💍 Cincin 2, ◈ Aksesori 1, ◈ Aksesori 2
+- Layout 3 kolom visual di inventory
+- `Armor.ArmorType`: tambah HELMET, BOOTS, RING
 
-**[POIN 6] Mythic Fragment counter di Hub (HubView.java)**
-- Counter `✦ X/3` di header bar player
-- Oranye jika ada fragment, redup jika belum
-- Tooltip: info cara craft + status fragment saat ini
+**Item Detail Popup**
+- Klik equipment slot → popup dengan semua stat, bar kalibrasi/upgrade, tombol LEPAS
 
-**[POIN 7] Semar Pamungkas balance (SemarPamungkas.java)**
-- HP regen: 20/turn → 8/turn (masih challenge tapi tidak impossible)
-- Shield regen: 15/turn → 5/turn
+**Equip Langsung Update**
+- Klik LEPAS → view refresh tanpa perlu keluar
+
+**Save/Load Floor Fix**
+- `GameStateConverter.restoreFromSave()` set `dungeonManager.setCurrentFloorNumber()`
+- `DungeonManager.setCurrentFloorNumber()` ditambahkan
+
+**Notification Redesign**
+- Level up: toast overlay slide-down (ganti Alert dialog)
+- Toast via `SceneRouter.showToast()`
+
+**Lokalisasi DungeonMap**
+- 6 string English tersisa dilokalkan ke Bahasa Indonesia
+
+---
+
+## [v0.5.2] — 2026-05-05
+
+### GuildMate Chat Fix + Skill Sync
+
+**GuildMate Chat — Fix Timing**
+- `emitChatDelayed(trigger, ms)` — `Timeline` delay + double `Platform.runLater`
+- Trigger di setiap navigasi: Hub (700ms), DungeonMap (600ms), Combat (1000ms)
+- `addMercMessage` defensive retry dengan try-catch
+
+**Skill Names Sync**
+- `getSkillInfo()` cover 16 skill termasuk baru dari SkillTree
+- SOVEREIGN_STRIKE, NULL_FIELD, NULL_PROTOCOL, DATA_FRAGMENTATION
+
+**Victory Screen Loot**
+- Tampilkan nama item (bukan hanya "1 item")
+
+**Persona Dialog Timing**
+- Delay sebelum combat mulai: 800ms → 2500ms saat boss
+
+---
+
+## [v0.5.1b] — 2026-05-05
+
+### Fix 3 Error PersonaDialogBox
+
+- `Runnable` dari `java.util.function` → `java.lang` (tidak perlu import)
+- `TranslateTransition` dan `FadeTransition` adalah final class — tidak bisa anonymous subclass `{{}}`
+
+---
+
+## [v0.5.1] — 2026-05-05
+
+### 6 Fitur Besar Sekaligus
+
+**Kota (4 Area)**
+- 🏪 Toko Senjata Pak Empu
+- ⚗️ Kedai Jamu Mbah Jamu
+- 🔨 Bengkel Empu (upgrade +9/+10 dengan Kristal Ultra, kalibrasi premium)
+- 💰 Penadah Barang (jual item 40% harga)
+- Item baru: Kalibrator (⚙300) dan Kristal Ultra Enhance (⚙800)
+- Tombol 🏙 MASUK KOTA di Hub
+
+**Skill Tree — Pohon Jurus**
+- 3 cabang × 4 depth: Serangan (merah), Mobilitas (gold), Pertahanan (ungu)
+- Syarat: unlock skill sebelumnya + level minimum + SP
+- Akses dari tab JURUS via "🌳 POHON JURUS ▶"
+
+**Dialog Persona-style**
+- `PersonaDialogBox` — portrait + nama + typewriter effect
+- Auto-muncul saat boss encounter
+- Dialog khusus Theresa per fase (1, 3, 5)
+
+**GuildMate Redesign**
+- Chat bubble: portrait circle + nama di bawah + bubble di kanan
+- Party max: 2 → 3 orang
+
+**Hub Navigation**
+- Tombol 🏙 MASUK KOTA ditambahkan
+
+---
+
+## [v0.5.0] — 2026-05-05
+
+### Major Lore & Identity Overhaul
+
+**Protagonis Tetap: ASUNA**
+- Hapus class selection (6 background → 1 karakter)
+- `PlayerBackground` hanya `ASUNA`
+- CharacterCreateView: intro lore, preview stat, input nama panggilan
+
+**Satu Mythic: ✦ Red Blossom Katana**
+- Hapus 10 Mythic weapon random
+- Ditempa dari 5 Serpihan Red Essence (boss F10/20/30/40/50)
+
+**Boss per 10 Floor + Theresa**
+- F10: Batara Kala | F20: Nyi Roro Kidul | F30: Rangda Agung
+- F40: Garuda Mahaguru | F50: Semar Pamungkas | F51: THERESA
+
+**Weapon Types → Semua Pedang**
+- BLADE/GUN/CYBER_TOOL/ENERGY_EMITTER/HEAVY dihapus
+- Diganti: KATANA/ODACHI/WAKIZASHI/KERIS_SWORD/GOLOK_RUNE/KUJANG_BLADE/FLAME_KATANA/SHADOW_BLADE/DIVINE_SWORD
+
+---
+
+## [v0.4.5] — 2026-05-02
+
+**EventView, ShopView, ProfileView, DungeonMapView, InventoryView** — Total redesign Nusantara Dark Gold
+
+---
+
+## [v0.4.4] — 2026-05-02
+
+**GUI Total Overhaul** — MainMenu, CharacterCreate, Hub, Victory, GameOver, Combat semua redesign
+
+---
+
+## [v0.4.3] — 2026-05-02
+
+**MercenaryDialogue** — 100+ dialog unik Bahasa Indonesia, 7 karakter kepribadian berbeda
 
 ---
 
 ## [v0.4.2] — 2026-05-01
 
-### Fixed — Critical
+**Bug Fix** — Gold/EXP double-apply, gameArea width reset, Boss `onPhaseTransition()`
 
-**[BUG] Gold & EXP double-apply setelah combat**
+---
 
-Root cause: `CombatManager.buildVictoryResult()` sudah memanggil `player.gainExp()` dan `player.gainGold()` secara langsung. Tapi `GameEngine.setCombatEndListener` juga memanggil `player.gainExp()` dan `player.addGold()` lagi dari `result.getTotalExpGained/GoldGained()`.
+## [v0.4.1] — 2026-05-01
 
-Akibatnya: setiap kali menang combat, player mendapat EXP dan Gold **dua kali lipat** dari seharusnya.
+**15 Enemy Baru** — total 20 enemy + 5 boss, EnemyRace baru, tier MYTHIC
 
-Fix: Hapus pemanggilan `gainExp()` dan `addGold()` dari `GameEngine.setCombatEndListener`. Engine sekarang hanya handle: loot drop, level up notification, dan Mythic fragment. EXP dan Gold tetap diapply oleh CombatManager (satu-satunya tempat yang benar).
+---
 
-**[BUG] gameArea width tidak di-reset setelah showFullWidth (SceneRouter.java)**
+## [v0.4.0] — 2026-05-01
 
-`showFullWidth()` mengubah `gameArea.setPrefWidth(SCREEN_WIDTH)` untuk tampilkan main menu/char create full width, tapi `showWithChat()` tidak me-reset width kembali ke `GAME_WIDTH`. Akibatnya, saat player masuk Hub setelah char create, game area masih 860px dan chat panel ter-push keluar layar.
+**Konversi Tema** — Arclight City → Mythic Item Obtained, Cyberpunk → Nusantara Dark Gold
 
-Fix: `showWithChat()` sekarang reset `gameArea.setPrefSize(GAME_WIDTH, SCREEN_HEIGHT)` dan `setMaxWidth/setMinWidth(GAME_WIDTH)` sebelum set konten.
+---
 
-**[BUG] Boss baru tidak implement `onPhaseTransition()` (abstract method di Boss.java)**
+## [v0.3.7d] — 2026-05-01
 
-Keempat boss baru (NyiRoroKidul, RangdaAgung, GarudaMahaguru, SemarPamungkas) tidak mengimplementasikan `onPhaseTransition(int, int)` yang abstract di `Boss.java`. Ini akan menyebabkan compile error.
+**Single Persistent Scene Architecture** — fix MercChatPanel root cause
 
-Fix: Tambahkan `@Override protected void onPhaseTransition(int fromPhase, int toPhase) {}` ke semua boss baru.
+---
 
-### Changed
+## [v0.3.7] — 2026-04-30
 
-**CombatResult — tambah `levelsGained` field**
-- `levelsGained` field baru (mutable, default 0)
-- `getLevelsGained()` dan `setLevelsGained(int)` getter/setter baru
-- `CombatManager.buildVictoryResult()` sekarang set `result.setLevelsGained(n)` setelah `player.gainExp()`
-- `GameEngine` menggunakan `result.getLevelsGained()` untuk trigger level up notification
+**Floating Damage Numbers, Floor Transition Animation, Room Preview Tooltip**
 
-**DungeonStateEvent — tambah `mythicCraft()` factory**
-- Notification khusus saat 3 Mythic Fragment berhasil di-craft
-- Pakai Type.LEVEL_UP untuk tampil sebagai notifikasi di DungeonMapView
+---
+
+## [v0.3.4] — 2026-04-30
+
+**Save/Load System** — Java Serialization, auto-save tiap turun floor
+
+---
+
+## [v0.3.3] — 2026-04-30
+
+**Layout Fix** — `UIFactory.screenRootBorder()`, hapus `setMinSize()` yang menyebabkan overflow
+
+---
+
+## [v0.3.0] — 2026-04-30
+
+**Turn Order Bar, Skill Popup, Target Select, Combat Speed Control**
+
+---
+
+## [v0.1.0] — 2026-04-26
+
+**Release awal** — migrasi NetBeans Ant → Maven
