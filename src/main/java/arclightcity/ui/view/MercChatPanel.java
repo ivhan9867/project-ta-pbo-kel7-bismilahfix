@@ -218,19 +218,29 @@ public class MercChatPanel extends VBox {
         portrait.setMinWidth(44);
         portrait.setMaxWidth(44);
 
-        // Avatar circle dengan inisial
+        // Avatar circle dengan portrait gambar atau inisial
         javafx.scene.layout.StackPane avatarStack = new javafx.scene.layout.StackPane();
-        Circle avatarBg = new Circle(18, Color.web(color + "22"));
+        Circle avatarBg = new Circle(20, Color.web(color + "22"));
         avatarBg.setStroke(Color.web(color));
         avatarBg.setStrokeWidth(1.5);
 
-        String initials = msg.mercName().length() >= 2
-            ? msg.mercName().substring(0, 2).toUpperCase()
-            : msg.mercName().toUpperCase();
-        Label avatarLbl = new Label(initials);
-        avatarLbl.setStyle("-fx-text-fill: " + color + "; -fx-font-family: 'Courier New';" +
-                           "-fx-font-size: 9px; -fx-font-weight: bold;");
-        avatarStack.getChildren().addAll(avatarBg, avatarLbl);
+        javafx.scene.image.Image portraitImg =
+            arclightcity.ui.util.AssetManager.portraitGuildmate(msg.mercName(), false);
+        if (portraitImg != null) {
+            javafx.scene.image.ImageView piv =
+                arclightcity.ui.util.AssetManager.makeIV(portraitImg, 36, 36);
+            Circle clip = new Circle(18, 18, 18);
+            piv.setClip(clip);
+            avatarStack.getChildren().addAll(avatarBg, piv);
+        } else {
+            String initials = msg.mercName().length() >= 2
+                ? msg.mercName().substring(0, 2).toUpperCase()
+                : msg.mercName().toUpperCase();
+            Label avatarLbl = new Label(initials);
+            avatarLbl.setStyle("-fx-text-fill: " + color + "; -fx-font-family: 'Courier New';" +
+                               "-fx-font-size: 9px; -fx-font-weight: bold;");
+            avatarStack.getChildren().addAll(avatarBg, avatarLbl);
+        }
 
         // Nama di bawah avatar
         String shortName = msg.mercName().contains(" ")

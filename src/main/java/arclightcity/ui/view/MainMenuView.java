@@ -33,6 +33,16 @@ public class MainMenuView {
         root.setPrefSize(ArclightApp.SCREEN_WIDTH, ArclightApp.SCREEN_HEIGHT);
         root.setStyle("-fx-background-color: #0A0604;");
 
+        // ── Background image ───────────────────────────────
+        javafx.scene.image.Image bgImg = arclightcity.ui.util.AssetManager.bgMainMenu();
+        if (bgImg != null) {
+            javafx.scene.image.ImageView bgView =
+                arclightcity.ui.util.AssetManager.makeIVFill(bgImg,
+                    ArclightApp.GAME_WIDTH, ArclightApp.SCREEN_HEIGHT);
+            bgView.setOpacity(0.4);
+            root.getChildren().add(bgView);
+        }
+
         // ── Background dekoratif ───────────────────────────
         root.getChildren().add(buildBackground());
 

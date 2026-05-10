@@ -33,6 +33,20 @@ public class HubView {
         Player player = engine.getPlayer();
         BorderPane root = UIFactory.screenRootBorder();
 
+        // Background markas
+        javafx.scene.image.Image bgImg = arclightcity.ui.util.AssetManager.bgHub();
+        if (bgImg != null) {
+            javafx.scene.image.ImageView bgView =
+                arclightcity.ui.util.AssetManager.makeIVFill(bgImg,
+                    arclightcity.ui.ArclightApp.GAME_WIDTH,
+                    arclightcity.ui.ArclightApp.SCREEN_HEIGHT);
+            bgView.setOpacity(0.18);
+            bgView.setMouseTransparent(true);
+            javafx.scene.layout.StackPane bgLayer = new javafx.scene.layout.StackPane(bgView);
+            bgLayer.setMouseTransparent(true);
+            root.getChildren().add(0, bgLayer);
+        }
+
         // ── TOP: Player identity bar ──────────────────────
         root.setTop(buildIdentityBar(player));
 

@@ -169,7 +169,20 @@ public class CombatView {
             "-fx-background: #0A0604;" +
             "-fx-border-color: transparent;"
         );
-        battleArea.setStyle("-fx-background-color: linear-gradient(to bottom, #140A06, #0A0602, #120806);");
+                // Background dungeon berdasarkan floor
+        try {
+            int floor = engine.getDungeonManager().getCurrentFloorNumber();
+            javafx.scene.image.Image bgImg = arclightcity.ui.util.AssetManager.bgDungeon(floor);
+            if (bgImg != null) {
+                javafx.scene.image.ImageView bgView =
+                    arclightcity.ui.util.AssetManager.makeIVFill(bgImg,
+                        arclightcity.ui.ArclightApp.GAME_WIDTH,
+                        arclightcity.ui.ArclightApp.SCREEN_HEIGHT * 0.6);
+                bgView.setOpacity(0.25); // semi-transparan agar UI tetap terbaca
+                battleArea.getChildren().add(0, bgView);
+            }
+        } catch (Exception ignored) {}
+        battleArea.setStyle("-fx-background-color: linear-gradient(to bottom, #140A06CC, #0A0602CC, #120806CC);");
         root.setCenter(battleScroll);
 
         // ── BOTTOM: action panel (selalu terlihat) ────────
@@ -346,8 +359,8 @@ public class CombatView {
     }
 
     private VBox buildEnemyCard(Entity enemy) {
-        VBox card = new VBox(4);  // spacing 6→4
-        card.setPadding(new Insets(8, 12, 8, 12));  // 10→8 atas/bawah
+        VBox card = new VBox(4);
+        card.setPadding(new Insets(8, 12, 8, 12));
         card.setCursor(javafx.scene.Cursor.HAND);
 
         boolean isCurrentActor = cm.getCurrentActor() != null
@@ -365,6 +378,34 @@ public class CombatView {
                 ? "-fx-effect: dropshadow(gaussian, #CC3300AA, 18, 0.5, 0, 0);"
                 : "-fx-effect: dropshadow(gaussian, #44000044, 4, 0.1, 0, 0);")
         );
+
+        // Sprite + info layout
+        HBox mainRow = new HBox(10);
+        mainRow.setAlignment(Pos.CENTER_LEFT);
+
+        // Sprite chibi enemy — boss punya sprite khusus
+        javafx.scene.image.Image sprite = null;
+        if (enemy instanceof arclightcity.entity.enemy.Boss boss) {
+            sprite = arclightcity.ui.util.AssetManager
+                .spriteBossByFloor(boss.getFloorLevel(), "idle");
+            if (sprite == null) {
+                // Fallback ke theresa jika floor tidak dikenali
+                sprite = arclightcity.ui.util.AssetManager.spriteBoss("theresa", "idle");
+            }
+        }
+        if (sprite == null) {
+            sprite = arclightcity.ui.util.AssetManager.spriteEnemy(enemy.getName(), "idle");
+        }
+        if (sprite != null) {
+            // Boss lebih besar dari enemy biasa
+            boolean isBoss = enemy instanceof arclightcity.entity.enemy.Boss;
+            javafx.scene.image.ImageView iv =
+                arclightcity.ui.util.AssetManager.makeIV(sprite, isBoss ? 110 : 90, isBoss ? 110 : 90);
+            mainRow.getChildren().add(iv);
+        }
+
+        VBox infoCol = new VBox(4);
+        HBox.setHgrow(infoCol, Priority.ALWAYS);
 
         // Name + badges row
         HBox nameRow = new HBox(8);
@@ -449,7 +490,9 @@ public class CombatView {
         HBox effects = new HBox(4);
         enemy.getActiveEffects().forEach(ef -> effects.getChildren().add(UIFactory.effectBadge(ef)));
 
-        card.getChildren().addAll(nameRow, bars, effects);
+        infoCol.getChildren().addAll(nameRow, bars, effects);
+        mainRow.getChildren().add(infoCol);
+        card.getChildren().add(mainRow);
         card.setOnMouseClicked(e -> handleTargetSelect(enemy));
         return card;
     }
