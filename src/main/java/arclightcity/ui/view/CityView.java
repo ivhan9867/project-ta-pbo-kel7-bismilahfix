@@ -70,6 +70,24 @@ public class CityView {
 
     private Parent buildArea(String area) {
         BorderPane root = UIFactory.screenRootBorder();
+
+        // Background kota berdasarkan area
+        javafx.scene.image.Image cityBg = switch (activeArea) {
+            case "SENJATA"  -> arclightcity.ui.util.AssetManager.bgCitySenjata();
+            case "JAMU"     -> arclightcity.ui.util.AssetManager.bgCityJamu();
+            case "BENGKEL"  -> arclightcity.ui.util.AssetManager.bgCityBengkel();
+            case "PENADAH"  -> arclightcity.ui.util.AssetManager.bgCityPenadah();
+            default         -> arclightcity.ui.util.AssetManager.bgHub();
+        };
+        if (cityBg != null) {
+            javafx.scene.image.ImageView bgView =
+                arclightcity.ui.util.AssetManager.makeIVFill(cityBg,
+                    arclightcity.ui.ArclightApp.GAME_WIDTH,
+                    arclightcity.ui.ArclightApp.SCREEN_HEIGHT);
+            bgView.setOpacity(0.30);
+            bgView.setMouseTransparent(true);
+            root.getChildren().add(0, bgView);
+        }
         root.setTop(buildHeader(area));
 
         Parent content = switch (area) {

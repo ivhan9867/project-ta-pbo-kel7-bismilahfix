@@ -92,8 +92,24 @@ public class AssetManager {
 
     // ── Skill Icons ───────────────────────────────────────────
     public static Image iconSkill(String skillId) {
-        String filename = skillId.toLowerCase().replace(" ", "_") + ".png";
-        return load("icons/skill/" + filename);
+        if (skillId == null) return null;
+        String filename = switch (skillId.toUpperCase()) {
+            case "POWER_STRIKE","PUKULAN_HARIMAU"    -> "pukulan_harimau";
+            case "EXECUTE","TEBASAN_PAMUNGKAS"       -> "tebasan_pamungkas";
+            case "PHANTOM_SHOT","PANAH_BAYANGAN"     -> "panah_bayangan";
+            case "SHADOW_STEP","LANGKAH_GAIB"        -> "langkah_gaib";
+            case "DEEP_HACK","BIDANG_BAYANGAN"       -> "bidang_bayangan";
+            case "NULL_FIELD","PROTOKOL_NOL"         -> "protokol_nol";
+            case "SOVEREIGN_STRIKE","TEBASAN_AGUNG"  -> "tebasan_agung";
+            case "NULL_PROTOCOL"                     -> "protokol_nol";
+            case "DATA_FRAGMENTATION","PECAH_JIWA"   -> "pecah_jiwa";
+            case "ENERGY_DRAIN","SERAP_TENAGA"       -> "serap_tenaga";
+            case "IRON_SHIELD","TAMENG_BAJA"         -> "tameng_baja";
+            case "SEISMIC_SLAM","GEMPA_BUMI"         -> "gempa_bumi";
+            case "SACRED_SEAL","RAJAH_PELINDUNG"     -> "rajah_pelindung";
+            default -> skillId.toLowerCase().replace(" ", "_");
+        };
+        return load("icons/skill/" + filename + ".png");
     }
 
     // ── UI ────────────────────────────────────────────────────
@@ -174,13 +190,13 @@ public class AssetManager {
     public static String guildmateSpriteKey(String name) {
         if (name == null) return "gatotkaca";
         return switch (name.toLowerCase().trim()) {
-            case "gatot kaca" -> "gatotkaca";
-            case "nyai roro"  -> "nyairoro";
-            case "ki ageng"   -> "kiageng";
-            case "dewi sri"   -> "dewisri";
-            case "srikandi"   -> "srikandi";
-            case "rangga"     -> "rangga";
-            case "bima"       -> "bima";
+            case "gatot kaca","tank-rx9","tank rx9" -> "gatotkaca";
+            case "nyai roro","sera mend"             -> "nyairoro";
+            case "ki ageng","echo null"              -> "kiageng";
+            case "dewi sri","lyra bloom"             -> "dewisri";
+            case "srikandi","kira voss"              -> "srikandi";
+            case "rangga","vector"                   -> "rangga";
+            case "bima","magnus forge"               -> "bima";
             default -> name.toLowerCase().replaceAll("[^a-z]", "");
         };
     }
@@ -188,7 +204,7 @@ public class AssetManager {
     public static String guildmatePortraitKey(String name) {
         if (name == null) return "gatotkaca";
         return switch (name.toLowerCase().trim()) {
-            case "gatot kaca" -> "gatotkaca";
+            case "gatot kaca","tank-rx9","tank rx9" -> "gatotkaca";
             case "nyai roro"  -> "nyairoro";
             case "ki ageng"   -> "kiageng";
             case "dewi sri"   -> "dewisri";

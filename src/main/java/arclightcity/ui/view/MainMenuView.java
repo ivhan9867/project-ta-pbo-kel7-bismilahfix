@@ -31,7 +31,7 @@ public class MainMenuView {
     public Parent build() {
         StackPane root = new StackPane();
         root.setPrefSize(ArclightApp.SCREEN_WIDTH, ArclightApp.SCREEN_HEIGHT);
-        root.setStyle("-fx-background-color: #0A0604;");
+        root.setStyle("-fx-background-color: #000000;");
 
         // ── Background image ───────────────────────────────
         javafx.scene.image.Image bgImg = arclightcity.ui.util.AssetManager.bgMainMenu();
@@ -39,7 +39,7 @@ public class MainMenuView {
             javafx.scene.image.ImageView bgView =
                 arclightcity.ui.util.AssetManager.makeIVFill(bgImg,
                     ArclightApp.GAME_WIDTH, ArclightApp.SCREEN_HEIGHT);
-            bgView.setOpacity(0.4);
+            bgView.setOpacity(0.85);
             root.getChildren().add(bgView);
         }
 

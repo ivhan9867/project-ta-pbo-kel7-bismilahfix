@@ -70,7 +70,7 @@ public class DungeonStateEvent {
 
     public static DungeonStateEvent dungeonStarted(String playerName) {
         return new Builder(Type.DUNGEON_STARTED)
-                .message("🏙️ " + playerName + " enters Arclight City dungeon...").build();
+                .message("🏙️ " + playerName + " enters Mythic Item Obtained dungeon...").build();
     }
 
     public static DungeonStateEvent floorEntered(int floor, Floor.FloorTheme theme) {

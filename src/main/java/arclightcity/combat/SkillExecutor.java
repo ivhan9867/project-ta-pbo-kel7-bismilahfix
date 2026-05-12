@@ -34,11 +34,49 @@ public class SkillExecutor {
      * Eksekusi skill dari caster ke target(s).
      * @return list CombatEvent dari hasil eksekusi
      */
+    /** MP cost per skill */
+    public static double getMpCost(String skillId) {
+        if (skillId == null) return 0;
+        return switch (skillId) {
+            // Player skills
+            case "POWER_STRIKE", "PUKULAN_HARIMAU"   -> 15;
+            case "EXECUTE",      "TEBASAN_PAMUNGKAS"  -> 25;
+            case "PHANTOM_SHOT", "PANAH_BAYANGAN"     -> 20;
+            case "SHADOW_STEP",  "LANGKAH_GAIB"       -> 18;
+            case "DEEP_HACK",    "BIDANG_BAYANGAN"    -> 22;
+            case "NULL_FIELD",   "PROTOKOL_NOL"       -> 30;
+            case "SOVEREIGN_STRIKE","TEBASAN_AGUNG"   -> 35;
+            case "NULL_PROTOCOL"                      -> 28;
+            case "DATA_FRAGMENTATION","PECAH_JIWA"   -> 40;
+            case "ENERGY_DRAIN",  "SERAP_TENAGA"     -> 20;
+            case "IRON_SHIELD",   "TAMENG_BAJA"      -> 18;
+            case "SEISMIC_SLAM",  "GEMPA_BUMI"       -> 25;
+            case "SACRED_SEAL",   "RAJAH_PELINDUNG"  -> 22;
+            // Enemy skills - biaya rendah
+            case "NEON_VENOM","COIL_STRIKE","VIRUS_UPLOAD","CORRUPT",
+                 "SHOCKWAVE","VOID_RUPTURE" -> 10;
+            case "SELF_DESTRUCT" -> 0; // tidak pakai MP
+            // Boss skills - biaya tinggi
+            default -> skillId.contains("BOSS") ? 30 : 12;
+        };
+    }
+
+
     public static List<CombatEvent> execute(String skillId, Entity caster,
                                              List<Entity> targets,
                                              List<Entity> allAllies,
                                              List<Entity> allEnemies) {
         List<CombatEvent> events = new ArrayList<>();
+
+        // Cek dan kurangi MP — jika tidak cukup, batalkan skill
+        double mpCost = getMpCost(skillId);
+        if (mpCost > 0 && caster.getCurrentMp() < mpCost) {
+            events.add(CombatEvent.actionPrevented(caster.getId(), caster.getName(),
+                "MP tidak cukup! (" + (int)caster.getCurrentMp() + "/" + (int)mpCost + " MP)"));
+            return events;
+        }
+        if (mpCost > 0) caster.spendMp(mpCost);
+
         events.add(CombatEvent.skillUsed(caster.getId(), caster.getName(), skillId));
 
         return switch (skillId) {

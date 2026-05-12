@@ -163,6 +163,35 @@ public abstract class Mercenary extends Entity {
     public String        getLore()          { return lore; }
     public int           getHireCost()      { return hireCost; }
     public int           getLoyaltyLevel()  { return loyaltyLevel; }
+
+    /** Upgrade manual dengan gold — max level 10 */
+    public boolean upgradeLevel(arclightcity.entity.player.Player player) {
+        if (loyaltyLevel >= 10) return false;
+        int cost = getUpgradeCost();
+        if (player.getGold() < cost) return false;
+        player.spendGold(cost);
+        loyaltyLevel++;
+        onLoyaltyLevelUp(loyaltyLevel);
+        restoreVitals(getStats().get(arclightcity.entity.stats.StatType.MAX_HP), getStats().get(arclightcity.entity.stats.StatType.MAX_SHIELD), getStats().get(arclightcity.entity.stats.StatType.MAX_MP)); // HP/MP refill setelah upgrade
+        return true;
+    }
+
+    /** Biaya upgrade meningkat per level */
+    public int getUpgradeCost() {
+        return switch (loyaltyLevel) {
+            case 0 -> 200;
+            case 1 -> 350;
+            case 2 -> 500;
+            case 3 -> 700;
+            case 4 -> 1000;
+            case 5 -> 1400;
+            case 6 -> 1900;
+            case 7 -> 2500;
+            case 8 -> 3200;
+            case 9 -> 4000;
+            default -> 99999;
+        };
+    }
     public int           getMissionCount()  { return missionCount; }
     public String        getWeaponItemId()  { return weaponItemId; }
     public String        getArmorItemId()   { return armorItemId; }

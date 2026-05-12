@@ -117,7 +117,6 @@ arclightcity\item\Item$Rarity.class
 arclightcity\entity\EntityFactory.class
 arclightcity\ui\view\MercenaryView.class
 arclightcity\ui\view\DungeonGridMap$1.class
-arclightcity\ui\view\CombatView$SkillInfo.class
 arclightcity\ui\view\MercChatPanel.class
 arclightcity\combat\TurnQueue$TurnSlot.class
 arclightcity\save\GameSaveState$ProgressData.class

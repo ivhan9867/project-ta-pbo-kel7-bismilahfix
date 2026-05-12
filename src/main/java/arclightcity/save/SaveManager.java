@@ -8,7 +8,7 @@ import java.util.Optional;
  * SaveManager — mengelola semua operasi save/load ke disk.
  *
  * File struktur:
- *   %APPDATA%/ArclightCity/  (Windows)
+ *   %APPDATA%/MythicItemObtained/  (Windows)
  *   ~/.arclight/             (Linux/Mac)
  *   ├── save_manual.dat      ← manual save (1 slot)
  *   └── save_auto.dat        ← auto-save backup
@@ -26,7 +26,7 @@ public class SaveManager {
     public  static final String AUTO_FILENAME   = "save_auto.dat";
     // Alias untuk backward compat
     private static final String MANUAL_FILENAME = SLOT1_FILENAME;
-    private static final String SAVE_DIR_NAME   = "ArclightCity";
+    private static final String SAVE_DIR_NAME   = "MythicItemObtained";
 
     // ── Result type ───────────────────────────────────────────
 
@@ -39,7 +39,7 @@ public class SaveManager {
 
     /**
      * Dapatkan direktori save yang sesuai dengan OS.
-     * Windows: %APPDATA%\ArclightCity\
+     * Windows: %APPDATA%\MythicItemObtained\
      * Mac/Linux: ~/.arclight/
      */
     public static Path getSaveDirectory() {

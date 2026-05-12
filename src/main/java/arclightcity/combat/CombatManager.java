@@ -430,9 +430,15 @@ public class CombatManager {
         // Grant gold
         player.gainGold(totalGold);
 
-        // Mercenary mission complete
+        // Mercenary mission complete + revive yang mati dengan 25% HP
         for (Mercenary m : activeMercs) {
-            if (m.isAlive()) m.completeMission();
+            if (m.isAlive()) {
+                m.completeMission();
+            } else {
+                // Revive dengan 25% HP setelah menang
+                double reviveHp = m.getStats().get(arclightcity.entity.stats.StatType.MAX_HP) * 0.25;
+                m.restoreVitals(reviveHp, 0, 0);
+            }
         }
 
         CombatResult result = CombatResult.victory(totalTurns, totalExp, totalGold, loot, collectLog(), defeated);

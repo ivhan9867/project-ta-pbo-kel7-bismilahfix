@@ -47,17 +47,17 @@ public class MagnusForge extends Mercenary {
 
     @Override
     protected void initStats() {
-        stats.setBase(StatType.MAX_HP,       200);
+        stats.setBase(StatType.MAX_HP,       280);
         stats.setBase(StatType.MAX_SHIELD,   40);
         stats.setBase(StatType.DAMAGE_MULT,  0.10); // HP tinggi untuk DPS
         stats.setBase(StatType.MAX_MP,       60);
         stats.setBase(StatType.MP_REGEN,     4);
         stats.setBase(StatType.HP_REGEN,     3);
-        stats.setBase(StatType.PHYSICAL_ATK, 42); // ATK tertinggi di semua merc
-        stats.setBase(StatType.ENERGY_ATK,   20);
-        stats.setBase(StatType.PHYSICAL_DEF, 22);
-        stats.setBase(StatType.CYBER_DEF,    10);
-        stats.setBase(StatType.ENERGY_DEF,   15);
+        stats.setBase(StatType.PHYSICAL_ATK, 67.2); // ATK tertinggi di semua merc
+        stats.setBase(StatType.ENERGY_ATK,   32);
+        stats.setBase(StatType.PHYSICAL_DEF, 28.6);
+        stats.setBase(StatType.CYBER_DEF,    13);
+        stats.setBase(StatType.ENERGY_DEF,   19.5);
         stats.setBase(StatType.EVASION,      0.02); // hampir tidak bisa dodge
         stats.setBase(StatType.BLOCK_CHANCE, 0.10);
         stats.setBase(StatType.CRIT_CHANCE,  0.12);
@@ -120,6 +120,17 @@ public class MagnusForge extends Mercenary {
 
     @Override
     protected void onLoyaltyLevelUp(int newLevel) {
+        // Universal stat buff per level (+10% HP, +12% ATK, +8% DEF)
+        double hp  = getStats().get(arclightcity.entity.stats.StatType.MAX_HP) * 0.10;
+        double atk = getStats().get(arclightcity.entity.stats.StatType.PHYSICAL_ATK) * 0.12;
+        double def = getStats().get(arclightcity.entity.stats.StatType.PHYSICAL_DEF) * 0.08;
+        getStats().addBase(arclightcity.entity.stats.StatType.MAX_HP, hp);
+        getStats().addBase(arclightcity.entity.stats.StatType.PHYSICAL_ATK, atk);
+        getStats().addBase(arclightcity.entity.stats.StatType.CYBER_ATK, atk * 0.6);
+        getStats().addBase(arclightcity.entity.stats.StatType.ENERGY_ATK, atk * 0.6);
+        getStats().addBase(arclightcity.entity.stats.StatType.PHYSICAL_DEF, def);
+        restoreVitals(getStats().get(arclightcity.entity.stats.StatType.MAX_HP), getStats().get(arclightcity.entity.stats.StatType.MAX_SHIELD), getStats().get(arclightcity.entity.stats.StatType.MAX_MP)); // Refill HP/MP setelah level up
+        System.out.println("[Merc] " + getName() + " level up! LV." + newLevel);
         stats.addBase(StatType.PHYSICAL_ATK, 5);
         stats.addBase(StatType.MAX_HP,       15);
         if (newLevel == 10) {

@@ -257,17 +257,22 @@ public class Inventory {
                 equippedAccessory1!= null ? equippedAccessory1 : eq,
                 equippedAccessory2!= null ? equippedAccessory2 : eq
         );
-        boolean isEquipped = (eq == equippedWeapon || eq == equippedArmor
+        boolean isEquipped = (eq == equippedWeapon  || eq == equippedArmor
+                           || eq == equippedHelmet  || eq == equippedBoots
+                           || eq == equippedRing1   || eq == equippedRing2
                            || eq == equippedAccessory1 || eq == equippedAccessory2);
         if (isEquipped) {
-            // Recalculate semua equipment bonuses dari nol
+            // Recalculate semua equipment bonuses dari nol (semua 8 slot)
             player.getStats().clearEquipmentBonuses();
             if (equippedWeapon     != null) applyStatBonuses(equippedWeapon);
             if (equippedArmor      != null) applyStatBonuses(equippedArmor);
+            if (equippedHelmet     != null) applyStatBonuses(equippedHelmet);
+            if (equippedBoots      != null) applyStatBonuses(equippedBoots);
+            if (equippedRing1      != null) applyStatBonuses(equippedRing1);
+            if (equippedRing2      != null) applyStatBonuses(equippedRing2);
             if (equippedAccessory1 != null) applyStatBonuses(equippedAccessory1);
             if (equippedAccessory2 != null) applyStatBonuses(equippedAccessory2);
 
-            // Recalculate MAX_SHIELD dengan SHIELD_MULT
             recalcShield();
         }
     }

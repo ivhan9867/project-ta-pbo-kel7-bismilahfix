@@ -3,7 +3,6 @@ import arclightcity.entity.base.Entity;
 import arclightcity.entity.stats.StatType;
 import arclightcity.combat.*;
 import arclightcity.engine.GameEngine;
-import arclightcity.entity.enemy.Enemy;
 import arclightcity.entity.mercenary.Mercenary;
 import arclightcity.entity.player.Player;
 import javafx.animation.*;
@@ -11,41 +10,34 @@ import javafx.application.Platform;
 import javafx.geometry.*;
 import javafx.scene.Parent;
 import javafx.scene.canvas.Canvas;
-import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
-import arclightcity.ui.ArclightApp;
 import javafx.scene.text.TextAlignment;
+import arclightcity.ui.ArclightApp;
 import javafx.util.Duration;
 import arclightcity.ui.controller.SceneRouter;
-import arclightcity.ui.view.MercenaryDialogue;
 import arclightcity.ui.util.UIFactory;
-import java.util.List;
-import java.util.ArrayList;
-
 import java.util.List;
 
 /**
- * CombatView — layar combat utama.
+ * CombatView v0.6.5 — Layout RPG klasik:
  *
- * Layout:
- *   ┌──────────────────────────┐
- *   │ ESCAPE      [TURN X]     │
- *   │ [combat log scroll]      │
- *   ├──────────────────────────┤
- *   │ ENEMIES                  │
- *   │ [enemy cards: name+bars] │
- *   ├──────────────────────────┤
- *   │ ALLIES                   │
- *   │ [player] [merc1] [merc2] │
- *   ├──────────────────────────┤
- *   │ STATUS EFFECTS           │
- *   ├──────────────────────────┤
- *   │ [ATTACK] [SKILL] [ITEM]  │
- *   │ [DEFEND]         [FLEE]  │
- *   └──────────────────────────┘
+ * ┌─────────────────────────────────────────┐
+ * │ KABUR | PERTEMPURAN Giliran X | ACTOR ▶ │  ← header bar
+ * ├─────────────────────────────────────────┤
+ * │                                         │
+ * │  BG dungeon (full width, ~320px)        │  ← scene area
+ * │                                         │
+ * │  [Enemy1]  [Enemy2]  [Enemy3]           │  ← enemy di tengah-atas BG
+ * │   HP████░   HP███░    HP████            │
+ * │                                         │
+ * │ [Ally1] [Ally2] [Ally3]  ← kiri bawah  │  ← ally kecil di bawah BG
+ * ├─────────────────────────────────────────┤
+ * │ [sk1][sk2][sk3][sk4]  MP ████░          │  ← skill slots
+ * │ [SERANG] [JURUS] [ITEM] [BERTAHAN][KABUR│  ← action buttons
+ * └─────────────────────────────────────────┘
  */
 public class CombatView {
 
@@ -53,44 +45,24 @@ public class CombatView {
     private final SceneRouter router;
     private CombatManager     cm;
 
-    // UI refs
-    private VBox       enemyContainer;
-    private HBox       allyContainer;
-    private VBox       logContainer;
-    private ScrollPane logScroll;
-    private VBox       actionPanel;
-    private Label      turnLabel;
-    private Label      currentActorLabel;
-    private HBox       turnOrderBar;     // v0.3: antrian giliran
-    private Timeline   combatLoop;
+    private HBox     enemyRow;
+    private HBox     allyRow;
+    private VBox     actionPanel;
+    private Label    turnLabel;
+    private Label    actorLabel;
+    private Timeline combatLoop;
+    private Timeline floatLoop;
+    private Canvas   floatCanvas;
+    private int      speedMs = 1200;
 
-    // v0.3: AI turn guard
-    private boolean aiTurnPending = false;
-
-    // v0.3: Target Selection mode
-    private boolean          targetSelectMode = false;
-    private String           pendingSkillId   = null;
-    private java.util.function.Consumer<Entity> onTargetSelected = null;
-
-    // v0.3: Combat speed — default 1200ms agar player sempat baca log
-    // 1× = 1200ms (comfortable), 2× = 500ms (faster), SKIP = 50ms
-    private int combatSpeedMs = 1200;
-
-    // v0.3: Floating damage texts
     private record FloatingText(String text, String color,
-                                double x, double y, long startMs,
-                                int duration, double rise) {
-        // Convenience constructor with defaults
-        FloatingText(String text, String color, double x, double y, long startMs) {
-            this(text, color, x, y, startMs,
-                text.startsWith("⚡") ? 1800 : text.startsWith("✦") ? 1600 : 1400,
-                text.startsWith("⚡") ? 75 : text.startsWith("✦") ? 65 : 55);
+                                double x, double y, long t0, int dur, double rise) {
+        FloatingText(String t, String c, double x, double y, long t0) {
+            this(t, c, x, y, t0, t.startsWith("\u26a1") ? 1800 : 1400,
+                               t.startsWith("\u26a1") ? 80 : 55);
         }
     }
-    private final java.util.List<FloatingText> floatingTexts
-            = new java.util.ArrayList<>();
-    private Canvas   floatCanvas;   // overlay untuk floating damage numbers
-    private Timeline floatLoop;     // animation loop untuk floating texts
+    private final List<FloatingText> floats = new java.util.ArrayList<>();
 
     public CombatView(GameEngine engine, SceneRouter router) {
         this.engine = engine;
@@ -98,1305 +70,550 @@ public class CombatView {
         this.cm     = engine.getActiveCombat();
     }
 
-    private javafx.scene.layout.BorderPane combatRoot;
-
+    // ════════════════════════════════════════════
+    //  BUILD
+    // ════════════════════════════════════════════
     public Parent build() {
-        // BorderPane: top=fixed headers, center=scrollable battle area, bottom=action panel
         BorderPane root = UIFactory.screenRootBorder();
-        combatRoot = root;
+        root.setStyle("-fx-background-color:#0A0503;");
 
-        // ── TOP: TopBar + TurnOrderBar (fixed) ───────────
-        VBox topSection = new VBox(0);
-        topSection.getChildren().add(buildTopBar());
+        root.setTop(buildHeader());
+        root.setCenter(buildScene());
 
-        turnOrderBar = new HBox(6);
-        turnOrderBar.setPadding(new Insets(3, 10, 3, 10));
-        turnOrderBar.setMinHeight(28);
-        turnOrderBar.setMaxHeight(36);
-        turnOrderBar.setAlignment(Pos.CENTER_LEFT);
-        turnOrderBar.setStyle(
-            "-fx-background-color: linear-gradient(to right, #1A0806, #0F0604, #1A0806);" +
-            "-fx-border-color: #CC330055;" +
-            "-fx-border-width: 0 0 1 0;" +
-            "-fx-effect: dropshadow(gaussian, #CC330033, 4, 0.2, 0, 1);"
-        );
-        topSection.getChildren().add(turnOrderBar);
-        root.setTop(topSection);
-
-        // ── CENTER: scrollable battle area ───────────────
-        VBox battleArea = new VBox(0);
-
-        // Combat log
-        battleArea.getChildren().add(buildCombatLog());
-
-        // Enemy area — wrapped in StackPane for floating damage overlay
-        VBox enemySection = new VBox(6);
-        enemySection.setPadding(new Insets(4, 10, 3, 10));
-        enemySection.setStyle("-fx-border-color: #3A2810; -fx-border-width: 0 0 1 0;");
-        Label enemySectionTitle = UIFactory.sectionTitle("◆ LAWAN");
-        enemySectionTitle.setPadding(new Insets(0, 0, 4, 0));
-        enemyContainer = new VBox(4);
-        enemySection.getChildren().addAll(enemySectionTitle, enemyContainer);
-
-        // StackPane untuk floating damage overlay di atas enemy section
-        floatCanvas = new Canvas(ArclightApp.GAME_WIDTH, 200);
-        floatCanvas.setMouseTransparent(true); // tidak blok mouse events
-        StackPane enemyStack = new StackPane(enemySection, floatCanvas);
-        enemyStack.setAlignment(Pos.TOP_LEFT);
-        battleArea.getChildren().add(enemyStack);
-
-        // Ally area
-        VBox allySection = new VBox(6);
-        allySection.setPadding(new Insets(4, 10, 3, 10));
-        allySection.setStyle("-fx-border-color: #3A2810; -fx-border-width: 0 0 1 0;");
-        Label allySectionTitle = UIFactory.sectionTitle("◈ SEKUTU");
-        allySectionTitle.setPadding(new Insets(0, 0, 4, 0));
-        allyContainer = new HBox(6);
-        allySection.getChildren().addAll(allySectionTitle, allyContainer);
-        battleArea.getChildren().add(allySection);
-
-        // Status effects
-        battleArea.getChildren().add(buildStatusPanel());
-
-        // Wrap dalam ScrollPane tapi dibatasi — cukup untuk 1-2 musuh tanpa scroll
-        // jika ada lebih banyak musuh, baru perlu scroll
-        ScrollPane battleScroll = new ScrollPane(battleArea);
-        battleScroll.setFitToWidth(true);
-        battleScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        battleScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-        battleScroll.setStyle(
-            "-fx-background-color: #0A0604;" +
-            "-fx-background: #0A0604;" +
-            "-fx-border-color: transparent;"
-        );
-                // Background dungeon berdasarkan floor
-        try {
-            int floor = engine.getDungeonManager().getCurrentFloorNumber();
-            javafx.scene.image.Image bgImg = arclightcity.ui.util.AssetManager.bgDungeon(floor);
-            if (bgImg != null) {
-                javafx.scene.image.ImageView bgView =
-                    arclightcity.ui.util.AssetManager.makeIVFill(bgImg,
-                        arclightcity.ui.ArclightApp.GAME_WIDTH,
-                        arclightcity.ui.ArclightApp.SCREEN_HEIGHT * 0.6);
-                bgView.setOpacity(0.25); // semi-transparan agar UI tetap terbaca
-                battleArea.getChildren().add(0, bgView);
-            }
-        } catch (Exception ignored) {}
-        battleArea.setStyle("-fx-background-color: linear-gradient(to bottom, #140A06CC, #0A0602CC, #120806CC);");
-        root.setCenter(battleScroll);
-
-        // ── BOTTOM: action panel (selalu terlihat) ────────
-        actionPanel = new VBox(8);
-        actionPanel.setPadding(new Insets(5, 10, 7, 10));
-        actionPanel.setStyle(
-            "-fx-background-color: #150E08;" +
-            "-fx-border-color: #3A2810;" +
-            "-fx-border-width: 1 0 0 0;"
-        );
+        actionPanel = new VBox(6);
+        actionPanel.setPadding(new Insets(6, 10, 8, 10));
+        actionPanel.setStyle("-fx-background-color:#0D0903;" +
+            "-fx-border-color:#C8860A55; -fx-border-width:1 0 0 0;");
         root.setBottom(actionPanel);
 
-        // Initial render
-        refreshCombatants();
-        refreshActionPanel();
-
-        // Subscribe event listener
         if (cm != null) {
-            cm.addEventListener(event -> Platform.runLater(() -> handleCombatEvent(event)));
-            cm.addResultListener(result -> Platform.runLater(() -> handleCombatEnd(result)));
+            cm.addEventListener(ev -> Platform.runLater(() -> onEvent(ev)));
+            cm.addResultListener(res -> Platform.runLater(() -> onEnd(res)));
         }
-
+        refresh();
+        refreshActions();
+        startLoop();
         UIFactory.fadeIn(root, 300);
         return root;
     }
 
-    // ════════════════════════════════════════════════════
-    // TOP BAR
-    // ════════════════════════════════════════════════════
+    // ── HEADER ──────────────────────────────────
+    private HBox buildHeader() {
+        HBox h = new HBox(10);
+        h.setAlignment(Pos.CENTER_LEFT);
+        h.setPadding(new Insets(6, 12, 6, 12));
+        h.setStyle("-fx-background-color:linear-gradient(to right,#1A0806,#0A0503);" +
+                   "-fx-border-color:#CC330055; -fx-border-width:0 0 1 0;");
 
-    private HBox buildTopBar() {
-        HBox bar = new HBox(8);
-        bar.setAlignment(Pos.CENTER_LEFT);
-        bar.setPadding(new Insets(8, 12, 8, 12));
-        bar.setStyle("-fx-background-color: #0F0A06;" +
-                     "-fx-border-color: #3A2810; -fx-border-width: 0 0 1 0;");
+        Button kabur = btn("\u2190 KABUR", "#CC3300", "#CC330022");
+        kabur.setOnAction(e -> doFlee());
 
-        // Escape/flee button
-        Button escapeBtn = new Button("↩ KABUR");
-        escapeBtn.setStyle(
-            "-fx-background-color: transparent;" +
-            "-fx-border-color: #CC3300; -fx-border-width: 1;" +
-            "-fx-text-fill: #CC3300; -fx-font-family: 'Courier New'; -fx-font-size: 10px;" +
-            "-fx-padding: 3 8; -fx-cursor: hand;"
-        );
-        escapeBtn.setOnAction(e -> {
-            boolean fled = engine.attemptFlee();
-            if (!fled) addLog("❌ Kabur gagal!", "#CC3300");
-        });
+        Label lbl = new Label("PERTEMPURAN");
+        lbl.setStyle("-fx-text-fill:#CC3300; -fx-font-family:'Courier New';" +
+            "-fx-font-size:13px; -fx-font-weight:bold;");
 
-        // Combat title
-        Label combatTitle = new Label("⚔  PERTEMPURAN");
-        // Animasi flicker pada judul combat
-        boolean isBoss = cm != null && cm.getEnemies().stream()
-            .anyMatch(e -> e instanceof arclightcity.entity.enemy.Boss);
-        if (isBoss) UIFactory.flicker(combatTitle);
-        combatTitle.setStyle("-fx-text-fill: #CC3300; -fx-font-family: 'Courier New';" +
-                             "-fx-font-size: 12px; -fx-font-weight: bold;" +
-                             "-fx-effect: dropshadow(gaussian, #CC3300, 6, 0.3, 0, 0);");
-
-        // Turn label - center
-        turnLabel = new Label("GILIRAN 0");
-        turnLabel.setStyle("-fx-text-fill: #5A3A10; -fx-font-family: 'Courier New';" +
-                           "-fx-font-size: 11px;");
+        turnLabel = new Label("Giliran 1");
+        turnLabel.setStyle("-fx-text-fill:#5A3A10; -fx-font-family:'Courier New'; -fx-font-size:11px;");
         HBox.setHgrow(turnLabel, Priority.ALWAYS);
-        turnLabel.setAlignment(Pos.CENTER);
 
-        // Current actor
-        currentActorLabel = new Label("—");
-        currentActorLabel.setStyle(
-            "-fx-text-fill: #FFB830; -fx-font-family: 'Courier New';" +
-            "-fx-font-size: 11px; -fx-font-weight: bold;"
-        );
+        actorLabel = new Label("ASUNA \u25ba");
+        actorLabel.setStyle("-fx-text-fill:#FFB830; -fx-font-family:'Courier New';" +
+            "-fx-font-size:12px; -fx-font-weight:bold;");
 
-        bar.getChildren().addAll(escapeBtn, combatTitle, turnLabel, currentActorLabel);
-        return bar;
+        Label sep = new Label("  SPD:");
+        sep.setStyle("-fx-text-fill:#3A2810; -fx-font-size:10px;");
+        ToggleGroup tg = new ToggleGroup();
+        ToggleButton t1 = spd("1\u00d7", 1200, tg, true);
+        ToggleButton t2 = spd("2\u00d7", 500,  tg, false);
+        ToggleButton ts = spd("SKIP",    50,   tg, false);
+
+        h.getChildren().addAll(kabur, lbl, turnLabel, actorLabel, sep, t1, t2, ts);
+        return h;
     }
 
-    // ════════════════════════════════════════════════════
-    // COMBAT LOG
-    // ════════════════════════════════════════════════════
-
-    private VBox buildCombatLog() {
-        VBox wrapper = new VBox();
-        wrapper.setPrefHeight(80);   // compact untuk 720px tanpa scroll
-        wrapper.setMaxHeight(150);
-        wrapper.setStyle("-fx-background-color: #0A0604; -fx-border-color: #3A2810; -fx-border-width: 0 0 1 0;");
-
-        logContainer = new VBox(2);
-        logContainer.setPadding(new Insets(6, 10, 6, 10));
-
-        logScroll = new ScrollPane(logContainer);
-        logScroll.setFitToWidth(true);
-        logScroll.setPrefHeight(0);
-        logScroll.setVisible(false);
-        logScroll.setManaged(false);
-        logScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        logScroll.setStyle("-fx-background-color: #0A0604; -fx-background: #0A0604; -fx-border-color: transparent;");
-
-        wrapper.getChildren().add(logScroll);
-        return wrapper;
+    private ToggleButton spd(String txt, int ms, ToggleGroup g, boolean sel) {
+        ToggleButton b = new ToggleButton(txt);
+        b.setToggleGroup(g); b.setSelected(sel);
+        String s = "-fx-text-fill:#A09070; -fx-font-family:'Courier New';" +
+                   "-fx-font-size:9px; -fx-padding:2 6; -fx-cursor:hand;";
+        b.setStyle("-fx-background-color:" + (sel?"#3A2810":"#1A1008") + ";" + s);
+        b.selectedProperty().addListener((o,ov,nv) -> {
+            if (nv) { speedMs = ms; startLoop(); }
+            b.setStyle("-fx-background-color:" + (nv?"#3A2810":"#1A1008") + ";" + s);
+        });
+        return b;
     }
 
-    public void addLog(String message, String color) {
-        Label entry = new Label("> " + message);
-        entry.setWrapText(true);
-        entry.setStyle(
-            "-fx-text-fill: " + color + ";" +
-            "-fx-font-family: 'Courier New', monospace;" +
-            "-fx-font-size: 12px;"   // naik dari 10px
-        );
-        logContainer.getChildren().add(entry);
+    // ── SCENE ───────────────────────────────────
+    private BorderPane buildScene() {
+        BorderPane scene = new BorderPane();
+        double sceneH = ArclightApp.SCREEN_HEIGHT * 0.60;
+        scene.setPrefHeight(sceneH);
+        scene.setMaxHeight(sceneH);
 
-        // Keep only last 50 entries
-        if (logContainer.getChildren().size() > 50) {
-            logContainer.getChildren().remove(0);
-        }
-
-        // Auto-scroll to bottom
-        Platform.runLater(() -> logScroll.setVvalue(1.0));
-    }
-
-    // ════════════════════════════════════════════════════
-    // STATUS PANEL
-    // ════════════════════════════════════════════════════
-
-    private HBox buildStatusPanel() {
-        HBox panel = new HBox(4);
-        panel.setPadding(new Insets(6, 12, 6, 12));
-        panel.setStyle("-fx-background-color: #0F0A06; -fx-border-color: #3A2810; -fx-border-width: 0 0 1 0;");
-        panel.setAlignment(Pos.CENTER_LEFT);
-
-        Player player = engine.getPlayer();
-        for (var effect : player.getActiveEffects()) {
-            panel.getChildren().add(UIFactory.effectBadge(effect));
-        }
-
-        if (panel.getChildren().isEmpty()) {
-            Label none = new Label("Tidak ada efek aktif");
-            none.setStyle("-fx-text-fill: #3A2810; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
-            panel.getChildren().add(none);
-        }
-
-        return panel;
-    }
-
-    // ════════════════════════════════════════════════════
-    // ENTITY CARDS
-    // ════════════════════════════════════════════════════
-
-    private void refreshCombatants() {
-        if (cm == null) return;
-
-        // Enemies
-        enemyContainer.getChildren().clear();
-        for (Entity enemy : cm.getAllEnemies()) {
-            enemyContainer.getChildren().add(buildEnemyCard(enemy));
-        }
-
-        // Allies
-        allyContainer.getChildren().clear();
-        for (Entity ally : cm.getAllAllies()) {
-            allyContainer.getChildren().add(buildAllyCard(ally));
-        }
-
-        // Update turn info
-        if (turnLabel != null) {
-            turnLabel.setText("Giliran " + cm.getTotalTurns());
-        }
-        Entity actor = cm.getCurrentActor();
-        if (currentActorLabel != null && actor != null) {
-            currentActorLabel.setText(actor.getName().toUpperCase() + " ▶");
-        }
-    }
-
-    private VBox buildEnemyCard(Entity enemy) {
-        VBox card = new VBox(4);
-        card.setPadding(new Insets(8, 12, 8, 12));
-        card.setCursor(javafx.scene.Cursor.HAND);
-
-        boolean isCurrentActor = cm.getCurrentActor() != null
-                && cm.getCurrentActor().getId().equals(enemy.getId());
-
-        String borderColor = isCurrentActor ? UIFactory.RED : "#3A2810";
-        String cardBg = isCurrentActor
-            ? "linear-gradient(to bottom right, #2A0808, #180606)"
-            : "linear-gradient(to bottom, #150606, #100505)";
-        card.setStyle(
-            "-fx-background-color: " + cardBg + ";" +
-            "-fx-border-color: " + borderColor + ";" +
-            "-fx-border-width: 0 0 0 4;" +
-            (isCurrentActor
-                ? "-fx-effect: dropshadow(gaussian, #CC3300AA, 18, 0.5, 0, 0);"
-                : "-fx-effect: dropshadow(gaussian, #44000044, 4, 0.1, 0, 0);")
-        );
-
-        // Sprite + info layout
-        HBox mainRow = new HBox(10);
-        mainRow.setAlignment(Pos.CENTER_LEFT);
-
-        // Sprite chibi enemy — boss punya sprite khusus
-        javafx.scene.image.Image sprite = null;
-        if (enemy instanceof arclightcity.entity.enemy.Boss boss) {
-            sprite = arclightcity.ui.util.AssetManager
-                .spriteBossByFloor(boss.getFloorLevel(), "idle");
-            if (sprite == null) {
-                // Fallback ke theresa jika floor tidak dikenali
-                sprite = arclightcity.ui.util.AssetManager.spriteBoss("theresa", "idle");
+        // Background
+        StackPane bgPane = new StackPane();
+        bgPane.setStyle("-fx-background-color:#060402;");
+        try {
+            int fl = engine.getDungeonManager().getCurrentFloorNumber();
+            var bg = arclightcity.ui.util.AssetManager.bgDungeon(fl);
+            if (bg != null) {
+                var iv = arclightcity.ui.util.AssetManager.makeIVFill(
+                    bg, ArclightApp.GAME_WIDTH, sceneH);
+                iv.setOpacity(0.78);
+                iv.setMouseTransparent(true);
+                bgPane.getChildren().add(iv);
             }
-        }
-        if (sprite == null) {
-            sprite = arclightcity.ui.util.AssetManager.spriteEnemy(enemy.getName(), "idle");
-        }
+        } catch (Exception ignored) {}
+
+        // Floating canvas
+        floatCanvas = new Canvas(ArclightApp.GAME_WIDTH, sceneH);
+        floatCanvas.setMouseTransparent(true);
+        bgPane.getChildren().add(floatCanvas);
+        scene.setCenter(bgPane);
+
+        // Enemy row — CENTER-TOP of bg
+        enemyRow = new HBox(20);
+        enemyRow.setAlignment(Pos.BOTTOM_CENTER);
+        enemyRow.setPadding(new Insets(20, 0, 0, 0));
+        StackPane.setAlignment(enemyRow, Pos.TOP_CENTER);
+        bgPane.getChildren().add(enemyRow);
+
+        // Ally row — BOTTOM-LEFT of bg, smaller
+        allyRow = new HBox(8);
+        allyRow.setAlignment(Pos.BOTTOM_LEFT);
+        allyRow.setPadding(new Insets(0, 0, 6, 8));
+        StackPane.setAlignment(allyRow, Pos.BOTTOM_LEFT);
+        bgPane.getChildren().add(allyRow);
+
+        return scene;
+    }
+
+    // ── ENEMY CARD ──────────────────────────────
+    private VBox buildEnemy(Entity e) {
+        boolean isBoss = e instanceof arclightcity.entity.enemy.Boss;
+        double sz = isBoss ? 140 : 110;
+
+        boolean cur = cm.getCurrentActor() != null
+            && cm.getCurrentActor().getId().equals(e.getId());
+
+        VBox card = new VBox(3);
+        card.setAlignment(Pos.BOTTOM_CENTER);
+        card.setStyle(cur
+            ? "-fx-effect:dropshadow(gaussian,#FF4422,20,0.6,0,0);" : "");
+
+        // HP bar (slim, above sprite)
+        double hp = e.getHpPercent();
+        Region bg = new Region(); bg.setPrefSize(sz, 5);
+        bg.setStyle("-fx-background-color:#1A0404; -fx-background-radius:3;");
+        Region fill = new Region(); fill.setPrefSize(sz*hp, 5);
+        fill.setStyle("-fx-background-color:" +
+            (hp>.6?"#DD2211":hp>.3?"#FF5500":"#FF1100") + "; -fx-background-radius:3;");
+        StackPane bar = new StackPane(); bar.setAlignment(Pos.CENTER_LEFT);
+        bar.getChildren().addAll(bg, fill);
+
+        Label hpLbl = new Label((int)e.getCurrentHp() + "/" + (int)e.getStats().get(StatType.MAX_HP));
+        hpLbl.setStyle("-fx-text-fill:#FFAA88; -fx-font-family:'Courier New'; -fx-font-size:9px;" +
+                      "-fx-effect:dropshadow(gaussian,#000,3,1,0,1);");
+
+        // Sprite
+        var sprite = isBoss
+            ? arclightcity.ui.util.AssetManager.spriteBossByFloor(
+                ((arclightcity.entity.enemy.Boss)e).getFloorLevel(), "idle")
+            : arclightcity.ui.util.AssetManager.spriteEnemy(e.getName(), "idle");
+        if (sprite == null && isBoss)
+            sprite = arclightcity.ui.util.AssetManager.spriteBoss("theresa","idle");
+
+        StackPane sp = new StackPane(); sp.setMinSize(sz,sz); sp.setMaxSize(sz,sz);
         if (sprite != null) {
-            // Boss lebih besar dari enemy biasa
-            boolean isBoss = enemy instanceof arclightcity.entity.enemy.Boss;
-            javafx.scene.image.ImageView iv =
-                arclightcity.ui.util.AssetManager.makeIV(sprite, isBoss ? 110 : 90, isBoss ? 110 : 90);
-            mainRow.getChildren().add(iv);
-        }
-
-        VBox infoCol = new VBox(4);
-        HBox.setHgrow(infoCol, Priority.ALWAYS);
-
-        // Name + badges row
-        HBox nameRow = new HBox(8);
-        nameRow.setAlignment(Pos.CENTER_LEFT);
-
-        String nameColor = enemy.isAlive() ? UIFactory.RED : "#6A5840";
-        Label nameLabel = new Label(enemy.getName());
-        nameLabel.setStyle("-fx-text-fill: " + nameColor +
-                "; -fx-font-family: 'Courier New'; -fx-font-size: 14px; -fx-font-weight: bold;");
-
-        if (enemy instanceof Enemy e) {
-            Label levelBadge = new Label("Lv." + e.getFloorLevel());
-            levelBadge.setStyle("-fx-text-fill: #A09070; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
-            Label typeBadge = new Label(e.getRace().displayName);
-            typeBadge.setStyle(
-                "-fx-background-color: #3A281088; -fx-text-fill: #A09070;" +
-                "-fx-font-family: 'Courier New'; -fx-font-size: 10px; -fx-padding: 2 6;"
-            );
-            HBox.setHgrow(nameLabel, Priority.ALWAYS);
-            nameRow.getChildren().addAll(nameLabel, levelBadge, typeBadge);
+            var iv = arclightcity.ui.util.AssetManager.makeIV(sprite, sz, sz);
+            iv.setOpacity(e.isAlive() ? 1.0 : 0.2);
+            sp.getChildren().add(iv);
         } else {
-            nameRow.getChildren().add(nameLabel);
+            Label ph = new Label(e.getName().substring(0,1));
+            ph.setStyle("-fx-text-fill:#CC3300; -fx-font-size:50px; -fx-font-weight:bold;");
+            sp.getChildren().add(ph);
         }
 
-        // Target select mode: highlight style + konten tetap ditampilkan
-        if (targetSelectMode && enemy.isAlive()) {
-            card.setStyle(
-                "-fx-background-color: #FFB83011;" +
-                "-fx-border-color: #FFB830;" +
-                "-fx-border-width: 2;" +
-                "-fx-effect: dropshadow(gaussian, #FFB830, 12, 0.4, 0, 0);" +
-                "-fx-cursor: hand;"
-            );
-            card.setOnMouseClicked(e -> handleTargetSelect(enemy));
-            card.setOnMouseEntered(e -> card.setStyle(
-                "-fx-background-color: #FFB83022;" +
-                "-fx-border-color: #FFB830;" +
-                "-fx-border-width: 2;" +
-                "-fx-effect: dropshadow(gaussian, #FFB830, 18, 0.6, 0, 0);" +
-                "-fx-cursor: hand;"
-            ));
-            card.setOnMouseExited(e -> card.setStyle(
-                "-fx-background-color: #FFB83011;" +
-                "-fx-border-color: #FFB830;" +
-                "-fx-border-width: 2;" +
-                "-fx-effect: dropshadow(gaussian, #FFB830, 12, 0.4, 0, 0);" +
-                "-fx-cursor: hand;"
-            ));
+        Label name = new Label(e.getName());
+        name.setStyle("-fx-text-fill:" + (cur?"#FF7755":"#DDAA88") +
+            "; -fx-font-family:'Courier New'; -fx-font-size:10px; -fx-font-weight:bold;" +
+            "-fx-effect:dropshadow(gaussian,#000,5,1,0,1);");
 
-            // Tambah konten: nama + bars tetap tampil
-            VBox bars = UIFactory.compactVitalBars(
-                    enemy.getCurrentHp(),     enemy.getStats().get(StatType.MAX_HP),
-                    enemy.getCurrentShield(), enemy.getStats().get(StatType.MAX_SHIELD),
-                    enemy.getCurrentMp(),     enemy.getStats().get(StatType.MAX_MP));
-
-            // Label TARGET di atas nama
-            Label targetHint = new Label("▶ PILIH TARGET");
-            targetHint.setStyle(
-                "-fx-text-fill: #FFB830; -fx-font-family: 'Courier New';" +
-                "-fx-font-size: 9px; -fx-font-weight: bold;"
-            );
-            card.getChildren().addAll(targetHint, nameRow, bars);
-            return card;
-        }
-
-        // Defeated overlay
-        if (!enemy.isAlive()) {
-            card.setOpacity(0.3);
-            Label deadLabel = new Label("✕ DEFEATED");
-            deadLabel.setStyle("-fx-text-fill: #6A5840; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
-            card.getChildren().addAll(nameRow, deadLabel);
-            return card;
-        }
-
-        // Vital bars — lebih tebal
-        VBox bars = UIFactory.compactVitalBars(
-                enemy.getCurrentHp(),    enemy.getStats().get(StatType.MAX_HP),
-                enemy.getCurrentShield(),enemy.getStats().get(StatType.MAX_SHIELD),
-                enemy.getCurrentMp(),    enemy.getStats().get(StatType.MAX_MP));
-
-        // Status effects
-        HBox effects = new HBox(4);
-        enemy.getActiveEffects().forEach(ef -> effects.getChildren().add(UIFactory.effectBadge(ef)));
-
-        infoCol.getChildren().addAll(nameRow, bars, effects);
-        mainRow.getChildren().add(infoCol);
-        card.getChildren().add(mainRow);
-        card.setOnMouseClicked(e -> handleTargetSelect(enemy));
+        card.getChildren().addAll(bar, hpLbl, sp, name);
+        if (e.isAlive()) card.setOnMouseClicked(ev -> onTargetClick(e));
         return card;
     }
 
-    private VBox buildAllyCard(Entity ally) {
-        VBox card = new VBox(4);  // 6→4
-        card.setPadding(new Insets(8, 12, 8, 12));  // 10→8
-        card.setPrefWidth(150);
-        card.setMaxWidth(180);
+    // ── ALLY CARD ───────────────────────────────
+    private VBox buildAlly(Entity ally) {
+        boolean cur = cm.getCurrentActor() != null
+            && cm.getCurrentActor().getId().equals(ally.getId());
+        double sz = 70;
 
-        boolean isCurrentActor = cm.getCurrentActor() != null
-                && cm.getCurrentActor().getId().equals(ally.getId());
-        boolean isPlayer = ally instanceof Player;
+        VBox card = new VBox(2); card.setAlignment(Pos.BOTTOM_CENTER);
+        card.setStyle("-fx-background-color:linear-gradient(to top,#1A120899,transparent);" +
+            "-fx-border-color:" + (cur?"#FFB830":"transparent") + "; -fx-border-width:0 0 2 0;" +
+            (cur?"-fx-effect:dropshadow(gaussian,#FFB830AA,12,0.4,0,0);":""));
 
-        String borderColor = isCurrentActor ? UIFactory.CYAN
-                : isPlayer ? "#C8860A55" : "#3A2810";
-        card.setStyle(
-            "-fx-background-color: #0F0A06;" +
-            "-fx-border-color: " + borderColor + ";" +
-            "-fx-border-width: " + (isCurrentActor ? "2" : "1") + " " +
-                                   (isCurrentActor ? "2" : "1") + " " +
-                                   (isCurrentActor ? "2" : "1") + " 3;" +
-            (isCurrentActor ? "-fx-effect: dropshadow(gaussian, #C8860A, 10, 0.4, 0, 0);" : "")
-        );
+        var sprite = ally instanceof Player
+            ? arclightcity.ui.util.AssetManager.spriteAsuna("idle")
+            : ally instanceof Mercenary m
+                ? arclightcity.ui.util.AssetManager.spriteGuildmate(m.getName(),"idle")
+                : null;
 
-        // Name
-        String nameStr = isPlayer
-                ? ally.getName()
-                : (ally instanceof Mercenary m ? m.getMercenaryType().displayName : ally.getName());
-        Label nameLabel = new Label(nameStr.toUpperCase());
-        String nameColor = !ally.isAlive() ? "#6A5840" : isPlayer ? UIFactory.CYAN : UIFactory.TEXT;
-        nameLabel.setStyle("-fx-text-fill: " + nameColor +
-                "; -fx-font-family: 'Courier New'; -fx-font-size: 12px; -fx-font-weight: bold;");
-        nameLabel.setWrapText(true);
-
-        // Role badge
-        if (!isPlayer && ally instanceof Mercenary m) {
-            Label roleBadge = new Label("[" + m.getRole().name() + "]");
-            roleBadge.setStyle("-fx-text-fill: #6A5840; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
-
-            // Vital bars
-            VBox bars = UIFactory.compactVitalBars(
-                    ally.getCurrentHp(),     ally.getStats().get(StatType.MAX_HP),
-                    ally.getCurrentShield(), ally.getStats().get(StatType.MAX_SHIELD),
-                    ally.getCurrentMp(),     ally.getStats().get(StatType.MAX_MP));
-
-            HBox effects = new HBox(3);
-            ally.getActiveEffects().stream().limit(3)
-                    .forEach(ef -> effects.getChildren().add(UIFactory.effectBadge(ef)));
-
-            if (!ally.isAlive()) {
-                card.setOpacity(0.3);
-                card.getChildren().addAll(nameLabel, new Label("✕"));
-                return card;
-            }
-            card.getChildren().addAll(nameLabel, roleBadge, bars, effects);
-        } else {
-            // Vital bars
-            VBox bars = UIFactory.compactVitalBars(
-                    ally.getCurrentHp(),     ally.getStats().get(StatType.MAX_HP),
-                    ally.getCurrentShield(), ally.getStats().get(StatType.MAX_SHIELD),
-                    ally.getCurrentMp(),     ally.getStats().get(StatType.MAX_MP));
-
-            HBox effects = new HBox(3);
-            ally.getActiveEffects().stream().limit(3)
-                    .forEach(ef -> effects.getChildren().add(UIFactory.effectBadge(ef)));
-
-            if (!ally.isAlive()) {
-                card.setOpacity(0.3);
-                card.getChildren().addAll(nameLabel, new Label("✕"));
-                return card;
-            }
-            card.getChildren().addAll(nameLabel, bars, effects);
+        StackPane sp = new StackPane(); sp.setMinSize(sz,sz); sp.setMaxSize(sz,sz);
+        if (sprite != null) {
+            var iv = arclightcity.ui.util.AssetManager.makeIV(sprite, sz, sz);
+            iv.setOpacity(ally.isAlive() ? 1.0 : 0.15);
+            sp.getChildren().add(iv);
         }
 
+        double hp = ally.getHpPercent();
+        Region hbg = new Region(); hbg.setPrefSize(sz,4);
+        hbg.setStyle("-fx-background-color:#1A0808; -fx-background-radius:2;");
+        Region hf = new Region(); hf.setPrefSize(sz*hp,4);
+        hf.setStyle("-fx-background-color:" + (hp>.5?"#CC3300":hp>.25?"#FF6600":"#FF1100") +
+            "; -fx-background-radius:2;");
+        StackPane hb = new StackPane(); hb.setAlignment(Pos.CENTER_LEFT);
+        hb.getChildren().addAll(hbg, hf);
+
+        String dn = ally instanceof Mercenary m2
+            ? m2.getMercenaryType().displayName : ally.getName();
+        int lv = ally instanceof Mercenary m3 ? m3.getLoyaltyLevel()
+               : ally instanceof Player p ? p.getLevel() : 1;
+        Label nm = new Label(dn.toUpperCase() + " LV." + lv);
+        nm.setStyle("-fx-text-fill:" + (cur?"#FFB830":"#AA9060") +
+            "; -fx-font-family:'Courier New'; -fx-font-size:8px; -fx-font-weight:bold;" +
+            "-fx-effect:dropshadow(gaussian,#000,3,1,0,1);");
+
+        if (!ally.isAlive()) {
+            Label d = new Label("\u2020");
+            d.setStyle("-fx-text-fill:#660000; -fx-font-size:20px;");
+            card.getChildren().addAll(sp, d);
+        } else {
+            card.getChildren().addAll(sp, hb, nm);
+        }
         return card;
     }
 
-    // ════════════════════════════════════════════════════
-    // ACTION PANEL
-    // ════════════════════════════════════════════════════
+    // ── REFRESH ──────────────────────────────────
+    private void refresh() {
+        if (cm == null) return;
+        enemyRow.getChildren().clear();
+        for (Entity e : cm.getAllEnemies())
+            enemyRow.getChildren().add(buildEnemy(e));
+        allyRow.getChildren().clear();
+        for (Entity a : cm.getAllAllies())
+            allyRow.getChildren().add(buildAlly(a));
+        Entity actor = cm.getCurrentActor();
+        if (turnLabel != null) turnLabel.setText("Giliran " + cm.getTotalTurns());
+        if (actorLabel != null && actor != null)
+            actorLabel.setText(actor.getName().toUpperCase() + " \u25ba");
+    }
 
-    private void refreshActionPanel() {
+    // ── ACTION PANEL ────────────────────────────
+    public void refreshActions() {
+        if (actionPanel == null) return;
         actionPanel.getChildren().clear();
-
         if (cm == null || !cm.isCombatActive()) return;
-
-        // Target select mode indicator
-        if (targetSelectMode) {
-            HBox hint = new HBox(8);
-            hint.setAlignment(Pos.CENTER);
-            Label hintLabel = new Label("▶ Click an enemy to target  ");
-            hintLabel.setStyle("-fx-text-fill: #FFB830; -fx-font-family: 'Courier New';" +
-                               "-fx-font-size: 12px; -fx-font-weight: bold;");
-            Button cancelTarget = new Button("✕ CANCEL");
-            cancelTarget.setStyle("-fx-background-color: transparent; -fx-border-color: #6A5840;" +
-                                  "-fx-border-width: 1; -fx-text-fill: #6A5840;" +
-                                  "-fx-font-family: 'Courier New'; -fx-font-size: 10px; -fx-cursor: hand;");
-            cancelTarget.setOnAction(e -> {
-                targetSelectMode = false;
-                pendingSkillId   = null;
-                refreshCombatants();
-                refreshActionPanel();
-            });
-            hint.getChildren().addAll(hintLabel, cancelTarget);
-            actionPanel.getChildren().add(hint);
-            return;
+        Entity actor = cm.getCurrentActor();
+        if (actor == null) return;
+        if (actor instanceof Player) {
+            actionPanel.getChildren().add(buildSkills());
+            actionPanel.getChildren().add(buildButtons());
+        } else {
+            Label ai = new Label("\u27f3  " + actor.getName() + " bertindak...");
+            ai.setStyle("-fx-text-fill:#8A7060; -fx-font-family:'Courier New';" +
+                       "-fx-font-size:12px; -fx-padding:10 0;");
+            actionPanel.getChildren().add(ai);
         }
-
-        if (!cm.isWaitingForPlayer()) {
-            HBox processingRow = new HBox(8);
-            processingRow.setAlignment(Pos.CENTER);
-            Label waiting = new Label("⟳ Processing...");
-            waiting.setStyle("-fx-text-fill: #6A5840; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
-            processingRow.getChildren().add(waiting);
-
-            // Speed control tetap tampil saat AI turn
-            processingRow.getChildren().add(buildSpeedControl());
-            actionPanel.getChildren().add(processingRow);
-            return;
-        }
-
-        // Speed control di atas action buttons
-        HBox speedRow = new HBox();
-        speedRow.setAlignment(Pos.CENTER_RIGHT);
-        speedRow.getChildren().add(buildSpeedControl());
-        actionPanel.getChildren().add(speedRow);
-
-        // Row 1: Attack + Skill + Item
-        HBox row1 = new HBox(8);
-        row1.setAlignment(Pos.CENTER);
-
-        // SERANG — enter target select mode
-        Button attackBtn = buildActionBtn("⚔  SERANG", UIFactory.RED, () -> {
-            addLog("▶ Klik musuh untuk menyerang", UIFactory.YELLOW);
-            targetSelectMode = true;
-            pendingSkillId   = null;
-            refreshCombatants();
-            refreshActionPanel();
-        });
-
-        Button skillBtn = buildActionBtn("★  JURUS", UIFactory.CYAN, () -> showSkillMenu());
-        Button itemBtn  = buildActionBtn("⊞  ITEM",  UIFactory.GREEN, () -> showItemMenu());
-
-        row1.getChildren().addAll(attackBtn, skillBtn, itemBtn);
-
-        // Row 2: Bertahan + Kabur
-        HBox row2 = new HBox(8);
-        row2.setAlignment(Pos.CENTER);
-
-        Button defendBtn = buildActionBtn("🛡  BERTAHAN", UIFactory.PURPLE, () -> {
-            engine.submitCombatAction(CombatAction.defend());
-        });
-
-        Button fleeBtn = buildActionBtn("↩  KABUR", "#6A5840", () -> {
-            boolean fled = engine.attemptFlee();
-            if (!fled) addLog("Kabur gagal! Terus bertarung.", UIFactory.RED);
-        });
-
-        HBox.setHgrow(defendBtn, Priority.ALWAYS);
-        HBox.setHgrow(fleeBtn, Priority.ALWAYS);
-        row2.getChildren().addAll(defendBtn, fleeBtn);
-
-        // Equipped skills quick bar
-        HBox skillBar = buildSkillQuickBar();
-
-        actionPanel.getChildren().addAll(skillBar, row1, row2);
     }
 
-    private HBox buildSkillQuickBar() {
-        HBox bar = new HBox(8);
-        bar.setAlignment(Pos.CENTER_LEFT);
-        bar.setPadding(new Insets(0, 0, 6, 0));
-
-        Player player = engine.getPlayer();
-        List<String> equipped = player.getEquippedSkillIds();
-
+    private HBox buildSkills() {
+        HBox bar = new HBox(8); bar.setAlignment(Pos.CENTER); bar.setPadding(new Insets(2,8,2,8));
+        Player pl = engine.getPlayer(); if (pl == null) return bar;
+        List<String> eq = pl.getEquippedSkillIds();
         for (int i = 0; i < 4; i++) {
-            String skillId = i < equipped.size() ? equipped.get(i) : null;
-            int cd = skillId != null ? player.getSkillCooldown(skillId) : 0;
-            boolean ready = skillId != null && cd == 0;
+            String sid = i < eq.size() ? eq.get(i) : null;
+            int cd = sid != null ? pl.getSkillCooldown(sid) : 0;
+            double mc = sid != null ? arclightcity.combat.SkillExecutor.getMpCost(sid) : 0;
+            boolean rdy = sid != null && cd == 0 && pl.getCurrentMp() >= mc;
 
-            VBox slot = new VBox(3);
-            slot.setAlignment(Pos.CENTER);
-            slot.setPrefSize(110, 52);  // lebih besar dari sebelumnya (72×44)
+            VBox slot = new VBox(2); slot.setAlignment(Pos.CENTER); slot.setPrefSize(106,56);
+            slot.setStyle(rdy
+                ? "-fx-background-color:#C8860A11; -fx-border-color:#C8860A66; -fx-border-width:1 1 2 1; -fx-cursor:hand;"
+                : sid!=null ? "-fx-background-color:#3A281011; -fx-border-color:#3A2810; -fx-border-width:1;"
+                            : "-fx-background-color:#150E08; -fx-border-color:#2A1808; -fx-border-width:1;");
 
-            String slotStyle;
-            if (ready) {
-                slotStyle = "-fx-background-color: #C8860A11; -fx-border-color: #C8860A55;" +
-                            " -fx-border-width: 1 1 1 2; -fx-cursor: hand;";
-            } else if (skillId != null) {
-                slotStyle = "-fx-background-color: #3A281011; -fx-border-color: #3A2810;" +
-                            " -fx-border-width: 1;";
-            } else {
-                slotStyle = "-fx-background-color: #150E08; -fx-border-color: #3A281033;" +
-                            " -fx-border-width: 1;";
+            if (sid != null) {
+                var icon = arclightcity.ui.util.AssetManager.iconSkill(sid);
+                if (icon != null) {
+                    var iv = arclightcity.ui.util.AssetManager.makeIV(icon,24,24);
+                    iv.setOpacity(rdy?1.0:0.35); slot.getChildren().add(iv);
+                }
             }
-            slot.setStyle(slotStyle);
-
-            // Skill name — lebih besar
-            String displayName = skillId != null ? getSkillDisplayName(skillId) : "—";
-            Label nameLabel = new Label(displayName);
-            nameLabel.setStyle(
-                "-fx-text-fill: " + (ready ? UIFactory.CYAN : skillId != null ? "#6A5840" : "#3A2810") + ";" +
-                "-fx-font-family: 'Courier New'; -fx-font-size: 11px; -fx-font-weight: bold;" +
-                "-fx-alignment: center; -fx-text-alignment: center;"
-            );
-            nameLabel.setWrapText(true);
-            nameLabel.setMaxWidth(100);
-
-            // CD / Status
-            Label cdLabel = new Label(cd > 0 ? "CD: " + cd + "t" : skillId != null ? "READY" : "EMPTY");
-            cdLabel.setStyle(
-                "-fx-text-fill: " + (cd > 0 ? UIFactory.ORANGE : skillId != null ? "#2D7A4588" : "#3A2810") + ";" +
-                "-fx-font-family: 'Courier New'; -fx-font-size: 10px;"
-            );
-
-            slot.getChildren().addAll(nameLabel, cdLabel);
-
-            if (ready) {
-                final String sid = skillId;
-                slot.setOnMouseClicked(e -> submitSkillAction(sid));
-                // Hover effect
-                slot.setOnMouseEntered(e -> slot.setStyle(
-                    "-fx-background-color: #C8860A22; -fx-border-color: #C8860A;" +
-                    " -fx-border-width: 1 1 1 2; -fx-cursor: hand;"));
-                slot.setOnMouseExited(e -> slot.setStyle(slotStyle));
-            }
-
+            Label nm = new Label(sid!=null ? skillName(sid) : "EMPTY");
+            nm.setStyle("-fx-text-fill:" + (rdy?UIFactory.CYAN:sid!=null?"#6A5840":"#3A2810") +
+                "; -fx-font-family:'Courier New'; -fx-font-size:9px; -fx-font-weight:bold;");
+            Label cdl = new Label(cd>0?"CD:"+cd:sid!=null?"READY":"");
+            cdl.setStyle("-fx-text-fill:" + (cd>0?UIFactory.ORANGE:"#2D7A4566") +
+                "; -fx-font-family:'Courier New'; -fx-font-size:9px;");
+            slot.getChildren().addAll(nm, cdl);
+            if (rdy) { final String fs=sid; slot.setOnMouseClicked(e->useSkill(fs)); }
             bar.getChildren().add(slot);
         }
-
+        // MP bar
+        double mpPct = Math.min(1, pl.getCurrentMp() / Math.max(1, pl.getStats().get(StatType.MAX_MP)));
+        Region mb = new Region(); mb.setPrefSize(80,4);
+        mb.setStyle("-fx-background-color:#0A0816; -fx-background-radius:2;");
+        Region mf = new Region(); mf.setPrefSize(80*mpPct,4);
+        mf.setStyle("-fx-background-color:#4455CC; -fx-background-radius:2;");
+        StackPane mp = new StackPane(); mp.setAlignment(Pos.CENTER_LEFT); mp.getChildren().addAll(mb,mf);
+        Label ml = new Label("MP "+(int)pl.getCurrentMp()+"/"+(int)pl.getStats().get(StatType.MAX_MP));
+        ml.setStyle("-fx-text-fill:#5566AA; -fx-font-family:'Courier New'; -fx-font-size:9px;");
+        VBox mb2 = new VBox(2,mp,ml); mb2.setAlignment(Pos.CENTER);
+        bar.getChildren().add(mb2);
         return bar;
     }
 
-    private Button buildActionBtn(String text, String color, Runnable action) {
-        Button btn = new Button(text);
-        btn.setPrefWidth(130);
-        btn.setStyle(
-            "-fx-background-color: " + color + "18;" +
-            "-fx-border-color: " + color + "77;" +
-            "-fx-border-width: 1;" +
-            "-fx-text-fill: " + color + ";" +
-            "-fx-font-family: 'Courier New', monospace;" +
-            "-fx-font-size: 13px;" +
-            "-fx-font-weight: bold;" +
-            "-fx-padding: 10 8;" +
-            "-fx-cursor: hand;"
-        );
-        btn.setOnMouseEntered(e -> btn.setStyle(
-            "-fx-background-color: " + color + "30;" +
-            "-fx-border-color: " + color + ";" +
-            "-fx-border-width: 1;" +
-            "-fx-text-fill: " + color + ";" +
-            "-fx-font-family: 'Courier New', monospace;" +
-            "-fx-font-size: 13px;" +
-            "-fx-font-weight: bold;" +
-            "-fx-padding: 10 8;" +
-            "-fx-cursor: hand;" +
-            "-fx-effect: dropshadow(gaussian, " + color + ", 6, 0.3, 0, 0);"
-        ));
-        btn.setOnMouseExited(e -> btn.setStyle(
-            "-fx-background-color: " + color + "18;" +
-            "-fx-border-color: " + color + "77;" +
-            "-fx-border-width: 1;" +
-            "-fx-text-fill: " + color + ";" +
-            "-fx-font-family: 'Courier New', monospace;" +
-            "-fx-font-size: 13px;" +
-            "-fx-font-weight: bold;" +
-            "-fx-padding: 10 8;" +
-            "-fx-cursor: hand;"
-        ));
-        btn.setOnAction(e -> action.run());
-        return btn;
+    private HBox buildButtons() {
+        HBox r = new HBox(8); r.setAlignment(Pos.CENTER); r.setPadding(new Insets(4,8,2,8));
+        Button serang = btn("\u2717  SERANG",   "#CC3300","#CC330022");
+        Button jurus  = btn("\u2605  JURUS",    "#FFB830","#C8860A22");
+        Button item   = btn("\u2261  ITEM",     "#2D7A45","#2D7A4522");
+        Button tahan  = btn("\u21ba  BERTAHAN", "#7755BB","#7755BB22");
+        Button kabur2 = btn("\u2190  KABUR",    "#5A3A10","transparent");
+        serang.setOnAction(e -> attack());
+        jurus.setOnAction(e  -> showSkillMenu());
+        item.setOnAction(e   -> showItemMenu());
+        tahan.setOnAction(e  -> defend());
+        kabur2.setOnAction(e -> doFlee());
+        r.getChildren().addAll(serang,jurus,item,tahan,kabur2);
+        return r;
     }
 
-    // ════════════════════════════════════════════════════
-    // SKILL / ITEM MENUS
-    // ════════════════════════════════════════════════════
+    private Button btn(String txt, String tc, String bg) {
+        Button b = new Button(txt);
+        b.setStyle("-fx-background-color:"+bg+"; -fx-border-color:"+tc+"55;" +
+            "-fx-border-width:1 1 3 1; -fx-text-fill:"+tc+";" +
+            "-fx-font-family:'Courier New'; -fx-font-size:12px; -fx-font-weight:bold;" +
+            "-fx-padding:8 14; -fx-cursor:hand; -fx-min-width:100;" +
+            "-fx-effect:dropshadow(gaussian,"+tc+",5,0.2,0,0);");
+        b.setOnMouseEntered(e->b.setOpacity(0.8)); b.setOnMouseExited(e->b.setOpacity(1.0));
+        return b;
+    }
 
-    // ════════════════════════════════════════════════════
-    // v0.3: SKILL SELECTION POPUP
-    // ════════════════════════════════════════════════════
+    // ── COMBAT LOOP ─────────────────────────────
+    public void startCombatLoop() { startLoop(); }
 
-    private void showSkillMenu() {
-        Player player = engine.getPlayer();
-        List<String> equipped = player.getEquippedSkillIds();
-        if (equipped.isEmpty()) {
-            addLog("No skills equipped!", UIFactory.ORANGE);
-            return;
-        }
-
-        // Hapus popup lama jika ada
-        actionPanel.getChildren().removeIf(n -> "skill-popup".equals(n.getId()));
-
-        VBox popup = new VBox(6);
-        popup.setId("skill-popup");
-        popup.setPadding(new Insets(12));
-        popup.setStyle(
-            "-fx-background-color: #150E08EE;" +
-            "-fx-border-color: #C8860A55;" +
-            "-fx-border-width: 1;" +
-            "-fx-effect: dropshadow(gaussian, #C8860A, 12, 0.2, 0, 0);"
-        );
-
-        Label title = new Label("◈ SELECT SKILL");
-        title.setStyle("-fx-text-fill: #C8860A; -fx-font-family: 'Courier New';" +
-                       "-fx-font-size: 12px; -fx-font-weight: bold;");
-        popup.getChildren().add(title);
-
-        for (String skillId : equipped) {
-            int cd = player.getSkillCooldown(skillId);
-            boolean ready = cd == 0;
-            SkillInfo info = getSkillInfo(skillId);
-
-            Button btn = new Button(
-                (ready ? "▶ " : "✕ ") + info.name() +
-                "   [MP:" + info.mpCost() + "]" +
-                (cd > 0 ? "  [CD:" + cd + "t]" : "  READY") +
-                (info.isAoe() ? "  [AoE]" : "")
-            );
-            btn.setMaxWidth(Double.MAX_VALUE);
-            btn.setDisable(!ready);
-
-            String c = ready ? "#C8860A" : "#6A5840";
-            btn.setStyle(
-                "-fx-background-color: " + (ready ? "#C8860A11" : "transparent") + ";" +
-                "-fx-border-color: " + c + "55;" +
-                "-fx-border-width: 1 1 1 3;" +
-                "-fx-text-fill: " + c + ";" +
-                "-fx-font-family: 'Courier New'; -fx-font-size: 11px;" +
-                "-fx-padding: 8 10; -fx-cursor: " + (ready ? "hand" : "default") + ";"
-            );
-
-            // Tooltip deskripsi
-            Tooltip tip = new Tooltip(info.description());
-            tip.setStyle("-fx-background-color: #150E08; -fx-text-fill: #A09070;" +
-                         "-fx-font-family: 'Courier New'; -fx-font-size: 10px;");
-            btn.setTooltip(tip);
-
-            if (ready) {
-                final String sid = skillId;
-                btn.setOnAction(e -> {
-                    actionPanel.getChildren().removeIf(n -> "skill-popup".equals(n.getId()));
-                    submitSkillAction(sid);
-                });
+    private void startLoop() {
+        if (combatLoop != null) combatLoop.stop();
+        combatLoop = new Timeline(new KeyFrame(Duration.millis(speedMs), e -> {
+            if (cm != null && cm.isCombatActive() && !cm.isWaitingForPlayer()) {
+                cm.processTurn();
+                Platform.runLater(() -> { refresh(); refreshActions(); });
             }
-            popup.getChildren().add(btn);
-        }
-
-        Button cancel = new Button("✕  CANCEL");
-        cancel.setStyle("-fx-background-color: transparent; -fx-border-color: #6A584066;" +
-                        "-fx-border-width: 1; -fx-text-fill: #6A5840;" +
-                        "-fx-font-family: 'Courier New'; -fx-font-size: 10px; -fx-cursor: hand;");
-        cancel.setOnAction(e -> actionPanel.getChildren()
-                .removeIf(n -> "skill-popup".equals(n.getId())));
-        popup.getChildren().add(cancel);
-
-        actionPanel.getChildren().add(0, popup);
+        }));
+        combatLoop.setCycleCount(Animation.INDEFINITE);
+        combatLoop.play();
     }
 
-    private void submitSkillAction(String skillId) {
-        SkillInfo info = getSkillInfo(skillId);
-        if (info.isAoe()) {
-            List<String> allEnemyIds = cm.getEnemies().stream()
-                    .filter(Entity::isAlive).map(Entity::getId).toList();
-            engine.submitCombatAction(CombatAction.useSkill(skillId, allEnemyIds));
-        } else {
-            // Enter target select mode
-            addLog("▶ Click an enemy to target", UIFactory.YELLOW);
-            pendingSkillId   = skillId;
-            targetSelectMode = true;
-            refreshCombatants(); // re-render enemy cards dengan highlight
-        }
+    // ── PLAYER ACTIONS ──────────────────────────
+    private void attack() {
+        if (!ready()) return;
+        Entity t = cm.getLivingEnemies().stream().findFirst().orElse(null);
+        if (t == null) return;
+        cm.submitPlayerAction(CombatAction.basicAttack(List.of(t.getId())));
+        Platform.runLater(() -> { refresh(); refreshActions(); });
     }
 
-    // ════════════════════════════════════════════════════
-    // v0.3: ITEM MENU
-    // ════════════════════════════════════════════════════
+    private void useSkill(String sid) {
+        if (!ready()) return;
+        Entity t = cm.getLivingEnemies().stream().findFirst().orElse(null);
+        if (t == null) return;
+        cm.submitPlayerAction(CombatAction.useSkill(sid, List.of(t.getId())));
+        Platform.runLater(() -> { refresh(); refreshActions(); });
+    }
+
+    private void defend() {
+        if (!ready()) return;
+        cm.submitPlayerAction(CombatAction.defend());
+        Platform.runLater(() -> { refresh(); refreshActions(); });
+    }
+
+    private void doFlee() { if (cm!=null) cm.attemptFlee(); }
+
+    private boolean ready() { return cm != null && cm.isWaitingForPlayer(); }
+
+    private void onTargetClick(Entity e) {
+        // Klik enemy = basic attack ke target itu
+        if (!ready()) return;
+        cm.submitPlayerAction(CombatAction.basicAttack(List.of(e.getId())));
+        Platform.runLater(() -> { refresh(); refreshActions(); });
+    }
+
+    // ── MENUS ───────────────────────────────────
+    private void showSkillMenu() {
+        actionPanel.getChildren().clear();
+        Label title = new Label("\u2605 PILIH JURUS");
+        title.setStyle("-fx-text-fill:#C8860A; -fx-font-family:'Courier New';" +
+                      "-fx-font-size:12px; -fx-font-weight:bold; -fx-padding:4 0;");
+        VBox menu = new VBox(2); menu.setPadding(new Insets(2));
+        Player pl = engine.getPlayer();
+        if (pl != null) for (String sid : pl.getEquippedSkillIds()) {
+            int cd=pl.getSkillCooldown(sid);
+            double mc=arclightcity.combat.SkillExecutor.getMpCost(sid);
+            boolean ok=cd==0 && pl.getCurrentMp()>=mc;
+            HBox row=new HBox(10); row.setAlignment(Pos.CENTER_LEFT); row.setPadding(new Insets(5,12,5,12));
+            row.setStyle(ok?"-fx-background-color:#1A1208; -fx-border-color:#3A2810; -fx-border-width:0 0 1 0; -fx-cursor:hand;"
+                           :"-fx-background-color:#0F0A06; -fx-border-color:#2A1808; -fx-border-width:0 0 1 0; -fx-opacity:0.5;");
+            var icon=arclightcity.ui.util.AssetManager.iconSkill(sid);
+            if(icon!=null) row.getChildren().add(arclightcity.ui.util.AssetManager.makeIV(icon,20,20));
+            Label nm=new Label("\u25ba "+skillName(sid));
+            nm.setStyle("-fx-text-fill:"+(ok?"#EDE0C8":"#5A3A10")+"; -fx-font-family:'Courier New'; -fx-font-size:11px;");
+            HBox.setHgrow(nm,Priority.ALWAYS);
+            Label info=new Label("MP:"+(int)mc+(cd>0?"  CD:"+cd:""));
+            info.setStyle("-fx-text-fill:"+(ok?"#4477AA":"#5A3A10")+"; -fx-font-family:'Courier New'; -fx-font-size:10px;");
+            row.getChildren().addAll(nm,info);
+            if(ok){final String fs=sid; row.setOnMouseClicked(e->{useSkill(fs); refreshActions();});}
+            menu.getChildren().add(row);
+        }
+        Button cancel=UIFactory.btnGold("\u2717 CANCEL"); cancel.setOnAction(e->refreshActions());
+        actionPanel.getChildren().addAll(title,menu,cancel);
+    }
 
     private void showItemMenu() {
-        var consumables = engine.getInventory().getConsumables();
-        if (consumables.isEmpty()) {
-            addLog("No items available!", UIFactory.ORANGE);
-            return;
-        }
-
-        actionPanel.getChildren().removeIf(n -> "item-popup".equals(n.getId()));
-
-        VBox popup = new VBox(6);
-        popup.setId("item-popup");
-        popup.setPadding(new Insets(12));
-        popup.setStyle("-fx-background-color: #150E08EE; -fx-border-color: #2D7A4555;" +
-                       "-fx-border-width: 1;");
-
-        Label title = new Label("⊞ USE ITEM");
-        title.setStyle("-fx-text-fill: #2D7A45; -fx-font-family: 'Courier New';" +
-                       "-fx-font-size: 12px; -fx-font-weight: bold;");
-        popup.getChildren().add(title);
-
-        for (var cons : consumables) {
-            Button btn = new Button("▶  " + cons.getName() +
-                    " ×" + cons.getStackCount());
-            btn.setMaxWidth(Double.MAX_VALUE);
-            btn.setStyle("-fx-background-color: #2D7A4511; -fx-border-color: #2D7A4555;" +
-                         "-fx-border-width: 1 1 1 3; -fx-text-fill: #2D7A45;" +
-                         "-fx-font-family: 'Courier New'; -fx-font-size: 11px;" +
-                         "-fx-padding: 8 10; -fx-cursor: hand;");
-            btn.setOnAction(e -> {
-                boolean used = engine.getInventory().useConsumable(
-                        cons.getId(), engine.getPlayer());
-                if (used) addLog("Used: " + cons.getName(), UIFactory.GREEN);
-                actionPanel.getChildren().removeIf(n -> "item-popup".equals(n.getId()));
-                refreshCombatants();
+        actionPanel.getChildren().clear();
+        Label title=new Label("\u2261 GUNAKAN ITEM");
+        title.setStyle("-fx-text-fill:#2D7A45; -fx-font-family:'Courier New';" +
+                      "-fx-font-size:12px; -fx-font-weight:bold; -fx-padding:4 0;");
+        VBox menu=new VBox(2); menu.setPadding(new Insets(2));
+        for (var it : engine.getInventory().getAllBagItems()) {
+            if (!(it instanceof arclightcity.item.Consumable c)) continue;
+            HBox row=new HBox(10); row.setAlignment(Pos.CENTER_LEFT); row.setPadding(new Insets(5,12,5,12));
+            row.setStyle("-fx-background-color:#1A1208; -fx-border-color:#3A2810; -fx-border-width:0 0 1 0; -fx-cursor:hand;");
+            Label nm=new Label("\u25ba "+c.getName()+" \u00d7"+c.getStackCount());
+            nm.setStyle("-fx-text-fill:#EDE0C8; -fx-font-family:'Courier New'; -fx-font-size:11px;");
+            HBox.setHgrow(nm,Priority.ALWAYS);
+            Label eff=new Label("+"+(int)c.getEffectValue()+" HP");
+            eff.setStyle("-fx-text-fill:#44AA66; -fx-font-family:'Courier New'; -fx-font-size:10px;");
+            row.getChildren().addAll(nm,eff);
+            row.setOnMouseClicked(e->{
+                if(!ready()) return;
+                cm.submitPlayerAction(CombatAction.useItem(c.getId(),List.of(engine.getPlayer().getId())));
+                refreshActions();
             });
-            popup.getChildren().add(btn);
+            menu.getChildren().add(row);
         }
-
-        Button cancel = new Button("✕  CANCEL");
-        cancel.setStyle("-fx-background-color: transparent; -fx-border-color: #6A584066;" +
-                        "-fx-border-width: 1; -fx-text-fill: #6A5840;" +
-                        "-fx-font-family: 'Courier New'; -fx-font-size: 10px; -fx-cursor: hand;");
-        cancel.setOnAction(e -> actionPanel.getChildren()
-                .removeIf(n -> "item-popup".equals(n.getId())));
-        popup.getChildren().add(cancel);
-
-        actionPanel.getChildren().add(0, popup);
+        if(menu.getChildren().isEmpty()) {
+            Label none=new Label("Tidak ada item"); none.setStyle("-fx-text-fill:#5A3A10; -fx-font-family:'Courier New'; -fx-padding:6;");
+            menu.getChildren().add(none);
+        }
+        Button cancel=UIFactory.btnGold("\u2717 CANCEL"); cancel.setOnAction(e->refreshActions());
+        actionPanel.getChildren().addAll(title,menu,cancel);
     }
 
-    // ════════════════════════════════════════════════════
-    // v0.3: SKILL INFO DATABASE
-    // ════════════════════════════════════════════════════
-
-    private record SkillInfo(String name, String description, int mpCost, boolean isAoe) {}
-
-    private SkillInfo getSkillInfo(String skillId) {
-        return switch (skillId) {
-            case "POWER_STRIKE"       -> new SkillInfo("Pukulan Harimau",
-                    "Pukulan keras: 1.8× ATK fisik.", 15, false);
-            case "TEBASAN"            -> new SkillInfo("Tebasan Pamungkas",
-                    "Instant kill jika HP < 25%. Else 1.5× damage.", 25, false);
-            case "SHOCKWAVE"          -> new SkillInfo("Gempa Bumi",
-                    "AoE fisik ke semua musuh sekaligus.", 24, true);
-            case "SOVEREIGN_STRIKE"   -> new SkillInfo("Tebasan Agung",
-                    "Ultimate: 3× ATK, abaikan semua armor.", 35, false);
-            case "PHANTOM_SHOT"       -> new SkillInfo("Panah Bayangan",
-                    "Crit chance tinggi, masuk sembunyi.", 20, false);
-            case "SHADOW_STEP"        -> new SkillInfo("Langkah Gaib",
-                    "2× crit damage, abaikan armor.", 22, false);
-            case "NULL_FIELD"         -> new SkillInfo("Bidang Bayangan",
-                    "Hapus buff musuh + evasion +30% 2 giliran.", 28, false);
-            case "NULL_PROTOCOL"      -> new SkillInfo("Protokol Nol",
-                    "AoE Void: semua musuh -50% DEF 3 giliran.", 35, true);
-            case "IRON_SHIELD"        -> new SkillInfo("Tameng Baja",
-                    "Buff BLOK 2 giliran, kurangi damage drastis.", 18, false);
-            case "FIELD_BARRIER"      -> new SkillInfo("Rajah Pelindung",
-                    "Shield barrier ke semua sekutu.", 25, true);
-            case "ENERGY_DRAIN"       -> new SkillInfo("Serap Tenaga",
-                    "Sedot MP musuh, pulihkan HP + MP sendiri.", 10, false);
-            case "DATA_FRAGMENTATION" -> new SkillInfo("Pecah Jiwa",
-                    "AoE besar + stun 1 giliran.", 30, true);
-            case "DEEP_HACK",
-                 "VIRUS_UPLOAD"       -> new SkillInfo("Santet Digital",
-                    "Kutukan cyber: ATK debuff -30% 3 giliran.", 20, false);
-            case "CORRUPT"            -> new SkillInfo("Korupsi",
-                    "Energy + debuff CORRODE ke target.", 22, false);
-            case "VOID_RUPTURE"       -> new SkillInfo("Robek Kekosongan",
-                    "AoE Energy damage ke semua musuh.", 26, true);
-            case "BIO_IRRADIATE"      -> new SkillInfo("Racun Semesta",
-                    "AoE Energy DOT + debuff ke semua.", 28, true);
-            case "EMP_BURST"          -> new SkillInfo("Ledakan Petir",
-                    "AoE Cyber + stun 1 giliran.", 30, true);
-            default -> new SkillInfo(skillId.replace("_", " "),
-                    "Jurus khusus.", 15, false);
-        };
+    // ── EVENTS ──────────────────────────────────
+    private void onEvent(CombatEvent ev) {
+        if (ev==null) return;
+        spawnDamage(ev);
+        refresh(); refreshActions();
     }
 
-    // ════════════════════════════════════════════════════
-    // EVENT HANDLERS
-    // ════════════════════════════════════════════════════
+    private void onEnd(CombatResult res) {
+        if (combatLoop!=null) combatLoop.stop();
+        if (res.isVictory())     router.showVictory(res);
+        else if (res.isDefeat()) router.showGameOver();
+        else                     router.showDungeonMap();
+    }
 
-    private void handleCombatEvent(CombatEvent event) {
-        String color = switch (event.getType()) {
-            case CRITICAL_HIT      -> UIFactory.YELLOW;
-            case DAMAGE_DEALT      -> "#FF5533";
-            case HEAL_RECEIVED     -> UIFactory.GREEN;
-            case EFFECT_APPLIED    -> UIFactory.ORANGE;
-            case EFFECT_TICK       -> UIFactory.ORANGE;
-            case ENTITY_DIED       -> UIFactory.RED;
-            case BOSS_PHASE_CHANGE -> UIFactory.PURPLE;
-            case BOSS_ENRAGE       -> UIFactory.RED;
-            case TURN_START        -> "#3A2810";
-            default                -> "#6A5840";
-        };
-        addLog(event.getMessage(), color);
-        refreshCombatants();
-        refreshTurnOrderBar();
-        handleFloatingDamage(event); // spawn floating numbers
-
-        // Chat triggers
-        switch (event.getType()) {
-            case ENTITY_DIED -> {
-                if (event.getMessage() != null &&
-                    !event.getMessage().contains(engine.getPlayer().getName())) {
-                    router.emitChat(MercenaryDialogue.Trigger.COMBAT_ENEMY_DIES);
-                }
+    // ── FLOATING DAMAGE ─────────────────────────
+    private void spawnDamage(CombatEvent ev) {
+        if (floatCanvas==null) return;
+        String msg=ev.getMessage(); if(msg==null) return;
+        double x=120+Math.random()*480, y=floatCanvas.getHeight()*0.55+Math.random()*30;
+        String text=null, color=null;
+        switch(ev.getType()) {
+            case CRITICAL_HIT  -> {text="\u26a1 "+(int)num(msg)+"!"; color="#FFD700";}
+            case DAMAGE_DEALT  -> {
+                double d=num(msg); if(d<=0) return;
+                text="-"+(int)d;
+                color=msg.contains("Fisik")?"#FF6644":msg.contains("Cyber")?"#44AAFF":"#FF8844";
             }
-            case DAMAGE_DEALT -> {
-                double hpPct = engine.getPlayer().getCurrentHp() /
-                               engine.getPlayer().getStats().get(StatType.MAX_HP);
-                if (hpPct < 0.30 && Math.random() < 0.4) {
-                    router.emitChat(MercenaryDialogue.Trigger.COMBAT_PLAYER_LOW_HP);
-                }
-            }
-            default -> { }
+            case DAMAGE_EVADED  -> {text="HINDAR"; color="#88CCFF";}
+            case DAMAGE_BLOCKED -> {text="\ud83d\udee1 "+(int)num(msg); color="#6699CC";}
+            case HEAL_RECEIVED  -> {text="+"+(int)num(msg)+" HP"; color="#44FF88"; y*=0.7;}
+            case EFFECT_TICK    -> {text="\u2620 "+(int)num(msg); color="#AA4400";}
+            case SKILL_USED     -> {text="\u2726 "+last(msg); color="#FFB830"; y*=0.5;}
+            case ENTITY_DIED    -> {text="\ud83d\udc80"; color="#CC3300";}
+            default -> {return;}
         }
-
-        // AI turn dengan combatSpeedMs delay
-        int delay = Math.max(50, combatSpeedMs); // minimum 50ms
-        if (cm.isCombatActive() && !cm.isWaitingForPlayer() && !aiTurnPending) {
-            aiTurnPending = true;
-            Timeline t = new Timeline(new KeyFrame(Duration.millis(delay), e -> {
-                aiTurnPending = false;
-                if (cm.isCombatActive() && !cm.isWaitingForPlayer()) {
-                    cm.processTurn();
-                    refreshActionPanel();
-                } else {
-                    refreshActionPanel();
-                }
-            }));
-            t.play();
-        } else if (!aiTurnPending) {
-            refreshActionPanel();
-        }
-    }
-
-    private void handleCombatEnd(CombatResult result) {
-        addLog(result.isVictory() ? "🏆 VICTORY!" : "💀 DEFEATED", UIFactory.YELLOW);
-        combatLoop = null;
-
-        // Chat trigger untuk victory/defeat
-        router.emitChat(result.isVictory()
-                ? MercenaryDialogue.Trigger.COMBAT_VICTORY
-                : MercenaryDialogue.Trigger.COMBAT_DEFEAT);
-
-        Timeline delay = new Timeline(new KeyFrame(Duration.millis(1500), e -> {
-            if (result.isVictory()) router.showVictory(result);
-            else if (result.isDefeat()) router.showGameOver();
-            else router.showDungeonMap();
-        }));
-        delay.play();
-    }
-
-    private void handleTargetSelect(Entity enemy) {
-        if (!cm.isWaitingForPlayer() || !enemy.isAlive()) return;
-
-        if (targetSelectMode && pendingSkillId != null) {
-            // Target select for skill
-            targetSelectMode = false;
-            String sid = pendingSkillId;
-            pendingSkillId = null;
-            engine.submitCombatAction(CombatAction.useSkill(sid, List.of(enemy.getId())));
-        } else {
-            // Normal attack
-            engine.submitCombatAction(CombatAction.basicAttack(List.of(enemy.getId())));
-        }
-    }
-
-    // ════════════════════════════════════════════════════
-    // COMBAT LOOP
-    // ════════════════════════════════════════════════════
-
-    public void startCombatLoop() {
-        if (cm == null) return;
-        if (logContainer != null) logContainer.getChildren().clear();
-        addLog("⚔ Pertempuran dimulai!", UIFactory.RED);
-        aiTurnPending    = false;
-        targetSelectMode = false;
-        combatSpeedMs    = 1200;
-
-        // Cek apakah ada boss — tampilkan dialog intro
-        boolean hasBoss = cm.getEnemies().stream()
-            .anyMatch(e -> e instanceof arclightcity.entity.enemy.Boss);
-        if (hasBoss) {
-            router.emitChat(MercenaryDialogue.Trigger.COMBAT_BOSS_START);
-            // Tampilkan persona dialog intro boss
-            cm.getEnemies().stream()
-                .filter(e -> e instanceof arclightcity.entity.enemy.Boss)
-                .findFirst()
-                .ifPresent(e -> {
-                    arclightcity.entity.enemy.Boss boss =
-                        (arclightcity.entity.enemy.Boss) e;
-                    String bossColor = switch (boss.getRace()) {
-                        case DEMON  -> "#CC3300";
-                        case DIVINE -> "#FFB830";
-                        case GIANT  -> "#7755BB";
-                        default     -> "#C8860A";
-                    };
-                    java.util.List<PersonaDialogBox.DialogLine> lines =
-                        boss instanceof arclightcity.entity.enemy.Theresa
-                            ? PersonaDialogBox.theresaPhaseLines(1)
-                            : PersonaDialogBox.bossIntroLines(boss.getName(), bossColor);
-                    javafx.application.Platform.runLater(() -> {
-                        if (combatRoot != null)
-                            PersonaDialogBox.show(
-                                (javafx.scene.layout.Pane) combatRoot, lines, null);
-                    });
-                });
-        }
-
-        Timeline firstTurn = new Timeline(new KeyFrame(Duration.millis(hasBoss ? 2500 : 300), e -> {
-            boolean ongoing = cm.processTurn();
-            refreshCombatants();
-            refreshActionPanel();
-            refreshTurnOrderBar();
-            if (!ongoing) addLog("Pertempuran berakhir seketika.", "#6A5840");
-        }));
-        firstTurn.play();
-    }
-
-    // ════════════════════════════════════════════════════
-    // HELPERS
-    // ════════════════════════════════════════════════════
-
-    // ════════════════════════════════════════════════════
-    // v0.3: TURN ORDER BAR + SPEED CONTROL
-    // ════════════════════════════════════════════════════
-
-    private void refreshTurnOrderBar() {
-        if (turnOrderBar == null || cm == null) return;
-        turnOrderBar.getChildren().clear();
-
-        Label lbl = new Label("NEXT ›");
-        lbl.setStyle("-fx-text-fill: #3A2810; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
-        turnOrderBar.getChildren().add(lbl);
-
-        List<Entity> upcoming = cm.getTurnQueue().getUpcomingTurns(6);
-        Entity current = cm.getCurrentActor();
-
-        for (int i = 0; i < upcoming.size(); i++) {
-            Entity e   = upcoming.get(i);
-            boolean isCur = current != null && e.getId().equals(current.getId()) && i == 0;
-            boolean isP   = e instanceof Player;
-            boolean isM   = e instanceof Mercenary;
-            String  clr   = isP ? UIFactory.CYAN : isM ? UIFactory.GREEN : UIFactory.RED;
-
-            VBox slot = new VBox(2);
-            slot.setAlignment(Pos.CENTER);
-            slot.setPadding(new Insets(2, 8, 2, 8));
-            slot.setStyle(isCur
-                ? "-fx-background-color: " + clr + "18; -fx-border-color: " + clr + "66; -fx-border-width: 1;"
-                : "-fx-background-color: transparent;");
-
-            String name = e.getName().length() > 7 ? e.getName().substring(0, 6) + "." : e.getName();
-            Label nameL = new Label(isCur ? "▶ " + name : name);
-            nameL.setStyle(
-                "-fx-text-fill: " + (isCur ? clr : clr + "77") + ";" +
-                "-fx-font-family: 'Courier New'; -fx-font-size: " + (isCur ? "10" : "9") + "px;" +
-                (isCur ? "-fx-font-weight: bold;" : "")
-            );
-
-            double hpPct = e.getCurrentHp() / e.getStats().get(StatType.MAX_HP);
-            ProgressBar hp = new ProgressBar(hpPct);
-            hp.setPrefWidth(48); hp.setPrefHeight(3);
-            hp.setStyle("-fx-accent: " + clr + "; -fx-background-color: " + clr + "22;" +
-                        "-fx-min-height: 3px; -fx-max-height: 3px;");
-
-            slot.getChildren().addAll(nameL, hp);
-            turnOrderBar.getChildren().add(slot);
-
-            if (i < upcoming.size() - 1) {
-                Label sep = new Label("›");
-                sep.setStyle("-fx-text-fill: #3A2810; -fx-font-size: 9px;");
-                turnOrderBar.getChildren().add(sep);
+        if(text!=null) {
+            floats.add(new FloatingText(text,color,x,y,System.currentTimeMillis()));
+            if(floatLoop==null||floatLoop.getStatus()!=Animation.Status.RUNNING) {
+                floatLoop=new Timeline(new KeyFrame(Duration.millis(30),e->drawFloats()));
+                floatLoop.setCycleCount(Animation.INDEFINITE); floatLoop.play();
             }
         }
-    }
-
-    private HBox buildSpeedControl() {
-        HBox bar = new HBox(4);
-        bar.setAlignment(Pos.CENTER_RIGHT);
-        HBox.setHgrow(bar, Priority.ALWAYS);
-
-        Label lbl = new Label("SPD:");
-        lbl.setStyle("-fx-text-fill: #3A2810; -fx-font-family: 'Courier New'; -fx-font-size: 9px;");
-        bar.getChildren().add(lbl);
-
-        for (int[] spec : new int[][]{{1, 1200}, {2, 500}, {0, 50}}) {
-            int label = spec[0], ms = spec[1];
-            String text = ms == 50 ? "SKIP" : label + "×";
-            boolean active = combatSpeedMs == ms;
-
-            Button b = new Button(text);
-            b.setStyle(
-                "-fx-background-color: " + (active ? "#C8860A22" : "transparent") + ";" +
-                "-fx-border-color: " + (active ? "#C8860A" : "#3A2810") + ";" +
-                "-fx-border-width: 1; -fx-text-fill: " + (active ? "#C8860A" : "#6A5840") + ";" +
-                "-fx-font-family: 'Courier New'; -fx-font-size: 9px; -fx-padding: 2 5; -fx-cursor: hand;"
-            );
-            final int speedMs = ms;
-            b.setOnAction(e -> { combatSpeedMs = speedMs; refreshActionPanel(); });
-            bar.getChildren().add(b);
-        }
-        return bar;
-    }
-
-    // ════════════════════════════════════════════════════
-    // FLOATING DAMAGE NUMBERS
-    // ════════════════════════════════════════════════════
-
-    private void startFloatLoop() {
-        floatLoop = new Timeline(new KeyFrame(Duration.millis(16), e -> drawFloats()));
-        floatLoop.setCycleCount(Timeline.INDEFINITE);
-        floatLoop.play();
     }
 
     private void drawFloats() {
-        if (floatCanvas == null) return;
-        GraphicsContext gc = floatCanvas.getGraphicsContext2D();
-        gc.clearRect(0, 0, floatCanvas.getWidth(), floatCanvas.getHeight());
-
-        long now = System.currentTimeMillis();
-        floatingTexts.removeIf(ft -> (now - ft.startMs()) > ft.duration());
-
-        for (FloatingText ft : floatingTexts) {
-            double elapsed = (now - ft.startMs()) / (double) ft.duration();
-            double yOffset = elapsed * ft.rise();
-            double alpha   = elapsed < 0.3 ? 1.0 : Math.max(0, (1.0 - elapsed) * 1.4);
-
+        if(floatCanvas==null) return;
+        var gc=floatCanvas.getGraphicsContext2D();
+        gc.clearRect(0,0,floatCanvas.getWidth(),floatCanvas.getHeight());
+        long now=System.currentTimeMillis();
+        floats.removeIf(f->(now-f.t0())>f.dur());
+        for(var f:floats) {
+            double el=(now-f.t0())/(double)f.dur();
+            double alpha=el<0.3?1.0:Math.max(0,(1.0-el)*1.4);
             try {
-                Color baseColor = Color.web(ft.color(), alpha);
-                gc.setFill(baseColor);
-
-                boolean isCrit  = ft.text().startsWith("⚡");
-                boolean isHeal  = ft.text().startsWith("+");
-                boolean isDot   = ft.text().startsWith("☠");
-                boolean isSkill = ft.text().startsWith("✦");
-                boolean isMiss  = ft.text().equals("MENGHINDAR") || ft.text().equals("MISS");
-
-                double fontSize = isCrit ? 22 : isSkill ? 20 : isMiss ? 14 : 16;
-                double wobble   = isCrit ? Math.sin(elapsed * 12) * 4 : 0;
-
+                boolean big=f.text().charAt(0)==0x26A1||f.text().charAt(0)==0x2726;
                 gc.setFont(Font.font("Courier New",
-                    isCrit || isSkill ? javafx.scene.text.FontWeight.BOLD
-                                      : javafx.scene.text.FontWeight.NORMAL,
-                    fontSize));
-                gc.setTextAlign(javafx.scene.text.TextAlignment.CENTER);
-
-                // Shadow/glow effect untuk crit dan skill
-                if (isCrit || isSkill) {
-                    Color shadow = Color.web(ft.color(), alpha * 0.4);
-                    gc.setFill(shadow);
-                    gc.fillText(ft.text(), ft.x() + wobble + 2, ft.y() - yOffset + 2);
-                    gc.setFill(baseColor);
-                }
-
-                gc.fillText(ft.text(), ft.x() + wobble, ft.y() - yOffset);
-
-                // Outline putih untuk keterbacaan
-                gc.setStroke(Color.web("#00000088", alpha));
-                gc.setLineWidth(1.5);
-                gc.strokeText(ft.text(), ft.x() + wobble, ft.y() - yOffset);
-
-            } catch (Exception ignored) {}
+                    big?javafx.scene.text.FontWeight.BOLD:javafx.scene.text.FontWeight.NORMAL,
+                    big?22:16));
+                gc.setTextAlign(TextAlignment.CENTER);
+                gc.setFill(Color.web("#000000",alpha*0.7));
+                gc.fillText(f.text(),f.x()+2,f.y()-el*f.rise()+2);
+                gc.setFill(Color.web(f.color(),alpha));
+                gc.fillText(f.text(),f.x(),f.y()-el*f.rise());
+            } catch(Exception ignored){}
         }
-
-        if (floatingTexts.isEmpty() && floatLoop != null) {
-            floatLoop.stop();
-            floatLoop = null;
-        }
+        if(floats.isEmpty()&&floatLoop!=null){floatLoop.stop();floatLoop=null;}
     }
 
-    /** Parse combat event message untuk extract damage value */
-    private void handleFloatingDamage(CombatEvent event) {
-        if (floatCanvas == null || cm == null) return;
-
-        String msg = event.getMessage();
-        if (msg == null) return;
-
-        // Posisi X berdasarkan target entity
-        double x = getEntityX(event.getTargetId());
-        double y = 30 + (Math.random() * 20);
-
-        String text  = null;
-        String color = null;
-
-        switch (event.getType()) {
-            case CRITICAL_HIT -> {
-                double dmg = extractDamage(msg);
-                text  = "⚡ " + (int)dmg + "!";
-                color = "#FFD700"; // gold untuk crit
-                // Extra spread untuk crit
-                x += (Math.random() * 30 - 15);
-            }
-            case DAMAGE_DEALT -> {
-                double dmg = extractDamage(msg);
-                if (dmg > 0) {
-                    text  = "-" + (int)dmg;
-                    // Warna berdasarkan damage type
-                    if (msg.contains("Fisik"))   color = "#FF6644";
-                    else if (msg.contains("Cyber"))  color = "#44AAFF";
-                    else if (msg.contains("Energi")) color = "#AA44FF";
-                    else color = "#FF8844";
-                }
-            }
-            case DAMAGE_EVADED -> {
-                text  = "MENGHINDAR";
-                color = "#88CCFF";
-            }
-            case DAMAGE_BLOCKED -> {
-                double blocked = extractDamage(msg);
-                text  = "🛡 " + (int)blocked;
-                color = "#6699CC";
-            }
-            case HEAL_RECEIVED -> {
-                double heal = extractDamage(msg);
-                text  = "+" + (int)heal;
-                color = "#44FF88";
-                y = 50; // heal muncul lebih bawah
-            }
-            case EFFECT_TICK -> {
-                double dmg = extractDamage(msg);
-                text  = "☠ " + (int)dmg;
-                color = "#AA4400";
-            }
-            case SKILL_USED -> {
-                // Skill indicator - muncul di atas user
-                double ux = getEntityX(event.getActorId());
-                String skillText = extractSkillName(msg);
-                if (skillText != null) {
-                    spawnFloat("✦ " + skillText, "#FFB830", ux, 20);
-                }
-                return;
-            }
-            case EFFECT_APPLIED -> {
-                text  = "⚑ " + extractStatusName(msg);
-                color = "#FF8833";
-            }
-            case ENTITY_DIED -> {
-                text  = "💀";
-                color = "#CC3300";
-                y = 10;
-            }
-            default -> { return; }
-        }
-
-        if (text != null) spawnFloat(text, color, x, y);
-    }
-
-    private void spawnFloat(String text, String color, double x, double y) {
-        floatingTexts.add(new FloatingText(text, color, x, y, System.currentTimeMillis()));
-        if (floatLoop == null || floatLoop.getStatus() != Animation.Status.RUNNING) {
-            startFloatLoop();
-        }
-    }
-
-    private double getEntityX(String entityId) {
-        if (entityId == null || cm == null) return 100 + Math.random() * 200;
-        // Cari index enemy atau ally
-        var enemies = cm.getEnemies();
-        for (int i = 0; i < enemies.size(); i++) {
-            if (enemies.get(i).getId().equals(entityId)) {
-                return 80 + i * 160 + Math.random() * 40 - 20;
-            }
-        }
-        // Ally: posisi di bawah
-        return 100 + Math.random() * 200;
-    }
-
-    private double extractDamage(String msg) {
+    // ── HELPERS ─────────────────────────────────
+    private double num(String msg) {
         try {
-            java.util.regex.Matcher m =
-                java.util.regex.Pattern.compile("([0-9]+\\.?[0-9]*)").matcher(msg);
-            if (m.find()) return Double.parseDouble(m.group(1));
-        } catch (Exception ignored) {}
+            var m=java.util.regex.Pattern.compile("([0-9]+[.]?[0-9]*)").matcher(msg);
+            if(m.find()) return Double.parseDouble(m.group(1));
+        } catch(Exception e){}
         return 0;
     }
-
-    private String extractSkillName(String msg) {
-        if (msg == null) return null;
-        // "X menggunakan Pukulan Harimau"
-        int idx = msg.lastIndexOf(" ");
-        return idx > 0 ? msg.substring(idx + 1) : null;
+    private String last(String msg) {
+        int i=msg==null?-1:msg.lastIndexOf(" ");
+        return i>0?msg.substring(i+1):"Skill";
     }
-
-    private String extractStatusName(String msg) {
-        if (msg == null) return "Status";
-        int idx = msg.lastIndexOf(":");
-        return idx > 0 ? msg.substring(idx + 1).trim() : "Status";
-    }
-
-    private Entity getFirstAliveEnemy() {
-        if (cm == null) return null;
-        return cm.getLivingEnemies().stream().findFirst().orElse(null);
-    }
-
-    private String getSkillDisplayName(String skillId) {
-        return switch (skillId) {
-            case "POWER_STRIKE"  -> "PUKULAN\nHARIMAU";
-            case "PHANTOM_SHOT"  -> "PANAH\nBAYANGAN";
-            case "SHADOW_STEP"   -> "LANGKAH\nGAIB";
-            case "DEEP_HACK"     -> "SANTET\nDIGITAL";
-            case "TEBASAN"       -> "EXECUTE";
-            default              -> skillId.replace("_", "\n").substring(0, Math.min(skillId.length(), 10));
+    private String skillName(String sid) {
+        if(sid==null) return "EMPTY";
+        return switch(sid) {
+            case "POWER_STRIKE"       -> "PUKULAN HARIMAU";
+            case "EXECUTE"            -> "TEBASAN PAMUNGKAS";
+            case "PHANTOM_SHOT"       -> "PANAH BAYANGAN";
+            case "SHADOW_STEP"        -> "LANGKAH GAIB";
+            case "DEEP_HACK"          -> "BIDANG BAYANGAN";
+            case "NULL_FIELD"         -> "PROTOKOL NOL";
+            case "SOVEREIGN_STRIKE"   -> "TEBASAN AGUNG";
+            case "NULL_PROTOCOL"      -> "NULL PROTOCOL";
+            case "DATA_FRAGMENTATION" -> "PECAH JIWA";
+            case "ENERGY_DRAIN"       -> "SERAP TENAGA";
+            case "IRON_SHIELD"        -> "TAMENG BAJA";
+            case "SEISMIC_SLAM"       -> "GEMPA BUMI";
+            case "SACRED_SEAL"        -> "RAJAH PELINDUNG";
+            default -> sid.replace("_"," ");
         };
     }
+
+    // Legacy alias
+    public void refreshActionPanel() { refreshActions(); }
 }

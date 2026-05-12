@@ -692,7 +692,7 @@ public static class MercenaryViewImpl {
             btn.setOnAction(e -> { activeTab = t; root.setCenter(buildCenter()); });
             tabBar.getChildren().add(btn);
         }
-        Label crewBadge = new Label("  CREW: " + engine.getActiveMercs().size() + "/2  ");
+        Label crewBadge = new Label("  CREW: " + engine.getActiveMercs().size() + "/3  ");
         crewBadge.setStyle("-fx-background-color: #C8860A11; -fx-text-fill: #C8860A;" +
                            "-fx-font-family: 'Courier New'; -fx-font-size: 10px;" +
                            "-fx-padding: 2 8; -fx-border-color: #C8860A44; -fx-border-width: 1;");
@@ -733,38 +733,85 @@ public static class MercenaryViewImpl {
 
     private VBox buildMercCard(Mercenary merc) {
         boolean isActive = engine.getActiveMercs().contains(merc);
+        int lv = merc.getLoyaltyLevel();
+        boolean maxLv = lv >= 10;
+
         VBox card = new VBox(6);
         card.setPadding(new Insets(12));
-        card.setStyle("-fx-background-color: " + (isActive ? "#0A180A" : "#150E08") + ";" +
-                      "-fx-border-color: " + (isActive ? UIFactory.GREEN : "#3A2810") + ";" +
-                      "-fx-border-width: 1 1 1 3;");
+        card.setStyle("-fx-background-color:" + (isActive ? "#0A180A" : "#150E08") + ";" +
+                      "-fx-border-color:" + (isActive ? UIFactory.GREEN : "#3A2810") + ";" +
+                      "-fx-border-width:1 1 1 3;");
+
+        // Header: nama + level badge
         HBox header = new HBox(10);
         header.setAlignment(Pos.CENTER_LEFT);
         Label nameLabel = new Label(merc.getMercenaryType().displayName.toUpperCase());
-        nameLabel.setStyle("-fx-text-fill: " + (isActive ? UIFactory.GREEN : UIFactory.TEXT) +
-                           "; -fx-font-family: 'Courier New'; -fx-font-size: 13px; -fx-font-weight: bold;");
+        nameLabel.setStyle("-fx-text-fill:" + (isActive ? UIFactory.GREEN : UIFactory.TEXT) +
+            "; -fx-font-family:'Courier New'; -fx-font-size:13px; -fx-font-weight:bold;");
         HBox.setHgrow(nameLabel, Priority.ALWAYS);
+
+        String lvColor = lv >= 8 ? "#FFD700" : lv >= 5 ? "#FFB830" : "#C8860A";
+        Label lvBadge = new Label("LV." + lv);
+        lvBadge.setStyle("-fx-text-fill:" + lvColor + "; -fx-font-family:'Courier New';" +
+            "-fx-font-size:11px; -fx-font-weight:bold; -fx-background-color:" + lvColor + "22;" +
+            "-fx-padding:2 6; -fx-background-radius:3;");
+
         Label roleLabel = new Label("[" + merc.getRole().name() + "]");
-        roleLabel.setStyle("-fx-text-fill: #6A5840; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
-        Label loyaltyLabel = new Label("♥ " + merc.getLoyaltyTitle());
-        loyaltyLabel.setStyle("-fx-text-fill: #FF6B6B; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
-        header.getChildren().addAll(nameLabel, roleLabel, loyaltyLabel);
+        roleLabel.setStyle("-fx-text-fill:#6A5840; -fx-font-family:'Courier New'; -fx-font-size:10px;");
+        Label loyLbl = new Label("\u2665 " + merc.getLoyaltyTitle());
+        loyLbl.setStyle("-fx-text-fill:#FF6B6B; -fx-font-family:'Courier New'; -fx-font-size:10px;");
+        header.getChildren().addAll(nameLabel, lvBadge, roleLabel, loyLbl);
+
         Label subtitle = new Label(merc.getMercenaryType().subtitle);
-        subtitle.setStyle("-fx-text-fill: #A09070; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
+        subtitle.setStyle("-fx-text-fill:#A09070; -fx-font-family:'Courier New'; -fx-font-size:11px;");
+
         HBox statsRow = new HBox(16);
         statsRow.getChildren().addAll(
             miniStat("HP",  String.valueOf((int)merc.getStats().get(StatType.MAX_HP))),
-            miniStat("SHD", String.valueOf((int)merc.getStats().get(StatType.MAX_SHIELD))),
             miniStat("SPD", String.valueOf((int)merc.getStats().get(StatType.SPEED))),
             miniStat("ATK", String.valueOf((int)Math.max(
                 merc.getStats().get(StatType.PHYSICAL_ATK),
                 Math.max(merc.getStats().get(StatType.CYBER_ATK),
                          merc.getStats().get(StatType.ENERGY_ATK)))))
         );
+
         VBox vitals = UIFactory.compactVitalBars(
-                merc.getCurrentHp(),     merc.getStats().get(StatType.MAX_HP),
-                merc.getCurrentShield(), merc.getStats().get(StatType.MAX_SHIELD),
-                merc.getCurrentMp(),     merc.getStats().get(StatType.MAX_MP));
+            merc.getCurrentHp(), merc.getStats().get(StatType.MAX_HP),
+            merc.getCurrentShield(), merc.getStats().get(StatType.MAX_SHIELD),
+            merc.getCurrentMp(), merc.getStats().get(StatType.MAX_MP));
+
+        // Upgrade button
+        HBox upgradeRow = new HBox(8);
+        upgradeRow.setAlignment(Pos.CENTER_LEFT);
+        if (!maxLv) {
+            int cost = merc.getUpgradeCost();
+            boolean canAfford = engine.getPlayer().getGold() >= cost;
+            Button upBtn = new Button("\u2b06 UPGRADE LV." + (lv+1) + "  \u2699" + cost);
+            upBtn.setStyle(
+                "-fx-background-color:" + (canAfford ? "#C8860A22" : "#1A1008") + ";" +
+                "-fx-border-color:" + (canAfford ? "#C8860A" : "#3A2810") + ";" +
+                "-fx-border-width:1; -fx-text-fill:" + (canAfford ? "#FFB830" : "#5A3A10") + ";" +
+                "-fx-font-family:'Courier New'; -fx-font-size:10px; -fx-padding:4 10;" +
+                "-fx-cursor:" + (canAfford ? "hand" : "default") + ";");
+            upBtn.setDisable(!canAfford);
+            upBtn.setOnAction(e -> {
+                if (merc.upgradeLevel(engine.getPlayer())) {
+                    router.addSystemChat("\u2b06 " + merc.getMercenaryType().displayName +
+                        " naik ke LV." + merc.getLoyaltyLevel() + "!");
+                    engine.autoSave();
+                    router.showMercenary();
+                }
+            });
+            Label preview = new Label("+10% HP  +12% ATK  +8% DEF");
+            preview.setStyle("-fx-text-fill:#3A2810; -fx-font-family:'Courier New'; -fx-font-size:9px;");
+            upgradeRow.getChildren().addAll(upBtn, preview);
+        } else {
+            Label maxLbl = new Label("\u2726 LEVEL MAKSIMUM");
+            maxLbl.setStyle("-fx-text-fill:#FFD700; -fx-font-family:'Courier New';" +
+                "-fx-font-size:11px; -fx-font-weight:bold;");
+            upgradeRow.getChildren().add(maxLbl);
+        }
+
         Button toggleBtn = isActive ? UIFactory.btnDanger("KELUARKAN DARI REGU")
                                     : UIFactory.btnPrimary("TAMBAH KE REGU");
         toggleBtn.setMaxWidth(Double.MAX_VALUE);
@@ -774,7 +821,7 @@ public static class MercenaryViewImpl {
                 router.addSystemChat("Regu penuh! Keluarkan satu guildmate dulu.");
             router.showMercenary();
         });
-        card.getChildren().addAll(header, subtitle, statsRow, vitals, toggleBtn);
+        card.getChildren().addAll(header, subtitle, statsRow, vitals, upgradeRow, toggleBtn);
         return card;
     }
 

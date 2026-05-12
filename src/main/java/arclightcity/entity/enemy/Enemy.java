@@ -45,14 +45,18 @@ public abstract class Enemy extends Entity {
      */
     public void scaleToFloor(int floor) {
         this.floorLevel = floor;
-        double scaleFactor = 1.0 + (floor - 1) * 0.08; // +8% per floor (turun dari 15%)
+        double scaleFactor = 1.0 + (floor - 1) * 0.06; // +6% per floor (lebih ringan)
         stats.scaleBase(scaleFactor);
 
-        // Reward scale
+        // Enemy biasa: hapus shield dan MP — hanya HP yang ada
+        if (!(this instanceof arclightcity.entity.enemy.Boss)) {
+            stats.setBase(arclightcity.entity.stats.StatType.MAX_SHIELD, 0);
+            stats.setBase(arclightcity.entity.stats.StatType.MAX_MP, 0);
+        }
+
         expReward  *= scaleFactor;
         goldReward  = (long)(goldReward * scaleFactor);
-
-        initVitals(); // refresh HP/MP setelah scaling
+        initVitals();
     }
 
     // ── AI Logic ─────────────────────────────────────────────

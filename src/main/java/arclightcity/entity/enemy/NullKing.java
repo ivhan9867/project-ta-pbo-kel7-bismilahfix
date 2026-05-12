@@ -15,7 +15,7 @@ import java.util.List;
  * Lore: Dulunya CEO MegaCorp cabang Sector 7. Saat eksperimen
  * digital consciousness-nya gagal, kesadarannya tersebar ke seluruh
  * jaringan dan menjadi sesuatu yang tidak lagi manusiawi.
- * Sekarang dia mengklaim seluruh Arclight City sebagai "domain"-nya.
+ * Sekarang dia mengklaim seluruh Mythic Item Obtained sebagai "domain"-nya.
  *
  * ═══ UNIQUE MECHANIC: NULL FIELD ═══
  * Boss ini bisa membuat "Null Field" yang menonaktifkan semua buff party

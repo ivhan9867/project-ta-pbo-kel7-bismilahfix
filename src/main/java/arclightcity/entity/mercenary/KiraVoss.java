@@ -44,15 +44,15 @@ public class KiraVoss extends Mercenary {
 
     @Override
     protected void initStats() {
-        stats.setBase(StatType.MAX_HP,       110);
+        stats.setBase(StatType.MAX_HP,       154);
         stats.setBase(StatType.MAX_SHIELD,   20);
         stats.setBase(StatType.DAMAGE_MULT,  0.12);
         stats.setBase(StatType.MAX_MP,       70);
-        stats.setBase(StatType.PHYSICAL_ATK, 32);
-        stats.setBase(StatType.CYBER_ATK,    18);
-        stats.setBase(StatType.PHYSICAL_DEF, 8);
-        stats.setBase(StatType.CYBER_DEF,    10);
-        stats.setBase(StatType.ENERGY_DEF,   8);
+        stats.setBase(StatType.PHYSICAL_ATK, 51.2);
+        stats.setBase(StatType.CYBER_ATK,    28.8);
+        stats.setBase(StatType.PHYSICAL_DEF, 10.4);
+        stats.setBase(StatType.CYBER_DEF,    13);
+        stats.setBase(StatType.ENERGY_DEF,   10.4);
         stats.setBase(StatType.CRIT_CHANCE,  0.30); // crit tinggi
         stats.setBase(StatType.CRIT_DAMAGE,  2.20); // crit damage tinggi
         stats.setBase(StatType.ARMOR_PIERCE, 0.20);
@@ -102,6 +102,17 @@ public class KiraVoss extends Mercenary {
 
     @Override
     protected void onLoyaltyLevelUp(int newLevel) {
+        // Universal stat buff per level (+10% HP, +12% ATK, +8% DEF)
+        double hp  = getStats().get(arclightcity.entity.stats.StatType.MAX_HP) * 0.10;
+        double atk = getStats().get(arclightcity.entity.stats.StatType.PHYSICAL_ATK) * 0.12;
+        double def = getStats().get(arclightcity.entity.stats.StatType.PHYSICAL_DEF) * 0.08;
+        getStats().addBase(arclightcity.entity.stats.StatType.MAX_HP, hp);
+        getStats().addBase(arclightcity.entity.stats.StatType.PHYSICAL_ATK, atk);
+        getStats().addBase(arclightcity.entity.stats.StatType.CYBER_ATK, atk * 0.6);
+        getStats().addBase(arclightcity.entity.stats.StatType.ENERGY_ATK, atk * 0.6);
+        getStats().addBase(arclightcity.entity.stats.StatType.PHYSICAL_DEF, def);
+        restoreVitals(getStats().get(arclightcity.entity.stats.StatType.MAX_HP), getStats().get(arclightcity.entity.stats.StatType.MAX_SHIELD), getStats().get(arclightcity.entity.stats.StatType.MAX_MP)); // Refill HP/MP setelah level up
+        System.out.println("[Merc] " + getName() + " level up! LV." + newLevel);
         // Tiap loyalty level: +crit chance kecil
         stats.addBase(StatType.CRIT_CHANCE, 0.02);
         if (newLevel == 10) {

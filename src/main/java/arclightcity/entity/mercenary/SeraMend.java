@@ -46,18 +46,18 @@ public class SeraMend extends Mercenary {
 
     @Override
     protected void initStats() {
-        stats.setBase(StatType.MAX_HP,       140);
+        stats.setBase(StatType.MAX_HP,       196);
         stats.setBase(StatType.MAX_SHIELD,   30);
         stats.setBase(StatType.DAMAGE_MULT,  0.0);
         stats.setBase(StatType.MAX_MP,       120); // MP tinggi untuk banyak heal
         stats.setBase(StatType.MP_REGEN,     12);
         stats.setBase(StatType.HP_REGEN,     5);
-        stats.setBase(StatType.PHYSICAL_ATK, 10);
-        stats.setBase(StatType.CYBER_ATK,    8);
-        stats.setBase(StatType.ENERGY_ATK,   20); // offense via energy
-        stats.setBase(StatType.PHYSICAL_DEF, 12);
-        stats.setBase(StatType.CYBER_DEF,    15);
-        stats.setBase(StatType.ENERGY_DEF,   18);
+        stats.setBase(StatType.PHYSICAL_ATK, 16);
+        stats.setBase(StatType.CYBER_ATK,    12.8);
+        stats.setBase(StatType.ENERGY_ATK,   32); // offense via energy
+        stats.setBase(StatType.PHYSICAL_DEF, 15.6);
+        stats.setBase(StatType.CYBER_DEF,    19.5);
+        stats.setBase(StatType.ENERGY_DEF,   23.4);
         stats.setBase(StatType.SKILL_POWER,  1.30); // skill power tinggi (heal lebih besar)
         stats.setBase(StatType.SPEED,        13);
         stats.setBase(StatType.SYNC_RATE,    0.20); // buff ke player lebih efektif
@@ -130,6 +130,17 @@ public class SeraMend extends Mercenary {
 
     @Override
     protected void onLoyaltyLevelUp(int newLevel) {
+        // Universal stat buff per level (+10% HP, +12% ATK, +8% DEF)
+        double hp  = getStats().get(arclightcity.entity.stats.StatType.MAX_HP) * 0.10;
+        double atk = getStats().get(arclightcity.entity.stats.StatType.PHYSICAL_ATK) * 0.12;
+        double def = getStats().get(arclightcity.entity.stats.StatType.PHYSICAL_DEF) * 0.08;
+        getStats().addBase(arclightcity.entity.stats.StatType.MAX_HP, hp);
+        getStats().addBase(arclightcity.entity.stats.StatType.PHYSICAL_ATK, atk);
+        getStats().addBase(arclightcity.entity.stats.StatType.CYBER_ATK, atk * 0.6);
+        getStats().addBase(arclightcity.entity.stats.StatType.ENERGY_ATK, atk * 0.6);
+        getStats().addBase(arclightcity.entity.stats.StatType.PHYSICAL_DEF, def);
+        restoreVitals(getStats().get(arclightcity.entity.stats.StatType.MAX_HP), getStats().get(arclightcity.entity.stats.StatType.MAX_SHIELD), getStats().get(arclightcity.entity.stats.StatType.MAX_MP)); // Refill HP/MP setelah level up
+        System.out.println("[Merc] " + getName() + " level up! LV." + newLevel);
         stats.addBase(StatType.MAX_MP,    15);
         stats.addBase(StatType.MP_REGEN,   3);
         stats.addBase(StatType.SKILL_POWER, 0.05);
