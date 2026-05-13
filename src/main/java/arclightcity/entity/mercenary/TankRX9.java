@@ -53,8 +53,8 @@ public class TankRX9 extends Mercenary {
         stats.setBase(StatType.MAX_SHIELD,   150); // Tank punya shield paling besar
         stats.setBase(StatType.SHIELD_REGEN, 12);  // regen shield kuat
         stats.setBase(StatType.HP_REGEN,     8);
-        stats.setBase(StatType.PHYSICAL_ATK, 32);
-        stats.setBase(StatType.CYBER_ATK,    8);
+        stats.setBase(StatType.PHYSICAL_ATK, 55);
+        stats.setBase(StatType.CYBER_ATK, 15);
         stats.setBase(StatType.DAMAGE_MULT,  0.0);
         stats.setBase(StatType.PHYSICAL_DEF, 58.5);
         stats.setBase(StatType.CYBER_DEF,    6.5);

@@ -214,10 +214,13 @@ public class AssetManager {
         if (name == null) return "gatotkaca";
         return switch (name.toLowerCase().trim()) {
             case "gatot kaca","tank-rx9","tank rx9" -> "gatotkaca";
-            case "nyai roro"  -> "nyairoro";
-            case "ki ageng"   -> "kiageng";
-            case "dewi sri"   -> "dewisri";
-            default -> name.toLowerCase().replaceAll("[^a-z]", "");
+            case "nyai roro","sera mend"             -> "nyairoro";
+            case "ki ageng","echo null"              -> "kiageng";
+            case "dewi sri","lyra bloom"             -> "dewisri";
+            case "srikandi","kira voss"              -> "srikandi";
+            case "rangga","vector"                   -> "rangga";
+            case "bima","magnus forge"               -> "bima";
+            default -> "gatotkaca"; // fallback ke gatotkaca, bukan nama acak
         };
     }
 }

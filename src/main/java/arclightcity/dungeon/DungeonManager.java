@@ -354,9 +354,25 @@ public class DungeonManager {
     private void onFloorCompleted() {
         emit(DungeonStateEvent.floorCompleted(currentFloorNumber));
 
-        // Pulihkan sebagian HP/MP antar floor
-        player.receiveHeal(player.getStats().get(StatType.MAX_HP) * 0.20);
-        player.restoreMp(player.getStats().get(StatType.MAX_MP) * 0.30);
+        // Setelah menang: pulihkan MP dan Shield PENUH, HP 30%
+        // (Beri waktu istirahat antar floor tapi tetap butuh manajemen HP)
+        double maxMp  = player.getStats().get(StatType.MAX_MP);
+        double maxShd = player.getStats().get(StatType.MAX_SHIELD);
+        double maxHp  = player.getStats().get(StatType.MAX_HP);
+        player.receiveHeal(maxHp  * 0.30);
+        player.restoreMp(maxMp); // MP penuh
+        player.restoreShield(maxShd); // Shield penuh
+
+        // Guildmate: restore via party dari activeParty (DungeonManager punya reference)
+        for (var merc : getActiveMercs()) {
+            if (merc != null && merc.isAlive()) {
+                merc.restoreVitals(
+                    merc.getStats().get(StatType.MAX_HP) * 0.25,
+                    merc.getStats().get(StatType.MAX_SHIELD),
+                    merc.getStats().get(StatType.MAX_MP)
+                );
+            }
+        }
 
         emit(DungeonStateEvent.readyForNextFloor(currentFloorNumber + 1));
     }

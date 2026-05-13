@@ -361,28 +361,57 @@ public static class InventoryViewImpl {
             router.showInventory();
         });
 
-        // Tombol Upgrade langsung dari popup
-        Button upgradeBtn = new Button("⬆ UPGRADE");
-        upgradeBtn.setStyle("-fx-background-color: #C8860A15; -fx-border-color: #C8860A;" +
-                           "-fx-border-width: 1; -fx-text-fill: #FFB830;" +
-                           "-fx-font-family: 'Courier New'; -fx-font-size: 11px;" +
-                           "-fx-padding: 6 14; -fx-cursor: hand;");
+        // Tombol Upgrade langsung dari popup — tampil biaya dulu
+        int upgLvl2 = eq.getUpgradeLevel();
+        int[] upgCost = switch (eq.getRarity()) {
+            case COMMON    -> new int[]{2*(upgLvl2+1), 0,          0};
+            case UNCOMMON  -> new int[]{4*(upgLvl2+1), 1*(upgLvl2+1), 0};
+            case RARE      -> new int[]{6*(upgLvl2+1), 2*(upgLvl2+1), 1*(upgLvl2+1)};
+            case EPIC      -> new int[]{8*(upgLvl2+1), 4*(upgLvl2+1), 2*(upgLvl2+1)};
+            case LEGENDARY -> new int[]{10*(upgLvl2+1),6*(upgLvl2+1), 4*(upgLvl2+1)};
+            default        -> new int[]{2, 0, 0};
+        };
+        boolean canUpgrade = inv.getScrapMetal() >= upgCost[0]
+            && inv.getCyberChips() >= upgCost[1]
+            && inv.getNeonCrystals() >= upgCost[2]
+            && eq.canUpgrade();
+        String upgLabel = "⬆ UPGRADE  (Scrap:" + upgCost[0]
+            + " Chip:" + upgCost[1] + " Crystal:" + upgCost[2] + ")";
+        Button upgradeBtn = new Button(upgLabel);
+        upgradeBtn.setStyle("-fx-background-color:" + (canUpgrade?"#C8860A15":"#2A180822") +
+            "; -fx-border-color:" + (canUpgrade?"#C8860A":"#5A3A10") +
+            "; -fx-border-width: 1; -fx-text-fill:" + (canUpgrade?"#FFB830":"#5A3A10") +
+            "; -fx-font-family: 'Courier New'; -fx-font-size: 10px;" +
+            "; -fx-padding: 6 10; -fx-cursor: hand; -fx-wrap-text: true;");
+        upgradeBtn.setDisable(!canUpgrade);
+        if (!canUpgrade && !eq.canUpgrade()) upgradeBtn.setText("⬆ UPGRADE MAX");
         upgradeBtn.setOnAction(e -> {
             var res = inv.upgradeItem(eq.getId());
             popup.close();
-            router.addSystemChat("⬆ " + eq.getName() + ": " + res.message);
+            router.addSystemChat((res.success ? "⬆ " : "✗ ") + eq.getName() + ": " + res.message);
             router.showInventory();
         });
 
-        // Tombol Kalibrasi langsung dari popup
-        Button calibBtn = new Button("◈ KALIBRASI");
-        calibBtn.setStyle("-fx-background-color: #4455CC15; -fx-border-color: #6677CC;" +
-                         "-fx-border-width: 1; -fx-text-fill: #88AAFF;" +
-                         "-fx-font-family: 'Courier New'; -fx-font-size: 11px;" +
-                         "-fx-padding: 6 14; -fx-cursor: hand;");
+        // Tombol Kalibrasi — cek Cal Kit, lakukan kalibrasi, tampil hasil
+        boolean hasCalKit = inv.getCalibrationKits() > 0;
+        Button calibBtn = new Button("◈ KALIBRASI" + (hasCalKit ? "" : "  (Cal Kit: 0)"));
+        calibBtn.setStyle("-fx-background-color:" + (hasCalKit?"#4455CC15":"#1A100822") +
+            "; -fx-border-color:" + (hasCalKit?"#6677CC":"#3A2810") +
+            "; -fx-border-width: 1; -fx-text-fill:" + (hasCalKit?"#88AAFF":"#5A3A10") +
+            "; -fx-font-family: 'Courier New'; -fx-font-size: 11px;" +
+            "; -fx-padding: 6 14; -fx-cursor: hand;");
+        calibBtn.setDisable(!hasCalKit);
         calibBtn.setOnAction(e -> {
-            popup.close();
-            router.showCalibrationPicker();
+            if (!hasCalKit) { showAlert("✗ Tidak punya Cal Kit!"); return; }
+            var calResult = inv.calibrateItem(eq.getId(), 1);
+            if (calResult.success) {
+                router.addSystemChat("◈ " + eq.getName() + " dikalibrasi! +" +
+                    calResult.message.replace("Calibration successful. ",""));
+                popup.close();
+                router.showInventory();
+            } else {
+                showAlert("✗ Kalibrasi gagal: " + calResult.message);
+            }
         });
 
         Button closeBtn = new Button("TUTUP");
@@ -432,9 +461,23 @@ public static class InventoryViewImpl {
 
         Label bagInfo = new Label("BAG " + inv.getBagSize() + "/" + inv.getMaxBagSize());
         bagInfo.setStyle("-fx-text-fill: #6A5840; -fx-font-family: 'Courier New'; -fx-font-size: 12px;");
-        HBox.setHgrow(new Region(), Priority.ALWAYS);
-        bar.getChildren().addAll(new Region(), bagInfo);
-        HBox.setHgrow(bar.getChildren().get(bar.getChildren().size() - 2), Priority.ALWAYS);
+
+        // Tombol expand bag (+)
+        int curMax = inv.getMaxBagSize();
+        boolean canExpand = curMax < 100;
+        Button expandBtn = new Button(canExpand ? "+" : "MAX");
+        expandBtn.setStyle("-fx-background-color:" + (canExpand?"#C8860A22":"#1A1008") +
+            "; -fx-border-color:" + (canExpand?"#C8860A":"#3A2810") +
+            "; -fx-border-width:1; -fx-border-radius:3; -fx-background-radius:3;" +
+            "-fx-text-fill:" + (canExpand?"#FFB830":"#5A3A10") +
+            "; -fx-font-family:'Courier New'; -fx-font-size:11px;" +
+            "-fx-padding:2 8; -fx-cursor:" + (canExpand?"hand":"default") + ";");
+        expandBtn.setDisable(!canExpand);
+        expandBtn.setOnAction(e -> ViewsBundle.showBagExpandMenuStatic(inv, engine, router));
+
+        Region spacer = new Region(); HBox.setHgrow(spacer, Priority.ALWAYS);
+        bar.getChildren().addAll(spacer, bagInfo, expandBtn);
+        HBox.setHgrow(bar.getChildren().get(bar.getChildren().size() - 3), Priority.ALWAYS);
 
         return bar;
     }
@@ -1540,9 +1583,8 @@ public static class GameOverViewImpl {
             "-fx-text-fill: #CC3300;" +
             "-fx-font-family: 'Courier New', monospace;" +
             "-fx-font-size: 32px;" +
-            "-fx-font-weight: bold;" +
-            "-fx-effect: dropshadow(gaussian, #CC3300, 20, 0.7, 0, 0)" +
-            "          , dropshadow(gaussian, #FF5500, 8, 0.4, 0, 0);"
+            "-fx-font-weight: bold;"
+        );"
         );
 
         Label sub = new Label("perjalananmu terhenti... namun belum berakhir");
@@ -1624,7 +1666,7 @@ public static class GameOverViewImpl {
             arclightcity.entity.player.Player pl2 = engine.getPlayer();
             double maxHp2 = pl2.getStats().get(arclightcity.entity.stats.StatType.MAX_HP);
             double maxMp2 = pl2.getStats().get(arclightcity.entity.stats.StatType.MAX_MP);
-            pl2.setHpDirect(maxHp2 * 0.50);
+            pl2.setHpDirect(maxHp2 * 0.50); // setHpDirect now resets alive=true
             pl2.restoreMp(maxMp2 * 0.50);
             // Revive semua guildmate juga di 30% HP
             for (var m : engine.getOwnedMercs()) {
@@ -1729,6 +1771,78 @@ public static class GameOverViewImpl {
             "-fx-border-width:1 0 0 0; -fx-text-fill:#5A3A10;" +
             "-fx-font-family:'Courier New'; -fx-font-size:10px;" +
             "-fx-padding:7 14; -fx-cursor:hand;");
+        cancel.setMaxWidth(Double.MAX_VALUE);
+        cancel.setOnAction(e -> dialog.close());
+        root.getChildren().add(cancel);
+
+        dialog.setScene(new javafx.scene.Scene(root));
+        dialog.show();
+    }
+
+
+    /** Dialog expand bag — pilih +1/+5/+10/+20 slot, bayar gold */
+    public static void showBagExpandMenuStatic(arclightcity.item.Inventory inv,
+                arclightcity.engine.GameEngine engine,
+                arclightcity.ui.controller.SceneRouter router) {
+        javafx.stage.Stage dialog = new javafx.stage.Stage();
+        dialog.initStyle(javafx.stage.StageStyle.UNDECORATED);
+        dialog.setAlwaysOnTop(true);
+
+        VBox root = new VBox(0);
+        root.setStyle("-fx-background-color:#0D0A06; -fx-border-color:#C8860A; -fx-border-width:1 1 1 3;");
+        root.setPrefWidth(280);
+
+        Label title = new Label("⬡  PERLUAS TAS");
+        title.setStyle("-fx-background-color:#C8860A;-fx-text-fill:#0A0603;" +
+            "-fx-font-family:'Courier New';-fx-font-size:12px;-fx-font-weight:bold;" +
+            "-fx-padding:8 14; -fx-max-width:280;");
+
+        Label info = new Label("Kapasitas: " + inv.getBagSize() + "/" + inv.getMaxBagSize() + " (maks 100)");
+        info.setStyle("-fx-text-fill:#6A5840;-fx-font-family:'Courier New';" +
+            "-fx-font-size:10px;-fx-padding:6 14 4 14;");
+
+        root.getChildren().addAll(title, info);
+
+        // Opsi expand
+        int[][] options = {{1,200},{5,800},{10,1400},{20,2400}};
+        for (int[] opt : options) {
+            int slots = opt[0]; int cost = opt[1];
+            boolean affordable = engine.getPlayer().getGold() >= cost;
+            boolean possible   = inv.getMaxBagSize() + slots <= 100;
+
+            HBox row = new HBox(10); row.setAlignment(Pos.CENTER_LEFT);
+            row.setPadding(new Insets(8,14,8,14));
+            row.setStyle("-fx-border-color:#3A2810;-fx-border-width:1 0 0 0;" +
+                "-fx-cursor:" + (affordable&&possible?"hand":"default") + ";" +
+                "-fx-opacity:" + (affordable&&possible?"1.0":"0.45") + ";");
+
+            Label optLbl = new Label("+" + slots + " Slot");
+            optLbl.setStyle("-fx-text-fill:#EDE0C8;-fx-font-family:'Courier New';-fx-font-size:12px;");
+            HBox.setHgrow(optLbl, Priority.ALWAYS);
+            Label costLbl = new Label("⚙ " + cost + " Gold");
+            costLbl.setStyle("-fx-text-fill:#C8860A;-fx-font-family:'Courier New';-fx-font-size:11px;");
+            row.getChildren().addAll(optLbl, costLbl);
+
+            if (affordable && possible) {
+                final int fs = slots; final int fc = cost;
+                row.setOnMouseClicked(e -> {
+                    engine.getPlayer().spendGold(fc);
+                    inv.expandBag(fs);
+                    router.addSystemChat("⊕ Tas diperluas +" + fs + " slot. Gold -" + fc);
+                    dialog.close();
+                    router.showInventory();
+                });
+                row.setOnMouseEntered(e -> row.setStyle(row.getStyle() + "-fx-background-color:#1A1208;"));
+                row.setOnMouseExited(e  -> row.setStyle(row.getStyle().replace("-fx-background-color:#1A1208;","")));
+            }
+            root.getChildren().add(row);
+        }
+
+        Button cancel = new Button("✗  TUTUP");
+        cancel.setStyle("-fx-background-color:transparent;-fx-border-color:#3A2810;" +
+            "-fx-border-width:1 0 0 0;-fx-text-fill:#5A3A10;" +
+            "-fx-font-family:'Courier New';-fx-font-size:10px;" +
+            "-fx-padding:7 14;-fx-cursor:hand;");
         cancel.setMaxWidth(Double.MAX_VALUE);
         cancel.setOnAction(e -> dialog.close());
         root.getChildren().add(cancel);

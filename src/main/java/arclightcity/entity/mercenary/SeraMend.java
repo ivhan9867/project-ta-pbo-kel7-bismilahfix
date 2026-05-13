@@ -52,9 +52,9 @@ public class SeraMend extends Mercenary {
         stats.setBase(StatType.MAX_MP,       120); // MP tinggi untuk banyak heal
         stats.setBase(StatType.MP_REGEN,     12);
         stats.setBase(StatType.HP_REGEN,     5);
-        stats.setBase(StatType.PHYSICAL_ATK, 16);
+        stats.setBase(StatType.PHYSICAL_ATK, 40);
         stats.setBase(StatType.CYBER_ATK,    12.8);
-        stats.setBase(StatType.ENERGY_ATK,   32); // offense via energy
+        stats.setBase(StatType.ENERGY_ATK, 60); // offense via energy
         stats.setBase(StatType.PHYSICAL_DEF, 15.6);
         stats.setBase(StatType.CYBER_DEF,    19.5);
         stats.setBase(StatType.ENERGY_DEF,   23.4);

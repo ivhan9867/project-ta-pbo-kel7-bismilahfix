@@ -85,8 +85,27 @@ public class GameStateConverter {
                     bagCount++;
                 }
             }
+            // Save material counters sebagai synthetic Material items
+            if (inv.getScrapMetal() > 0) {
+                GameSaveState.ItemData sd = new GameSaveState.ItemData();
+                sd.name = "Scrap Metal"; sd.itemClass = "Material";
+                sd.subType = "SCRAP"; sd.rarity = "COMMON"; sd.quantity = inv.getScrapMetal();
+                save.inventoryItems.add(sd);
+            }
+            if (inv.getCyberChips() > 0) {
+                GameSaveState.ItemData cd = new GameSaveState.ItemData();
+                cd.name = "Circuit Chip"; cd.itemClass = "Material";
+                cd.subType = "CHIP"; cd.rarity = "UNCOMMON"; cd.quantity = inv.getCyberChips();
+                save.inventoryItems.add(cd);
+            }
+            if (inv.getNeonCrystals() > 0) {
+                GameSaveState.ItemData nd = new GameSaveState.ItemData();
+                nd.name = "Neon Crystal"; nd.itemClass = "Material";
+                nd.subType = "CRYSTAL"; nd.rarity = "RARE"; nd.quantity = inv.getNeonCrystals();
+                save.inventoryItems.add(nd);
+            }
             System.out.println("[SAVE] Saved " + save.inventoryItems.size() +
-                " items total (" + bagCount + " in bag)");
+                " items total (" + bagCount + " in bag + material counters)");
         } else {
             System.err.println("[SAVE] ERROR: inventory is null!");
         }

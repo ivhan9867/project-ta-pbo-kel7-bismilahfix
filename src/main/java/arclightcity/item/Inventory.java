@@ -182,8 +182,29 @@ public class Inventory {
         return bag.removeIf(i -> i.getId().equals(itemId));
     }
 
+    public java.util.List<Equipment> getAllEquipped() {
+        java.util.List<Equipment> list = new java.util.ArrayList<>();
+        if (equippedWeapon     != null) list.add(equippedWeapon);
+        if (equippedArmor      != null) list.add(equippedArmor);
+        if (equippedHelmet     != null) list.add(equippedHelmet);
+        if (equippedBoots      != null) list.add(equippedBoots);
+        if (equippedRing1      != null) list.add(equippedRing1);
+        if (equippedRing2      != null) list.add(equippedRing2);
+        if (equippedAccessory1 != null) list.add(equippedAccessory1);
+        if (equippedAccessory2 != null) list.add(equippedAccessory2);
+        return list;
+    }
+
     public Item findById(String itemId) {
-        return bag.stream().filter(i -> i.getId().equals(itemId)).findFirst().orElse(null);
+        if (itemId == null) return null;
+        // Cari di bag dulu
+        var inBag = bag.stream().filter(i -> i.getId().equals(itemId)).findFirst().orElse(null);
+        if (inBag != null) return inBag;
+        // Cari di equipped slots juga (untuk upgrade/calibrate dari popup equipped item)
+        for (Equipment eq : getAllEquipped()) {
+            if (eq != null && eq.getId().equals(itemId)) return eq;
+        }
+        return null;
     }
 
     // ════════════════════════════════════════════════════════

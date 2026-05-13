@@ -53,7 +53,7 @@ public class MagnusForge extends Mercenary {
         stats.setBase(StatType.MAX_MP,       60);
         stats.setBase(StatType.MP_REGEN,     4);
         stats.setBase(StatType.HP_REGEN,     3);
-        stats.setBase(StatType.PHYSICAL_ATK, 67.2); // ATK tertinggi di semua merc
+        stats.setBase(StatType.PHYSICAL_ATK, 70); // ATK tertinggi di semua merc
         stats.setBase(StatType.ENERGY_ATK,   32);
         stats.setBase(StatType.PHYSICAL_DEF, 28.6);
         stats.setBase(StatType.CYBER_DEF,    13);

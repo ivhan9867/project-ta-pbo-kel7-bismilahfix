@@ -144,11 +144,13 @@ public class DamageCalculator {
      */
     public static double getBasicAttackDamage(Entity attacker, DamageType type) {
         StatSheet stats = attacker.getStats();
+        // Multiplier 1.5x untuk basic attack agar terasa impactful
+        double mult = 1.5;
         return switch (type) {
-            case PHYSICAL -> stats.get(StatType.PHYSICAL_ATK);
-            case CYBER    -> stats.get(StatType.CYBER_ATK);
-            case ENERGY   -> stats.get(StatType.ENERGY_ATK);
-            default       -> stats.get(StatType.PHYSICAL_ATK);
+            case PHYSICAL -> stats.get(StatType.PHYSICAL_ATK) * mult;
+            case CYBER    -> stats.get(StatType.CYBER_ATK)    * mult;
+            case ENERGY   -> stats.get(StatType.ENERGY_ATK)   * mult;
+            default       -> stats.get(StatType.PHYSICAL_ATK) * mult;
         };
     }
 

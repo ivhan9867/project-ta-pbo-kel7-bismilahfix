@@ -48,8 +48,8 @@ public class KiraVoss extends Mercenary {
         stats.setBase(StatType.MAX_SHIELD,   20);
         stats.setBase(StatType.DAMAGE_MULT,  0.12);
         stats.setBase(StatType.MAX_MP,       70);
-        stats.setBase(StatType.PHYSICAL_ATK, 51.2);
-        stats.setBase(StatType.CYBER_ATK,    28.8);
+        stats.setBase(StatType.PHYSICAL_ATK, 80);
+        stats.setBase(StatType.CYBER_ATK, 45);
         stats.setBase(StatType.PHYSICAL_DEF, 10.4);
         stats.setBase(StatType.CYBER_DEF,    13);
         stats.setBase(StatType.ENERGY_DEF,   10.4);

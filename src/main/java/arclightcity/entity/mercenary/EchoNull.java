@@ -57,8 +57,8 @@ public class EchoNull extends Mercenary {
         stats.setBase(StatType.DAMAGE_MULT,  0.0);
         stats.setBase(StatType.MAX_MP,       150); // MP tertinggi
         stats.setBase(StatType.MP_REGEN,     15);
-        stats.setBase(StatType.PHYSICAL_ATK, 19.2); // damage sangat rendah
-        stats.setBase(StatType.CYBER_ATK,    48); // tapi cyber damage lumayan
+        stats.setBase(StatType.PHYSICAL_ATK, 45); // damage sangat rendah
+        stats.setBase(StatType.CYBER_ATK, 85); // tapi cyber damage lumayan
         stats.setBase(StatType.ENERGY_ATK,   24);
         stats.setBase(StatType.PHYSICAL_DEF, 13);
         stats.setBase(StatType.CYBER_DEF,    10.4);  // lemah ke Hack

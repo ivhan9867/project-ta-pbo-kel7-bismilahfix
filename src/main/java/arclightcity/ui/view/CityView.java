@@ -593,7 +593,58 @@ public class CityView {
         sellBtn.setOnAction(e -> {
             engine.getInventory().removeItem(item.getId());
             engine.getPlayer().addGold(fp);
-            router.addSystemChat("✓ " + item.getName() + " dijual ⚙" + fp);
+
+            // FIX 10: Jual item juga kasih material berdasarkan rarity
+            arclightcity.item.Item.Rarity rarity = item.getRarity();
+            java.util.Random rng = new java.util.Random();
+            String matGain = "";
+            if (rarity != null) {
+                switch (rarity) {
+                    case COMMON -> {
+                        // 40% chance scrap x1
+                        if (rng.nextDouble() < 0.40) {
+                            engine.getInventory().addItem(new Material("Scrap Metal", "", rarity, Material.MaterialType.SCRAP_METAL));
+                            matGain = " + Scrap";
+                        }
+                    }
+                    case UNCOMMON -> {
+                        // 60% scrap, 20% chip
+                        engine.getInventory().addItem(new Material("Scrap Metal", "", rarity, Material.MaterialType.SCRAP_METAL));
+                        matGain = " + Scrap";
+                        if (rng.nextDouble() < 0.20) {
+                            engine.getInventory().addItem(new Material("Circuit Chip", "", rarity, Material.MaterialType.CYBER_CHIP));
+                            matGain += " + Chip";
+                        }
+                    }
+                    case RARE -> {
+                        // scrap + 50% chip
+                        engine.getInventory().addItem(new Material("Scrap Metal", "", rarity, Material.MaterialType.SCRAP_METAL));
+                        if (rng.nextDouble() < 0.50) {
+                            engine.getInventory().addItem(new Material("Circuit Chip", "", rarity, Material.MaterialType.CYBER_CHIP));
+                            matGain = " + Chip";
+                        }
+                        if (rng.nextDouble() < 0.15) {
+                            engine.getInventory().addItem(new Material("Neon Crystal", "", rarity, Material.MaterialType.NEON_CRYSTAL));
+                            matGain += " + Crystal";
+                        }
+                    }
+                    case EPIC, LEGENDARY -> {
+                        // chip pasti, crystal 40%, cal kit 10%
+                        engine.getInventory().addItem(new Material("Circuit Chip", "", rarity, Material.MaterialType.CYBER_CHIP));
+                        matGain = " + Chip";
+                        if (rng.nextDouble() < 0.40) {
+                            engine.getInventory().addItem(new Material("Neon Crystal", "", rarity, Material.MaterialType.NEON_CRYSTAL));
+                            matGain += " + Crystal";
+                        }
+                        if (rng.nextDouble() < 0.10) {
+                            engine.getInventory().addItem(new Material("Cal Kit", "", rarity, Material.MaterialType.CALIBRATION_KIT));
+                            matGain += " + Cal Kit";
+                        }
+                    }
+                    default -> {}
+                }
+            }
+            router.addSystemChat("✓ " + item.getName() + " dijual ⚙" + fp + matGain);
             engine.autoSave();
             router.showCityArea("PENADAH");
         });

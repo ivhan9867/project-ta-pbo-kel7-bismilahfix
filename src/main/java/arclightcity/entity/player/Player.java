@@ -190,7 +190,10 @@ public class Player extends Entity {
         this.currentShield = getStats().get(arclightcity.entity.stats.StatType.MAX_SHIELD);
     }
 
-    public void setHpDirect(double hp)                             { this.currentHp = Math.min(hp, stats.get(StatType.MAX_HP)); }
+    public void setHpDirect(double hp) {
+        this.currentHp = Math.min(Math.max(0, hp), stats.get(arclightcity.entity.stats.StatType.MAX_HP));
+        if (this.currentHp > 0) this.alive = true; // revive jika HP > 0
+    }
     public void setMpDirect(double mp)                             { this.currentMp = Math.min(mp, stats.get(StatType.MAX_MP)); }
     public void setShieldDirect(double shield)                     { this.currentShield = Math.min(shield, stats.get(StatType.MAX_SHIELD)); }
     public void setSkillPointsDirect(int pts)                      { this.skillPoints = pts; }

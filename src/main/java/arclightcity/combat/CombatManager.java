@@ -146,6 +146,10 @@ public class CombatManager {
         totalTurns++;
         emit(CombatEvent.turnStart(current.getId(), current.getName(), totalTurns));
 
+        // MP REGEN per turn: Guildmate regen 8 MP, Player regen 5 MP
+        double mpRegen = (current instanceof arclightcity.entity.mercenary.Mercenary) ? 8 : 5;
+        current.restoreMp(mpRegen);
+
         // Turn start lifecycle
         current.onTurnStart();
         emitDotResults(current);

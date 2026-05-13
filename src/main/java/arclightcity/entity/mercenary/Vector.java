@@ -53,8 +53,8 @@ public class Vector extends Mercenary {
         stats.setBase(StatType.DAMAGE_MULT,  0.15); // sangat rendah
         stats.setBase(StatType.MAX_MP,       90);
         stats.setBase(StatType.MP_REGEN,     8);
-        stats.setBase(StatType.PHYSICAL_ATK, 44.8);
-        stats.setBase(StatType.CYBER_ATK,    60.8); // cyber attack terkuat
+        stats.setBase(StatType.PHYSICAL_ATK, 90);
+        stats.setBase(StatType.CYBER_ATK, 30); // cyber attack terkuat
         stats.setBase(StatType.PHYSICAL_DEF, 7.8);
         stats.setBase(StatType.CYBER_DEF,    18.2);
         stats.setBase(StatType.ENERGY_DEF,   10.4);

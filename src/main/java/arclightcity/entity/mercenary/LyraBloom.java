@@ -59,9 +59,9 @@ public class LyraBloom extends Mercenary {
         stats.setBase(StatType.MAX_MP,       100);
         stats.setBase(StatType.MP_REGEN,     8);
         stats.setBase(StatType.HP_REGEN,     8);   // regen sendiri tinggi
-        stats.setBase(StatType.PHYSICAL_ATK, 12.8);
+        stats.setBase(StatType.PHYSICAL_ATK, 35);
         stats.setBase(StatType.CYBER_ATK,    16);
-        stats.setBase(StatType.ENERGY_ATK,   56);  // offense via energy
+        stats.setBase(StatType.ENERGY_ATK, 80);  // offense via energy
         stats.setBase(StatType.PHYSICAL_DEF, 13);
         stats.setBase(StatType.CYBER_DEF,    15.6);
         stats.setBase(StatType.ENERGY_DEF,   39);  // sangat resist energy

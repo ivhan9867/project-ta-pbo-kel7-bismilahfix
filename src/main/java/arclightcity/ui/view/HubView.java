@@ -496,11 +496,12 @@ public class HubView {
 
     private String getDistrictName(int depth) {
         if (depth <= 0)  return "PENDOPO MARKAS";
-        if (depth <= 3)  return "PASAR MALAM GAIB";
-        if (depth <= 6)  return "CANDI TERLARANG";
-        if (depth <= 10) return "HUTAN ANGKER";
-        if (depth <= 15) return "GOA NAGA";
-        return "KAHYANGAN RUSAK";
+        if (depth <= 10) return "PASAR MALAM GAIB";   // F1-10: pasar
+        if (depth <= 20) return "CANDI TERLARANG";     // F11-20: candi
+        if (depth <= 30) return "HUTAN ANGKER";        // F21-30: hutan
+        if (depth <= 40) return "GOA NAGA";            // F31-40: goa
+        if (depth <= 50) return "KAHYANGAN RUSAK";     // F41-50
+        return "JURANG ABADI";                         // F51+
     }
 
     private long getMythicFragmentCount() {

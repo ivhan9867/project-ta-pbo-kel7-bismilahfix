@@ -64,9 +64,9 @@ public class SkillExecutor {
                  "SHOCKWAVE","VOID_RUPTURE" -> 10;
             case "SELF_DESTRUCT" -> 0;
             // Skill guildmate baru
-            case "FORTIFY_TEAM","FOCUS_TEAM","SYNC_TEAM","STEALTH_STEP" -> 14;
-            case "REGEN_TEAM","EMPOWER_TEAM","BARRIER_SHIELD","BLOOM_BARRIER" -> 16;
-            case "STUN_SLAM","WEAKEN_AURA","BLEED_SLASH","EXPOSE_SHOT","SLOW_CURSE" -> 12;
+            case "FORTIFY_TEAM","FOCUS_TEAM","SYNC_TEAM","STEALTH_STEP" -> 10;
+            case "REGEN_TEAM","EMPOWER_TEAM","BARRIER_SHIELD","BLOOM_BARRIER" -> 12;
+            case "STUN_SLAM","WEAKEN_AURA","BLEED_SLASH","EXPOSE_SHOT","SLOW_CURSE" -> 8;
             default -> skillId.contains("BOSS") ? 30 : 12;
         };
     }
@@ -147,15 +147,15 @@ public class SkillExecutor {
 
             // ─── GUILDMATE BUFF SKILLS ──────────────────────────────
             case "FORTIFY_TEAM"   -> { buffTeam(caster, targets, allAllies,
-                arclightcity.entity.status.StatusEffectType.FORTIFY, 3, events, "Pertahanan meningkat!"); yield events; }
+                arclightcity.entity.status.StatusEffectType.FORTIFY, 8, events, "Pertahanan meningkat!"); yield events; }
             case "FOCUS_TEAM"     -> { buffTeam(caster, targets, allAllies,
-                arclightcity.entity.status.StatusEffectType.FOCUS, 2, events, "Fokus dan akurasi meningkat!"); yield events; }
+                arclightcity.entity.status.StatusEffectType.FOCUS, 6, events, "Fokus dan akurasi meningkat!"); yield events; }
             case "REGEN_TEAM"     -> { buffTeam(caster, targets, allAllies,
-                arclightcity.entity.status.StatusEffectType.REGEN, 3, events, "Regenerasi HP aktif!"); yield events; }
+                arclightcity.entity.status.StatusEffectType.REGEN, 9, events, "Regenerasi HP aktif!"); yield events; }
             case "EMPOWER_TEAM"   -> { buffTeam(caster, targets, allAllies,
-                arclightcity.entity.status.StatusEffectType.EMPOWERED, 2, events, "Serangan menguat!"); yield events; }
+                arclightcity.entity.status.StatusEffectType.EMPOWERED, 6, events, "Serangan menguat!"); yield events; }
             case "SYNC_TEAM"      -> { buffTeam(caster, targets, allAllies,
-                arclightcity.entity.status.StatusEffectType.SYNC, 2, events, "Kecepatan tersinkronisasi!"); yield events; }
+                arclightcity.entity.status.StatusEffectType.SYNC, 6, events, "Kecepatan tersinkronisasi!"); yield events; }
             // ─── GUILDMATE CC SKILLS ────────────────────────────────
             // ─── GUILDMATE ATTACK SKILLS ────────────────────────────
             default -> {
@@ -657,16 +657,26 @@ public class SkillExecutor {
     /** NEON_BLOOM: heal semua ally + weak damage ke musuh */
     private static void neonBloom(Entity caster, List<Entity> allAllies, List<Entity> allEnemies,
                                    List<CombatEvent> events) {
-        double healAmt = 30 + caster.getStats().get(arclightcity.entity.stats.StatType.ENERGY_ATK) * 0.3;
+        double healAmt = 35 + caster.getStats().get(arclightcity.entity.stats.StatType.ENERGY_ATK) * 0.35;
         for (Entity ally : allAllies) {
             if (!ally.isAlive()) continue;
-            double actual = ally.receiveHeal(healAmt);
+            double maxHp = ally.getStats().get(arclightcity.entity.stats.StatType.MAX_HP);
+            // Jika HP sudah >95%, alihkan ke shield bukan heal
+            if (ally.getCurrentHp() >= maxHp * 0.95) {
+                ally.applyEffect(new arclightcity.entity.status.StatusEffect(
+                    arclightcity.entity.status.StatusEffectType.BARRIER, 6, healAmt, caster.getId()));
+                events.add(new CombatEvent.Builder(CombatEvent.EventType.SKILL_USED)
+                    .actor(caster.getId(), caster.getName())
+                    .message("Mekar Neon: HP penuh, Shield +" + (int)healAmt).build());
+            } else {
+                double actual = ally.receiveHeal(healAmt);
+                events.add(new CombatEvent.Builder(CombatEvent.EventType.HEAL_RECEIVED)
+                    .actor(caster.getId(), caster.getName())
+                    .target(ally.getId(), ally.getName())
+                    .value(actual).message("Mekar Neon +" + (int)actual + " HP").build());
+            }
             ally.applyEffect(new arclightcity.entity.status.StatusEffect(
-                arclightcity.entity.status.StatusEffectType.REGEN, 3, 8, caster.getId()));
-            events.add(new CombatEvent.Builder(CombatEvent.EventType.HEAL_RECEIVED)
-                .actor(caster.getId(), caster.getName())
-                .target(ally.getId(), ally.getName())
-                .value(actual).message("Mekar Neon memulihkan " + (int)actual + " HP").build());
+                arclightcity.entity.status.StatusEffectType.REGEN, 9, 10, caster.getId()));
         }
     }
 
