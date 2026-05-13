@@ -99,15 +99,15 @@ public class VoidSpecter extends Enemy {
         // Hapus buff, ganti dengan debuff
         if (target.hasEffect(StatusEffectType.FORTIFY)) {
             target.removeEffect(StatusEffectType.FORTIFY);
-            target.applyEffect(new StatusEffect(StatusEffectType.SHRED, 2, 15.0, this.id));
+            target.applyEffect(new StatusEffect(StatusEffectType.SHRED, 1, 5.0, this.id));
         }
         if (target.hasEffect(StatusEffectType.REGEN)) {
             target.removeEffect(StatusEffectType.REGEN);
-            target.applyEffect(new StatusEffect(StatusEffectType.BLEED, 2, 10.0, this.id));
+            target.applyEffect(new StatusEffect(StatusEffectType.BLEED, 2, 5.0, this.id));
         }
         if (target.hasEffect(StatusEffectType.EMPOWERED)) {
             target.removeEffect(StatusEffectType.EMPOWERED);
-            target.applyEffect(new StatusEffect(StatusEffectType.WEAKEN, 2, 15.0, this.id));
+            target.applyEffect(new StatusEffect(StatusEffectType.WEAKEN, 2, 8.0, this.id));
         }
 
         // Tambah Silence

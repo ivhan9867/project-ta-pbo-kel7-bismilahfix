@@ -91,8 +91,7 @@ public class DamageCalculator {
 
             // Shred: reduce target DEF
             if (target.hasEffect(StatusEffectType.SHRED)) {
-                StatusEffectType shred = StatusEffectType.SHRED;
-                defense *= 0.55; // shred reduce DEF by 45%
+                defense *= 0.80; // SHRED: -20% DEF (cukup terasa tapi tidak OP)
             }
 
             // Armor pierce: bypass sebagian DEF
@@ -101,7 +100,10 @@ public class DamageCalculator {
             defense *= (1.0 - totalPierce);
 
             // Formula: damage = raw × (100 / (100 + DEF))
-            finalDmg = dmg * (100.0 / (100.0 + Math.max(0, defense)));
+            // DEF reduction cap: max 80% reduction (enemy tidak bisa blocking >80% damage)
+            double defReduction = defense / (defense + 100.0);
+            defReduction = Math.min(0.80, defReduction); // max 80% reduction
+            finalDmg = dmg * (1.0 - defReduction);
         }
 
         // ── Step 5: Crit multiplier ──────────────────────────
@@ -124,7 +126,13 @@ public class DamageCalculator {
         }
 
         finalDmg += overloadBonus;
-        finalDmg = Math.max(1, Math.round(finalDmg));
+        // Minimum damage: 15% dari base ATK dominan, min 5
+        double dominantAtk = Math.max(
+            atkStats.get(StatType.PHYSICAL_ATK),
+            Math.max(atkStats.get(StatType.ENERGY_ATK), atkStats.get(StatType.CYBER_ATK))
+        );
+        double minDmg = Math.max(5, dominantAtk * 0.15);
+        finalDmg = Math.max(minDmg, Math.round(finalDmg));
 
         return new DamageCalcResult(finalDmg, isCrit, blocked, false, overloadBonus > 0, dmgType);
     }

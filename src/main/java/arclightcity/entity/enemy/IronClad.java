@@ -74,7 +74,7 @@ public class IronClad extends Enemy {
             }
             case 2 -> {
                 // Phase 2: Armor retak, lebih agresif — tambahkan Shred ke target
-                target.applyEffect(new StatusEffect(StatusEffectType.SHRED, 2, 10.0, this.id));
+                target.applyEffect(new StatusEffect(StatusEffectType.SHRED, 1, 5.0, this.id));
                 yield CombatAction.basicAttack(List.of(target.getId()));
             }
             case 3 -> {
@@ -122,7 +122,7 @@ public class IronClad extends Enemy {
             stats.addBase(StatType.PHYSICAL_ATK,  20);
             stats.addBase(StatType.SPEED,          5);
             stats.addBase(StatType.CRIT_CHANCE,  0.20);
-            this.applyEffect(new StatusEffect(StatusEffectType.OVERCLOCK, 999, 0, this.id));
+            this.applyEffect(new StatusEffect(StatusEffectType.EMPOWERED, 2, 0, this.id));
         }
     }
 

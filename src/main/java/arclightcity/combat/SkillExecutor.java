@@ -52,11 +52,18 @@ public class SkillExecutor {
             case "IRON_SHIELD",   "TAMENG_BAJA"      -> 18;
             case "SEISMIC_SLAM",  "GEMPA_BUMI"       -> 25;
             case "SACRED_SEAL",   "RAJAH_PELINDUNG"  -> 22;
+            // Guildmate skills
+            case "TAUNT"                         -> 15;
+            case "TRIAGE_HEAL","CLEANSE_PROTOCOL"-> 18;
+            case "OVERLOAD_SHOT","SHRED_CANNON"  -> 25;
+            case "EMP_BURST","FREQUENCY_LOCK"    -> 22;
+            case "SIGNAL_JAM"                    -> 18;
+            case "NEON_BLOOM","BLOOM_MEND"       -> 20;
             // Enemy skills - biaya rendah
             case "NEON_VENOM","COIL_STRIKE","VIRUS_UPLOAD","CORRUPT",
                  "SHOCKWAVE","VOID_RUPTURE" -> 10;
-            case "SELF_DESTRUCT" -> 0; // tidak pakai MP
-            // Boss skills - biaya tinggi
+            case "SELF_DESTRUCT" -> 0;
+            // Boss skills
             default -> skillId.contains("BOSS") ? 30 : 12;
         };
     }

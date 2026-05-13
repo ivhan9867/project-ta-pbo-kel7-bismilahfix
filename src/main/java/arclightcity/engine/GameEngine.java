@@ -283,6 +283,23 @@ public class GameEngine {
     }
 
     public void returnToHub() {
+        // Pastikan player tidak dalam keadaan mati saat kembali ke hub
+        if (!player.isAlive() || player.getCurrentHp() <= 0) {
+            double maxHp = player.getStats().get(arclightcity.entity.stats.StatType.MAX_HP);
+            double maxMp = player.getStats().get(arclightcity.entity.stats.StatType.MAX_MP);
+            player.setHpDirect(maxHp * 0.30);
+            player.restoreMp(maxMp * 0.30);
+            // Revive guildmate juga
+            for (var m : getOwnedMercs()) {
+                if (!m.isAlive()) {
+                    m.restoreVitals(
+                        m.getStats().get(arclightcity.entity.stats.StatType.MAX_HP) * 0.30,
+                        m.getStats().get(arclightcity.entity.stats.StatType.MAX_SHIELD) * 0.20,
+                        m.getStats().get(arclightcity.entity.stats.StatType.MAX_MP) * 0.30
+                    );
+                }
+            }
+        }
         transitionTo(GameState.HUB);
     }
 

@@ -292,9 +292,10 @@ public class SceneRouter {
     }
 
     public void showDungeonMap() {
-        // Selalu buat DungeonMapView baru untuk fresh UI
-        // tapi wireEngineListeners dipanggil di initDungeonListeners() — hanya sekali
+        // Buat DungeonMapView baru untuk fresh UI
         dungeonMapView = new DungeonMapView(engine, this);
+        // WAJIB re-wire listener karena instance baru dibuat
+        dungeonMapView.wireEngineListeners();
         showWithChat(dungeonMapView.build());
         emitChatDelayed(MercenaryDialogue.Trigger.DUNGEON_ENTER_FLOOR, 600);
     }

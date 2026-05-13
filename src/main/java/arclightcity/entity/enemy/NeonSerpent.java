@@ -59,7 +59,7 @@ public class NeonSerpent extends Enemy {
         if (target == null) return CombatAction.pass();
 
         // Venomous Bite: selalu coba stack Bleed
-        target.applyEffect(new StatusEffect(StatusEffectType.BLEED, 3, 8.0, this.id));
+        target.applyEffect(new StatusEffect(StatusEffectType.BLEED, 2, 5.0, this.id));
         bleedStacks++;
 
         return CombatAction.basicAttack(List.of(target.getId()));
@@ -71,7 +71,7 @@ public class NeonSerpent extends Enemy {
         Entity target = getLowestHpTarget(enemies);
         if (target == null) return CombatAction.pass();
 
-        target.applyEffect(new StatusEffect(StatusEffectType.BLEED, 4, 15.0, this.id));
+        target.applyEffect(new StatusEffect(StatusEffectType.BLEED, 3, 8.0, this.id));
         target.applyEffect(new StatusEffect(StatusEffectType.SLOW, 2, 0.5, this.id));
 
         return CombatAction.useSkill("NEON_VENOM", List.of(target.getId()));
@@ -85,7 +85,7 @@ public class NeonSerpent extends Enemy {
                 .map(Entity::getId)
                 .toList();
         enemies.stream().filter(Entity::isAlive).forEach(t ->
-                t.applyEffect(new StatusEffect(StatusEffectType.BLEED, 3, 12.0, this.id)));
+                t.applyEffect(new StatusEffect(StatusEffectType.BLEED, 2, 6.0, this.id)));
 
         return CombatAction.useSkill("COIL_STRIKE", allTargetIds);
     }

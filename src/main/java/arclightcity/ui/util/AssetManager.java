@@ -161,7 +161,8 @@ public class AssetManager {
     // ── Key maps ─────────────────────────────────────────────
     public static String enemySpriteKey(String name) {
         if (name == null) return "leakpengembara";
-        return switch (name.toLowerCase().trim()) {
+        String key = switch (name.toLowerCase().trim()) {
+            // Pemetaan utama
             case "leak pengembara"    -> "leakpengembara";
             case "naga basuki"        -> "nagabasuki";
             case "genderuwo mekanik"  -> "genderuwomekanik";
@@ -169,22 +170,30 @@ public class AssetManager {
             case "kuntilanak abadi"   -> "kuntilanakabadi";
             case "tuyul pencuri"      -> "tuyulpencuri";
             case "wewe gombel"        -> "wewegombel";
-            case "pocong prajurit"    -> "pocongprajurit";
-            case "banaspati mekanik"  -> "banaspatimekanik";
-            case "celeng buto"        -> "celengbuto";
-            case "ular nagabanda"     -> "nagabanda";
-            case "demit pabrik"       -> "demitpabrik";
-            case "siluman harimau"    -> "silumanharimau";
-            case "jenglot purba"      -> "jenglotpurba";
-            case "buto ijo"           -> "butoijo";
-            case "gajah mungkur"      -> "gajahmungkur";
-            case "manananggal"        -> "manananggal";
-            case "leyak penyihir"     -> "leyakpenyihir";
-            case "rangkiang raksasa"  -> "rangkiangraksasa";
-            case "naga cyber"         -> "nagacyber";
-            case "tank rx-9", "tank-rx9", "tank rx9" -> "rx9";
+            case "pocong prajurit","pocong listrik","pocong" -> "pocongprajurit";
+            case "banaspati mekanik","banaspati" -> "banaspatimekanik";
+            case "celeng buto","celeng" -> "celengbuto";
+            case "ular nagabanda","ular naga","nagabanda" -> "nagabanda";
+            case "demit pabrik","demit" -> "demitpabrik";
+            case "siluman harimau","siluman" -> "silumanharimau";
+            case "jenglot purba","jenglot" -> "jenglotpurba";
+            case "buto ijo","buto" -> "butoijo";
+            case "gajah mungkur","gajah" -> "gajahmungkur";
+            case "manananggal" -> "manananggal";
+            case "leyak penyihir","leyak" -> "leyakpenyihir";
+            case "rangkiang raksasa","rangkiang" -> "rangkiangraksasa";
+            case "naga cyber","naga" -> "nagacyber";
+            case "tank rx-9","tank-rx9","tank rx9","tank" -> "rx9";
+            // Fallback: strip spasi dan karakter non-alpha
             default -> name.toLowerCase().replaceAll("[^a-z0-9]", "");
         };
+        // Verifikasi sprite ada, jika tidak pakai fallback leakpengembara
+        var test = load("sprites/enemy/" + key + "_idle.png");
+        if (test == null) {
+            System.err.println("[AssetManager] No sprite for '" + name + "' (key=" + key + "), using fallback");
+            return "leakpengembara";
+        }
+        return key;
     }
 
     public static String guildmateSpriteKey(String name) {

@@ -45,17 +45,34 @@ public abstract class Enemy extends Entity {
      */
     public void scaleToFloor(int floor) {
         this.floorLevel = floor;
-        double scaleFactor = 1.0 + (floor - 1) * 0.06; // +6% per floor (lebih ringan)
-        stats.scaleBase(scaleFactor);
 
-        // Enemy biasa: hapus shield dan MP — hanya HP yang ada
-        if (!(this instanceof arclightcity.entity.enemy.Boss)) {
+        if (this instanceof arclightcity.entity.enemy.Boss) {
+            // BOSS: semua stat naik normal (+10% per floor)
+            double bossScale = 1.0 + (floor - 1) * 0.10;
+            stats.scaleBase(bossScale);
+        } else {
+            // KROCO: HP naik banyak (+12% per floor), ATK hampir tidak naik (+3%)
+            double hpScale  = 1.0 + (floor - 1) * 0.12;
+            double atkScale = 1.0 + (floor - 1) * 0.03;
+
+            double baseHp  = stats.get(arclightcity.entity.stats.StatType.MAX_HP);
+            double baseAtk = stats.get(arclightcity.entity.stats.StatType.PHYSICAL_ATK);
+            double baseDef = stats.get(arclightcity.entity.stats.StatType.PHYSICAL_DEF);
+
+            stats.setBase(arclightcity.entity.stats.StatType.MAX_HP,     baseHp  * hpScale);
+            stats.setBase(arclightcity.entity.stats.StatType.PHYSICAL_ATK, baseAtk * atkScale);
+            stats.setBase(arclightcity.entity.stats.StatType.CYBER_ATK,    stats.get(arclightcity.entity.stats.StatType.CYBER_ATK) * atkScale);
+            stats.setBase(arclightcity.entity.stats.StatType.ENERGY_ATK,   stats.get(arclightcity.entity.stats.StatType.ENERGY_ATK) * atkScale);
+            // DEF kroco TIDAK naik — player selalu bisa deal damage yang masuk akal
+            // (DEF tetap base, tidak scale per floor)
+
+            // Kroco: hapus shield dan MP
             stats.setBase(arclightcity.entity.stats.StatType.MAX_SHIELD, 0);
             stats.setBase(arclightcity.entity.stats.StatType.MAX_MP, 0);
         }
 
-        expReward  *= scaleFactor;
-        goldReward  = (long)(goldReward * scaleFactor);
+        expReward  *= (1.0 + (floor - 1) * 0.08);
+        goldReward  = (long)(goldReward * (1.0 + (floor - 1) * 0.08));
         initVitals();
     }
 

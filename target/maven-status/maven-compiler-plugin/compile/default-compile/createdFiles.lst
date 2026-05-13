@@ -53,7 +53,6 @@ arclightcity\save\GameSaveState.class
 arclightcity\entity\enemy\PocongListrik.class
 arclightcity\ui\view\MainMenuView.class
 arclightcity\item\UpgradeSystem.class
-arclightcity\ui\view\CombatView$FloatingText.class
 arclightcity\dungeon\DungeonEvent$EventChoice.class
 arclightcity\entity\enemy\Banaspati.class
 arclightcity\dungeon\ProceduralGenerator.class
@@ -120,6 +119,7 @@ arclightcity\ui\view\DungeonGridMap$1.class
 arclightcity\ui\view\MercChatPanel.class
 arclightcity\combat\TurnQueue$TurnSlot.class
 arclightcity\save\GameSaveState$ProgressData.class
+arclightcity\ui\view\CombatView$FT.class
 arclightcity\ui\view\ShopView.class
 arclightcity\entity\stats\StatSheet.class
 arclightcity\item\CalibrationSystem$CalibrationResult.class

@@ -152,6 +152,19 @@ public class DungeonMapView {
         VBox root = new VBox(0);
         root.setStyle("-fx-background-color: #0A0604;");
 
+        // Background dungeon berdasarkan floor
+        try {
+            int fl = engine.getDungeonManager().getCurrentFloorNumber();
+            var bg = arclightcity.ui.util.AssetManager.bgDungeon(fl);
+            if (bg != null) {
+                var iv = arclightcity.ui.util.AssetManager.makeIVFill(
+                    bg, arclightcity.ui.ArclightApp.GAME_WIDTH,
+                    arclightcity.ui.ArclightApp.SCREEN_HEIGHT);
+                iv.setOpacity(0.12); iv.setMouseTransparent(true);
+                root.getChildren().add(0, iv);
+            }
+        } catch (Exception ignored) {}
+
         // ── TOP: header + vitals ──────────────────────────
         VBox topFixed = new VBox(0);
 

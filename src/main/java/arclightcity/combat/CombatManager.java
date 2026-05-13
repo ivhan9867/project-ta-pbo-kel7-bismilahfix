@@ -239,10 +239,28 @@ public class CombatManager {
             }
 
             case USE_ITEM -> {
-                // Dihandle oleh ItemManager — di sini hanya log
-                emit(new CombatEvent.Builder(CombatEvent.EventType.SKILL_USED)
+                // Heal item — CombatManager tidak akses inventory langsung
+                // heal amount diambil dari itemId yang di-encode saat CombatView submit
+                double healAmt = 50; // default fallback
+                String itemName = "Item";
+                try {
+                    String iid = action.getItemId();
+                    if (iid != null) {
+                        // Format: "itemId|healValue|itemName" jika ada pipe separator
+                        if (iid.contains("|")) {
+                            String[] parts = iid.split("\\|");
+                            healAmt = Double.parseDouble(parts[1]);
+                            if (parts.length > 2) itemName = parts[2];
+                        }
+                    }
+                } catch (Exception ignored2) {}
+                double actualHeal = actor.receiveHeal(healAmt);
+                emit(new CombatEvent.Builder(CombatEvent.EventType.HEAL_RECEIVED)
                         .actor(actor.getId(), actor.getName())
-                        .message(actor.getName() + " uses item: " + action.getItemId())
+                        .target(actor.getId(), actor.getName())
+                        .value(actualHeal)
+                        .message(actor.getName() + " menggunakan " + itemName +
+                                 ", memulihkan " + (int)actualHeal + " HP")
                         .build());
             }
 

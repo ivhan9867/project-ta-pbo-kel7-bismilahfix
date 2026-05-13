@@ -63,7 +63,7 @@ public class GlitchDrone extends Enemy {
                 .orElse(null);
 
         if (mpTarget != null) {
-            mpTarget.applyEffect(new StatusEffect(StatusEffectType.DRAIN, 2, 8.0, this.id));
+            mpTarget.applyEffect(new StatusEffect(StatusEffectType.DRAIN, 1, 4.0, this.id));
             return CombatAction.basicAttack(List.of(mpTarget.getId()));
         }
         return CombatAction.pass();
@@ -75,7 +75,7 @@ public class GlitchDrone extends Enemy {
         Entity target = getRandomTarget(enemies);
         if (target == null) return CombatAction.pass();
 
-        target.applyEffect(new StatusEffect(StatusEffectType.VIRUS, 3, 12.0, this.id));
+        target.applyEffect(new StatusEffect(StatusEffectType.VIRUS, 2, 6.0, this.id));
         if (Math.random() < 0.25) {
             target.applyEffect(new StatusEffect(StatusEffectType.HACK, 1, 0, this.id));
         }

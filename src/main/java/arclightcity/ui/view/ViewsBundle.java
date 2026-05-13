@@ -358,8 +358,31 @@ public static class InventoryViewImpl {
         unequipBtn.setOnAction(e -> {
             inv.unequip(eq);
             popup.close();
-            // Refresh inventory view agar slot terupdate
             router.showInventory();
+        });
+
+        // Tombol Upgrade langsung dari popup
+        Button upgradeBtn = new Button("⬆ UPGRADE");
+        upgradeBtn.setStyle("-fx-background-color: #C8860A15; -fx-border-color: #C8860A;" +
+                           "-fx-border-width: 1; -fx-text-fill: #FFB830;" +
+                           "-fx-font-family: 'Courier New'; -fx-font-size: 11px;" +
+                           "-fx-padding: 6 14; -fx-cursor: hand;");
+        upgradeBtn.setOnAction(e -> {
+            var res = inv.upgradeItem(eq.getId());
+            popup.close();
+            router.addSystemChat("⬆ " + eq.getName() + ": " + res.message);
+            router.showInventory();
+        });
+
+        // Tombol Kalibrasi langsung dari popup
+        Button calibBtn = new Button("◈ KALIBRASI");
+        calibBtn.setStyle("-fx-background-color: #4455CC15; -fx-border-color: #6677CC;" +
+                         "-fx-border-width: 1; -fx-text-fill: #88AAFF;" +
+                         "-fx-font-family: 'Courier New'; -fx-font-size: 11px;" +
+                         "-fx-padding: 6 14; -fx-cursor: hand;");
+        calibBtn.setOnAction(e -> {
+            popup.close();
+            router.showCalibrationPicker();
         });
 
         Button closeBtn = new Button("TUTUP");
@@ -370,9 +393,14 @@ public static class InventoryViewImpl {
         closeBtn.setOnAction(e -> popup.close());
         HBox.setHgrow(closeBtn, Priority.ALWAYS);
 
-        actions.getChildren().addAll(unequipBtn, closeBtn);
+        // Baris 1: Upgrade + Kalibrasi
+        HBox row1 = new HBox(8, upgradeBtn, calibBtn);
+        // Baris 2: Lepas + Tutup
+        HBox row2 = new HBox(8, unequipBtn, closeBtn);
+        VBox actionRows = new VBox(6, row1, row2);
+        actionRows.setPadding(new Insets(10, 16, 14, 16));
 
-        root.getChildren().addAll(header, statsBox, actions);
+        root.getChildren().addAll(header, statsBox, actionRows);
 
         popup.setScene(new javafx.scene.Scene(root));
         popup.show();
@@ -547,10 +575,36 @@ public static class InventoryViewImpl {
                     " -fx-font-family: 'Courier New'; -fx-font-size: 11px;" +
                     " -fx-padding: 3 6; -fx-cursor: hand;");
             equipBtn.setOnAction(e -> {
-                var result = inv.equip(eq);
-                showAlert(result.success ? "✅ " + result.message : "❌ " + result.message);
-                // Refresh seluruh inventory view agar slot atas ikut update
-                router.showInventory();
+                // Cek apakah slot sudah penuh (ring/accessory punya 2 slot)
+                boolean isRing = eq instanceof arclightcity.item.Armor arm2
+                    && arm2.getArmorType() == arclightcity.item.Armor.ArmorType.RING;
+                boolean isAcc  = eq instanceof arclightcity.item.Accessory;
+
+                if (isRing && inv.getEquippedRing1() != null && inv.getEquippedRing2() != null) {
+                    // Kedua slot cincin penuh — tanya ganti yang mana
+                    ViewsBundle.showSlotPickerStatic("Pilih slot cincin untuk diganti:",
+                        new String[]{"Cincin Slot 1: " + inv.getEquippedRing1().getName(),
+                                     "Cincin Slot 2: " + inv.getEquippedRing2().getName()},
+                        choice -> {
+                            if (choice == 0) inv.forceEquipRing1(eq);
+                            else             inv.forceEquipRing2(eq);
+                            router.showInventory();
+                        });
+                } else if (isAcc && inv.getEquippedAccessory1() != null && inv.getEquippedAccessory2() != null) {
+                    ViewsBundle.showSlotPickerStatic("Pilih slot aksesori untuk diganti:",
+                        new String[]{"Aksesori Slot 1: " + inv.getEquippedAccessory1().getName(),
+                                     "Aksesori Slot 2: " + inv.getEquippedAccessory2().getName()},
+                        choice -> {
+                            if (choice == 0) inv.unequip(inv.getEquippedAccessory1());
+                            else             inv.unequip(inv.getEquippedAccessory2());
+                            inv.equip(eq);
+                            router.showInventory();
+                        });
+                } else {
+                    var result = inv.equip(eq);
+                    if (!result.success) showAlert("❌ " + result.message);
+                    router.showInventory();
+                }
             });
 
             // UPGRADE button
@@ -1564,23 +1618,22 @@ public static class GameOverViewImpl {
             "-fx-padding: 8 14; -fx-cursor: hand;"
         );
         retry.setOnAction(e -> {
-            // Coba load auto-save dulu, kalau tidak ada baru load slot 1
-            var autoSave = arclightcity.save.SaveManager.loadAuto();
-            if (autoSave.isPresent()) {
-                arclightcity.save.GameStateConverter.restoreFromSave(engine, autoSave.get());
-                router.addSystemChat("📂 Dimuat dari auto-save terakhir.");
-            } else {
-                var slot1 = arclightcity.save.SaveManager.loadSlot(1);
-                if (slot1.isPresent()) {
-                    arclightcity.save.GameStateConverter.restoreFromSave(engine, slot1.get());
-                    router.addSystemChat("📂 Dimuat dari Slot 1.");
-                } else {
-                    // Tidak ada save sama sekali - kembali ke hub dengan state saat ini
-                    // Restore HP/MP player ke full
-                    engine.getPlayer().fullRestore();
-                    router.addSystemChat("⚠ Tidak ada save — HP/MP dipulihkan penuh.");
-                }
+            // COBA LAGI: restore HP 50% (penalty mati) dan kembali ke hub
+            // Item dan progress TIDAK hilang — hanya HP yang dipotong
+            engine.returnToHub();
+            arclightcity.entity.player.Player pl2 = engine.getPlayer();
+            double maxHp2 = pl2.getStats().get(arclightcity.entity.stats.StatType.MAX_HP);
+            double maxMp2 = pl2.getStats().get(arclightcity.entity.stats.StatType.MAX_MP);
+            pl2.setHpDirect(maxHp2 * 0.50);
+            pl2.restoreMp(maxMp2 * 0.50);
+            // Revive semua guildmate juga di 30% HP
+            for (var m : engine.getOwnedMercs()) {
+                double mhp = m.getStats().get(arclightcity.entity.stats.StatType.MAX_HP);
+                double mshd = m.getStats().get(arclightcity.entity.stats.StatType.MAX_SHIELD);
+                double mmp = m.getStats().get(arclightcity.entity.stats.StatType.MAX_MP);
+                m.restoreVitals(mhp * 0.30, mshd * 0.25, mmp * 0.30);
             }
+            router.addSystemChat("⟳ Coba lagi — 50% HP dipulihkan, progress tetap.");
             router.showHub();
         });
 
@@ -1588,9 +1641,25 @@ public static class GameOverViewImpl {
         Button backHub = UIFactory.btnPrimary("◈  KEMBALI KE MARKAS");
         backHub.setMaxWidth(Double.MAX_VALUE);
         backHub.setOnAction(e -> {
-            // Tidak reset karakter — kembali ke hub dengan state saat ini
-            // (Player sudah mati dalam dungeon, tapi bisa upgrade/prepare ulang)
             engine.returnToHub();
+            // Restore HP minimal 25% agar tidak mati di hub
+            arclightcity.entity.player.Player pl = engine.getPlayer();
+            double maxHp = pl.getStats().get(arclightcity.entity.stats.StatType.MAX_HP);
+            double maxMp = pl.getStats().get(arclightcity.entity.stats.StatType.MAX_MP);
+            if (pl.getCurrentHp() <= 0) {
+                pl.setHpDirect(maxHp * 0.25);
+                pl.restoreMp(maxMp * 0.30);
+                router.addSystemChat("⟳ Bangkit dari kekalahan — 25% HP dipulihkan.");
+            }
+            // Revive guildmate juga
+            for (var m : engine.getOwnedMercs()) {
+                if (!m.isAlive()) {
+                    double mhp = m.getStats().get(arclightcity.entity.stats.StatType.MAX_HP);
+                    double mshd = m.getStats().get(arclightcity.entity.stats.StatType.MAX_SHIELD);
+                    double mmp = m.getStats().get(arclightcity.entity.stats.StatType.MAX_MP);
+                    m.restoreVitals(mhp * 0.25, mshd * 0.20, mmp * 0.25);
+                }
+            }
             router.showHub();
         });
 
@@ -1621,5 +1690,52 @@ public static class GameOverViewImpl {
         return root;
     }
 }
+
+    /** Tampilkan dialog pilih slot saat slot sudah penuh */
+    public static void showSlotPickerStatic(String title, String[] options,
+                                 java.util.function.IntConsumer onChoice) {
+        javafx.stage.Stage dialog = new javafx.stage.Stage();
+        dialog.initStyle(javafx.stage.StageStyle.UNDECORATED);
+        dialog.setAlwaysOnTop(true);
+
+        VBox root = new VBox(0);
+        root.setStyle("-fx-background-color:#0D0A06; -fx-border-color:#C8860A; -fx-border-width:1 1 1 3;");
+        root.setPrefWidth(300);
+
+        Label titleLbl = new Label(title);
+        titleLbl.setStyle("-fx-text-fill:#FFB830; -fx-font-family:'Courier New';" +
+            "-fx-font-size:11px; -fx-font-weight:bold; -fx-padding:10 14 6 14;");
+        root.getChildren().add(titleLbl);
+
+        for (int i = 0; i < options.length; i++) {
+            final int idx = i;
+            HBox row = new HBox();
+            row.setPadding(new Insets(8, 14, 8, 14));
+            row.setStyle("-fx-background-color:transparent; -fx-border-color:#3A2810;" +
+                        "-fx-border-width:1 0 0 0; -fx-cursor:hand;");
+            Label lbl = new Label((i+1) + ". " + options[i]);
+            lbl.setStyle("-fx-text-fill:#EDE0C8; -fx-font-family:'Courier New'; -fx-font-size:11px;");
+            row.getChildren().add(lbl);
+            row.setOnMouseEntered(e -> row.setStyle("-fx-background-color:#1A1208;" +
+                "-fx-border-color:#3A2810;-fx-border-width:1 0 0 0;-fx-cursor:hand;"));
+            row.setOnMouseExited(e -> row.setStyle("-fx-background-color:transparent;" +
+                "-fx-border-color:#3A2810;-fx-border-width:1 0 0 0;-fx-cursor:hand;"));
+            row.setOnMouseClicked(e -> { dialog.close(); onChoice.accept(idx); });
+            root.getChildren().add(row);
+        }
+
+        Button cancel = new Button("✗  BATAL");
+        cancel.setStyle("-fx-background-color:transparent; -fx-border-color:#3A2810;" +
+            "-fx-border-width:1 0 0 0; -fx-text-fill:#5A3A10;" +
+            "-fx-font-family:'Courier New'; -fx-font-size:10px;" +
+            "-fx-padding:7 14; -fx-cursor:hand;");
+        cancel.setMaxWidth(Double.MAX_VALUE);
+        cancel.setOnAction(e -> dialog.close());
+        root.getChildren().add(cancel);
+
+        dialog.setScene(new javafx.scene.Scene(root));
+        dialog.show();
+    }
+
 
 } // end ViewsBundle
