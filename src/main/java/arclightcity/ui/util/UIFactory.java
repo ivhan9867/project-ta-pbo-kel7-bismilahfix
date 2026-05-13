@@ -314,45 +314,67 @@ public class UIFactory {
     // ══════════════════════════════════════════════════════
 
     public static Label effectBadge(StatusEffect effect) {
-        Label badge = new Label(effect.getType().displayName);
-        String color = switch (effect.getType().category) {
-            case BUFF    -> GREEN;
-            case DEBUFF  -> "#FF6B6B";
-            case DOT     -> ORANGE;
-            case CONTROL -> RED;
+        // Icon per kategori/tipe (unicode aman)
+        String ico = switch (effect.getType()) {
+            case REGEN     -> "♥";  // ♥ hijau
+            case BARRIER   -> "▣";  // ▣
+            case FORTIFY   -> "♔";  // ♔
+            case EMPOWERED -> "⚡";  // ⚡
+            case FOCUS     -> "◎";  // ◎
+            case STEALTH   -> "◌";  // ◌
+            case SYNC      -> "∞";  // ∞
+            case BLEED     -> "▼";  // ▼ merah
+            case BURN      -> "▲";  // ▲ api
+            case VIRUS     -> "◆";  // ◆ cyber
+            case STUN      -> "•";  // • CC
+            case FREEZE    -> "❄";  // ❄ biru
+            case SLOW      -> "⧖";  // ⧖ biru
+            case WEAKEN    -> "↓";  // ↓ merah
+            case SHRED     -> "⚔";  // ⚔ merah
+            case EXPOSE    -> "○";  // ○ merah
+            case IRRADIATE -> "☢";  // ☢
+            case CORRODE   -> "~";  // ~
+            case DRAIN     -> "⇊";  // ⇊
+            case HACK      -> "⋯";  // ⋯
+            case TAUNT     -> "▶";  // ▶ biru
+            case OVERCLOCK -> "⟳";  // ⟳
+            case OVERLOAD  -> "⚠";  // ⚠
+            default -> switch (effect.getType().category) {
+                case BUFF    -> "❆";  // ❆
+                case DEBUFF  -> "✗";  // ✗
+                case DOT     -> "☠";  // ☠
+                case CONTROL -> "❄";  // ❄
+            };
         };
+        // Warna: hijau=buff, merah=debuff/dot, biru=CC
+        String col = switch (effect.getType().category) {
+            case BUFF    -> "#44CC88";  // hijau
+            case DEBUFF  -> "#FF4444";  // merah
+            case DOT     -> "#FF8833";  // oranye
+            case CONTROL -> "#4488FF";  // biru (CC/freeze/stun)
+        };
+        int dur = effect.getRemainingTurns();
+        Label badge = new Label(ico + (dur > 0 ? String.valueOf(dur) : ""));
         badge.setStyle(
-            "-fx-background-color: " + color + "22;" +
-            "-fx-border-color: " + color + ";" +
-            "-fx-border-width: 1;" +
-            "-fx-text-fill: " + color + ";" +
-            "-fx-font-family: 'Courier New';" +
-            "-fx-font-size: 9px;" +
-            "-fx-padding: 2 5;" +
-            "-fx-label-padding: 0;"
+            "-fx-background-color:" + col + "22;" +
+            "-fx-border-color:" + col + ";" +
+            "-fx-border-width:1;" +
+            "-fx-border-radius:3;" +
+            "-fx-background-radius:3;" +
+            "-fx-text-fill:" + col + ";" +
+            "-fx-font-size:11px;" +
+            "-fx-padding:2 4;" +
+            "-fx-label-padding:0;"
         );
-
-        // Tooltip: nama, deskripsi, sisa durasi
-        javafx.scene.control.Tooltip tip = new javafx.scene.control.Tooltip(
-            effect.getType().displayName + "\n" +
-            effect.getType().description + "\n" +
-            "Turns: " + effect.getRemainingTurns() +
-            (effect.getStackCount() > 1 ? " | Stack: " + effect.getStackCount() : "")
-        );
-        tip.setStyle(
-            "-fx-background-color: " + BG_PANEL + ";" +
-            "-fx-text-fill: " + TEXT + ";" +
-            "-fx-font-family: 'Courier New'; -fx-font-size: 11px;" +
-            "-fx-border-color: " + color + "55; -fx-border-width: 1;"
-        );
-        javafx.scene.control.Tooltip.install(badge, tip);
-
+        // Tooltip
+        Tooltip tt = new Tooltip(effect.getType().displayName +
+            " (" + dur + " turn)\n" + effect.getType().description);
+        tt.setStyle("-fx-font-family:'Courier New'; -fx-font-size:11px;" +
+                   "-fx-background-color:#0D0A06; -fx-text-fill:#EDE0C8;" +
+                   "-fx-border-color:" + col + "; -fx-border-width:1;");
+        badge.setTooltip(tt);
         return badge;
     }
-
-    // ══════════════════════════════════════════════════════
-    // DAMAGE TYPE LABEL
-    // ══════════════════════════════════════════════════════
 
     public static String damageTypeColor(DamageType type) {
         return switch (type) {

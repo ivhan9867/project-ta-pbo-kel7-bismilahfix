@@ -224,4 +224,76 @@ public abstract class Mercenary extends Entity {
         this.currentMp     = Math.min(mp,     maxMp);
         this.currentShield = Math.min(shield, maxShield);
     }
+    // ════════════════════════════════════════════════════════
+    //  BUFF-FIRST AI HELPERS
+    // ════════════════════════════════════════════════════════
+
+    /** Cek apakah ally masih punya buff yang kita berikan */
+    protected boolean teamHasBuff(java.util.List<Entity> allies,
+                                   arclightcity.entity.status.StatusEffectType buffType) {
+        return allies.stream().anyMatch(a -> a.hasEffect(buffType));
+    }
+
+    /** Cari ally dengan HP paling rendah (untuk heal target) */
+    protected Entity lowestHpAlly(java.util.List<Entity> allies) {
+        return allies.stream()
+            .filter(Entity::isAlive)
+            .min(java.util.Comparator.comparingDouble(Entity::getHpPercent))
+            .orElse(null);
+    }
+
+    /** Cari musuh dengan HP paling tinggi (target prioritas) */
+    protected Entity highestHpEnemy(java.util.List<Entity> enemies) {
+        return enemies.stream()
+            .filter(Entity::isAlive)
+            .max(java.util.Comparator.comparingDouble(Entity::getCurrentHp))
+            .orElse(null);
+    }
+
+    /** Cari musuh yang tidak punya effect tertentu */
+    protected Entity enemyWithout(java.util.List<Entity> enemies,
+                                   arclightcity.entity.status.StatusEffectType effect) {
+        return enemies.stream()
+            .filter(e -> e.isAlive() && !e.hasEffect(effect))
+            .findFirst()
+            .orElse(enemies.stream().filter(Entity::isAlive).findFirst().orElse(null));
+    }
+
+    /** Apakah ada ally yang kritis HP < 35% */
+    protected boolean hasCriticalAlly(java.util.List<Entity> allies) {
+        return allies.stream().anyMatch(a -> a.isAlive() && a.getHpPercent() < 0.35);
+    }
+
+    /** Cek apakah self punya effect */
+    protected boolean selfHasEffect(arclightcity.entity.status.StatusEffectType t) {
+        return this.hasEffect(t);
+    }
+
+    /** Cek cukup MP untuk skill */
+    protected boolean hasMP(double cost) {
+        return this.getCurrentMp() >= cost;
+    }
+
+    /** Shortcut: useSkill ke satu target */
+    protected CombatAction skill(String skillId, Entity target) {
+        if (target == null) return CombatAction.basicAttack(
+            java.util.List.of()); // fallback pass
+        return CombatAction.useSkill(skillId, java.util.List.of(target.getId()));
+    }
+
+    /** Shortcut: useSkill ke semua target */
+    protected CombatAction skillAll(String skillId, java.util.List<Entity> targets) {
+        java.util.List<String> ids = targets.stream()
+            .filter(Entity::isAlive)
+            .map(Entity::getId).toList();
+        return CombatAction.useSkill(skillId, ids);
+    }
+
+    /** Shortcut: basicAttack ke target */
+    protected CombatAction attack(Entity target) {
+        if (target == null) return CombatAction.defend();
+        return CombatAction.basicAttack(java.util.List.of(target.getId()));
+    }
+
+
 }

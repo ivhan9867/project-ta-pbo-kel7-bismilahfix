@@ -141,4 +141,30 @@ public class MagnusForge extends Mercenary {
     }
 
     public boolean isChargingOverload() { return chargingOverload; }
+    @Override
+    public CombatAction decideAction(java.util.List<Entity> allies, java.util.List<Entity> enemies) {
+        Entity target = highestHpEnemy(enemies);
+        if (target == null) return CombatAction.defend();
+
+        // 1. BUFF: EMPOWERED (atk buff) ke team jika belum aktif
+        if (!teamHasBuff(allies, arclightcity.entity.status.StatusEffectType.EMPOWERED)
+                && hasMP(16)) {
+            return skillAll("EMPOWER_TEAM", allies);
+        }
+
+        // 2. CC: STUN musuh terkuat yang belum stun
+        Entity unstunned = enemyWithout(enemies, arclightcity.entity.status.StatusEffectType.STUN);
+        if (unstunned != null && hasMP(18)) {
+            return skill("STUN_SLAM", unstunned);
+        }
+
+        // 3. AoE attack jika musuh banyak
+        if (enemies.stream().filter(Entity::isAlive).count() >= 2 && hasMP(25)) {
+            return skillAll("OVERLOAD_SHOT", enemies.stream().filter(Entity::isAlive).toList());
+        }
+
+        // 4. Basic attack
+        return attack(target);
+    }
+
 }

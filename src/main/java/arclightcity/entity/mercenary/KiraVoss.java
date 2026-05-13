@@ -121,4 +121,26 @@ public class KiraVoss extends Mercenary {
             stats.addBase(StatType.CRIT_DAMAGE, 0.30);
         }
     }
+    @Override
+    public CombatAction decideAction(java.util.List<Entity> allies, java.util.List<Entity> enemies) {
+        Entity target = highestHpEnemy(enemies);
+        if (target == null) return CombatAction.defend();
+
+        // 1. BUFF: FOCUS (crit buff) ke team jika belum aktif
+        if (!teamHasBuff(allies, arclightcity.entity.status.StatusEffectType.FOCUS)
+                && hasMP(14)) {
+            return skillAll("FOCUS_TEAM", allies);
+        }
+
+        // 2. CC: EXPOSE musuh paling kuat yang belum di-expose
+        Entity unexposed = enemyWithout(enemies, arclightcity.entity.status.StatusEffectType.EXPOSE);
+        if (unexposed != null && hasMP(12)) {
+            return skill("EXPOSE_SHOT", unexposed);
+        }
+
+        // 3. Attack: PHANTOM_SHOT ke musuh HP tertinggi
+        if (hasMP(20)) return skill("PHANTOM_SHOT", target);
+        return attack(target);
+    }
+
 }

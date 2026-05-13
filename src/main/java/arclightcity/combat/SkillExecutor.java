@@ -63,7 +63,10 @@ public class SkillExecutor {
             case "NEON_VENOM","COIL_STRIKE","VIRUS_UPLOAD","CORRUPT",
                  "SHOCKWAVE","VOID_RUPTURE" -> 10;
             case "SELF_DESTRUCT" -> 0;
-            // Boss skills
+            // Skill guildmate baru
+            case "FORTIFY_TEAM","FOCUS_TEAM","SYNC_TEAM","STEALTH_STEP" -> 14;
+            case "REGEN_TEAM","EMPOWER_TEAM","BARRIER_SHIELD","BLOOM_BARRIER" -> 16;
+            case "STUN_SLAM","WEAKEN_AURA","BLEED_SLASH","EXPOSE_SHOT","SLOW_CURSE" -> 12;
             default -> skillId.contains("BOSS") ? 30 : 12;
         };
     }
@@ -142,6 +145,19 @@ public class SkillExecutor {
             case "OVERLOAD_SHOT"        -> overloadShot(caster, targets, events);
             case "OVERLOAD_CHARGE"      -> overloadCharge(caster, events);
 
+            // ─── GUILDMATE BUFF SKILLS ──────────────────────────────
+            case "FORTIFY_TEAM"   -> { buffTeam(caster, targets, allAllies,
+                arclightcity.entity.status.StatusEffectType.FORTIFY, 3, events, "Pertahanan meningkat!"); yield events; }
+            case "FOCUS_TEAM"     -> { buffTeam(caster, targets, allAllies,
+                arclightcity.entity.status.StatusEffectType.FOCUS, 2, events, "Fokus dan akurasi meningkat!"); yield events; }
+            case "REGEN_TEAM"     -> { buffTeam(caster, targets, allAllies,
+                arclightcity.entity.status.StatusEffectType.REGEN, 3, events, "Regenerasi HP aktif!"); yield events; }
+            case "EMPOWER_TEAM"   -> { buffTeam(caster, targets, allAllies,
+                arclightcity.entity.status.StatusEffectType.EMPOWERED, 2, events, "Serangan menguat!"); yield events; }
+            case "SYNC_TEAM"      -> { buffTeam(caster, targets, allAllies,
+                arclightcity.entity.status.StatusEffectType.SYNC, 2, events, "Kecepatan tersinkronisasi!"); yield events; }
+            // ─── GUILDMATE CC SKILLS ────────────────────────────────
+            // ─── GUILDMATE ATTACK SKILLS ────────────────────────────
             default -> {
                 events.add(new CombatEvent.Builder(CombatEvent.EventType.SKILL_FAILED)
                         .actor(caster.getId(), caster.getName())
@@ -621,4 +637,173 @@ public class SkillExecutor {
             events.add(CombatEvent.death(target.getId(), target.getName()));
         }
     }
+    // ════════════════════════════════════════════════════════
+    //  GUILDMATE SKILL IMPLEMENTATIONS
+    // ════════════════════════════════════════════════════════
+
+    /** BUFF ke seluruh tim */
+    private static void buffTeam(Entity caster, List<Entity> targets, List<Entity> allAllies,
+                                  arclightcity.entity.status.StatusEffectType buffType,
+                                  int duration, List<CombatEvent> events, String msg) {
+        for (Entity ally : allAllies) {
+            if (!ally.isAlive()) continue;
+            ally.applyEffect(new arclightcity.entity.status.StatusEffect(buffType, duration, 0, caster.getId()));
+        }
+        events.add(new CombatEvent.Builder(CombatEvent.EventType.SKILL_USED)
+            .actor(caster.getId(), caster.getName())
+            .message(caster.getName() + ": " + msg).build());
+    }
+
+    /** NEON_BLOOM: heal semua ally + weak damage ke musuh */
+    private static void neonBloom(Entity caster, List<Entity> allAllies, List<Entity> allEnemies,
+                                   List<CombatEvent> events) {
+        double healAmt = 30 + caster.getStats().get(arclightcity.entity.stats.StatType.ENERGY_ATK) * 0.3;
+        for (Entity ally : allAllies) {
+            if (!ally.isAlive()) continue;
+            double actual = ally.receiveHeal(healAmt);
+            ally.applyEffect(new arclightcity.entity.status.StatusEffect(
+                arclightcity.entity.status.StatusEffectType.REGEN, 3, 8, caster.getId()));
+            events.add(new CombatEvent.Builder(CombatEvent.EventType.HEAL_RECEIVED)
+                .actor(caster.getId(), caster.getName())
+                .target(ally.getId(), ally.getName())
+                .value(actual).message("Mekar Neon memulihkan " + (int)actual + " HP").build());
+        }
+    }
+
+    /** BARRIER ke target */
+    private static void barrierHeal(Entity caster, List<Entity> targets, List<CombatEvent> events) {
+        double shieldAmt = 40 + caster.getStats().get(arclightcity.entity.stats.StatType.ENERGY_ATK) * 0.4;
+        for (Entity t : targets) {
+            if (!t.isAlive()) continue;
+            t.applyEffect(new arclightcity.entity.status.StatusEffect(
+                arclightcity.entity.status.StatusEffectType.BARRIER, 3, shieldAmt, caster.getId()));
+            events.add(new CombatEvent.Builder(CombatEvent.EventType.SKILL_USED)
+                .actor(caster.getId(), caster.getName())
+                .message("Barrier +" + (int)shieldAmt + " ke " + t.getName()).build());
+        }
+    }
+
+    /** TRIAGE_HEAL / BLOOM_MEND: heal target */
+    private static void triageheal(Entity caster, List<Entity> targets, List<CombatEvent> events) {
+        double healAmt = 50 + caster.getStats().get(arclightcity.entity.stats.StatType.ENERGY_ATK) * 0.5;
+        for (Entity t : targets) {
+            if (!t.isAlive()) continue;
+            double actual = t.receiveHeal(healAmt);
+            events.add(new CombatEvent.Builder(CombatEvent.EventType.HEAL_RECEIVED)
+                .actor(caster.getId(), caster.getName())
+                .target(t.getId(), t.getName())
+                .value(actual).message("Penyembuhan +" + (int)actual + " HP").build());
+        }
+    }
+
+    /** TAUNT: paksa semua musuh serang caster */
+    private static void taunt(Entity caster, List<Entity> allies, List<Entity> enemies, List<CombatEvent> events) {
+        caster.applyEffect(new arclightcity.entity.status.StatusEffect(
+            arclightcity.entity.status.StatusEffectType.TAUNT, 2, 0, caster.getId()));
+        events.add(new CombatEvent.Builder(CombatEvent.EventType.SKILL_USED)
+            .actor(caster.getId(), caster.getName())
+            .message(caster.getName() + " memprovokasi semua musuh!").build());
+    }
+
+    /** STUN target */
+    private static void stunTarget(Entity caster, List<Entity> targets, List<CombatEvent> events, int dur) {
+        for (Entity t : targets) {
+            t.applyEffect(new arclightcity.entity.status.StatusEffect(
+                arclightcity.entity.status.StatusEffectType.STUN, dur, 0, caster.getId()));
+        }
+        events.add(new CombatEvent.Builder(CombatEvent.EventType.SKILL_USED)
+            .actor(caster.getId(), caster.getName())
+            .message(caster.getName() + " STUN target!").build());
+    }
+
+    /** EXPOSE target: reduce DEF */
+    private static void exposeTarget(Entity caster, List<Entity> targets, List<CombatEvent> events) {
+        for (Entity t : targets) {
+            t.applyEffect(new arclightcity.entity.status.StatusEffect(
+                arclightcity.entity.status.StatusEffectType.EXPOSE, 2, 0, caster.getId()));
+        }
+        events.add(new CombatEvent.Builder(CombatEvent.EventType.EFFECT_APPLIED)
+            .actor(caster.getId(), caster.getName())
+            .message("EXPOSE: pertahanan musuh terbuka!").build());
+    }
+
+    /** SLOW target */
+    private static void slowTarget(Entity caster, List<Entity> targets, List<CombatEvent> events) {
+        for (Entity t : targets) {
+            t.applyEffect(new arclightcity.entity.status.StatusEffect(
+                arclightcity.entity.status.StatusEffectType.SLOW, 2, 0.3, caster.getId()));
+        }
+        events.add(new CombatEvent.Builder(CombatEvent.EventType.EFFECT_APPLIED)
+            .actor(caster.getId(), caster.getName())
+            .message("SLOW: musuh melambat!").build());
+    }
+
+    /** FREEZE target */
+    private static void freezeTarget(Entity caster, List<Entity> targets, List<CombatEvent> events, int dur) {
+        for (Entity t : targets) {
+            t.applyEffect(new arclightcity.entity.status.StatusEffect(
+                arclightcity.entity.status.StatusEffectType.FREEZE, dur, 0, caster.getId()));
+        }
+        events.add(new CombatEvent.Builder(CombatEvent.EventType.SKILL_USED)
+            .actor(caster.getId(), caster.getName())
+            .message("FREEZE: musuh terkunci!").build());
+    }
+
+    /** SIGNAL_JAM: slow all */
+    private static void slowAll(Entity caster, List<Entity> targets, List<CombatEvent> events) {
+        for (Entity t : targets) {
+            if (!t.isAlive()) continue;
+            t.applyEffect(new arclightcity.entity.status.StatusEffect(
+                arclightcity.entity.status.StatusEffectType.SLOW, 2, 0.3, caster.getId()));
+        }
+        events.add(new CombatEvent.Builder(CombatEvent.EventType.SKILL_USED)
+            .actor(caster.getId(), caster.getName())
+            .message("Signal Jam: semua musuh melambat!").build());
+    }
+
+    /** WEAKEN target: reduce ATK */
+    private static void weakenTarget(Entity caster, List<Entity> targets, List<CombatEvent> events) {
+        for (Entity t : targets) {
+            t.applyEffect(new arclightcity.entity.status.StatusEffect(
+                arclightcity.entity.status.StatusEffectType.WEAKEN, 2, 0.25, caster.getId()));
+        }
+        events.add(new CombatEvent.Builder(CombatEvent.EventType.EFFECT_APPLIED)
+            .actor(caster.getId(), caster.getName())
+            .message("WEAKEN: kekuatan musuh berkurang!").build());
+    }
+
+    /** STEALTH_STEP: buff stealth lalu serang */
+    private static void stealthAttack(Entity caster, List<Entity> targets, List<CombatEvent> events) {
+        caster.applyEffect(new arclightcity.entity.status.StatusEffect(
+            arclightcity.entity.status.StatusEffectType.STEALTH, 2, 0, caster.getId()));
+        // Deal damage bonus
+        for (Entity t : targets) {
+            if (!t.isAlive()) continue;
+            double base = caster.getStats().get(arclightcity.entity.stats.StatType.PHYSICAL_ATK) * 1.5;
+            double dmg = DamageCalculator.calculate(caster, t, base, DamageType.PHYSICAL, 0).finalDamage;
+            t.receiveDamage(dmg, DamageType.PHYSICAL, false);
+            events.add(new CombatEvent.Builder(CombatEvent.EventType.DAMAGE_DEALT)
+                .actor(caster.getId(), caster.getName())
+                .target(t.getId(), t.getName())
+                .value(dmg).message("Langkah Bayangan: " + (int)dmg + " damage").build());
+        }
+    }
+
+    /** BLEED_SLASH: serangan + aplikasi BLEED */
+    private static void bleedAttack(Entity caster, List<Entity> targets, List<CombatEvent> events) {
+        for (Entity t : targets) {
+            if (!t.isAlive()) continue;
+            double base = caster.getStats().get(arclightcity.entity.stats.StatType.PHYSICAL_ATK) * 1.0;
+            double dmg = DamageCalculator.calculate(caster, t, base, DamageType.PHYSICAL, 0).finalDamage;
+            t.receiveDamage(dmg, DamageType.PHYSICAL, false);
+            t.applyEffect(new arclightcity.entity.status.StatusEffect(
+                arclightcity.entity.status.StatusEffectType.BLEED, 3, 6, caster.getId()));
+            events.add(new CombatEvent.Builder(CombatEvent.EventType.DAMAGE_DEALT)
+                .actor(caster.getId(), caster.getName())
+                .target(t.getId(), t.getName())
+                .value(dmg).message("Tebasan Darah: " + (int)dmg + " + BLEED").build());
+        }
+    }
+
+
 }

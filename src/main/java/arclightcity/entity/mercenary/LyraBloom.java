@@ -177,4 +177,39 @@ public class LyraBloom extends Mercenary {
     }
 
     public double getEnergyReserve() { return energyReserve; }
+    @Override
+    public CombatAction decideAction(java.util.List<Entity> allies, java.util.List<Entity> enemies) {
+        Entity target = highestHpEnemy(enemies);
+        Entity critical = lowestHpAlly(allies);
+
+        // 1. HEAL KRITIS: siapapun yang HP < 25%
+        if (critical != null && critical.getHpPercent() < 0.25 && hasMP(20)) {
+            return skill("BLOOM_MEND", critical);
+        }
+
+        // 2. BUFF: REGEN ke semua jika belum aktif
+        if (!teamHasBuff(allies, arclightcity.entity.status.StatusEffectType.REGEN)
+                && hasMP(18)) {
+            return skillAll("NEON_BLOOM", allies);
+        }
+
+        // 3. BARRIER ke ally paling kritis yang belum dapat barrier
+        if (critical != null && !critical.hasEffect(arclightcity.entity.status.StatusEffectType.BARRIER)
+                && hasMP(14)) {
+            return skill("BLOOM_BARRIER", critical);
+        }
+
+        // 4. CC: WEAKEN musuh
+        if (target != null && !target.hasEffect(arclightcity.entity.status.StatusEffectType.WEAKEN)
+                && hasMP(12)) {
+            return skill("WEAKEN_AURA", target);
+        }
+
+        // 5. Heal ally 50%-60% HP
+        if (critical != null && critical.getHpPercent() < 0.60 && hasMP(16)) {
+            return skillAll("NEON_BLOOM", allies);
+        }
+        return CombatAction.defend();
+    }
+
 }

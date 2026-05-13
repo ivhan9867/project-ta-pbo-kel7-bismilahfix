@@ -152,4 +152,39 @@ public class SeraMend extends Mercenary {
     }
 
     public int getHealsThisBattle() { return healsThisBattle; }
+    @Override
+    public CombatAction decideAction(java.util.List<Entity> allies, java.util.List<Entity> enemies) {
+        Entity target = highestHpEnemy(enemies);
+        Entity critical = lowestHpAlly(allies);
+
+        // 1. HEAL KRITIS: jika ada ally HP < 30%
+        if (critical != null && critical.getHpPercent() < 0.30 && hasMP(18)) {
+            return skill("TRIAGE_HEAL", critical);
+        }
+
+        // 2. BUFF: REGEN + BARRIER ke team jika belum ada REGEN
+        if (!teamHasBuff(allies, arclightcity.entity.status.StatusEffectType.REGEN)
+                && hasMP(16)) {
+            return skillAll("REGEN_TEAM", allies);
+        }
+
+        // 3. BARRIER ke ally yang HP paling rendah
+        if (critical != null && !critical.hasEffect(arclightcity.entity.status.StatusEffectType.BARRIER)
+                && hasMP(14)) {
+            return skill("BARRIER_SHIELD", critical);
+        }
+
+        // 4. CC: SLOW musuh
+        if (target != null && !target.hasEffect(arclightcity.entity.status.StatusEffectType.SLOW)
+                && hasMP(10)) {
+            return skill("SLOW_CURSE", target);
+        }
+
+        // 5. Heal ally paling lemah jika masih ada MP
+        if (critical != null && critical.getHpPercent() < 0.60 && hasMP(12)) {
+            return skill("TRIAGE_HEAL", critical);
+        }
+        return CombatAction.defend(); // Support tidak perlu basic attack
+    }
+
 }

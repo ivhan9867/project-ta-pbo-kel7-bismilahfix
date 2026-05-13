@@ -148,4 +148,31 @@ public class TankRX9 extends Mercenary {
     }
 
     public int getCounterCount() { return counterCount; }
+    @Override
+    public CombatAction decideAction(java.util.List<Entity> allies, java.util.List<Entity> enemies) {
+        Entity target = highestHpEnemy(enemies);
+        if (target == null) return CombatAction.defend();
+
+        // 1. BUFF PRIORITY: FORTIFY ke team jika belum aktif
+        if (!teamHasBuff(allies, arclightcity.entity.status.StatusEffectType.FORTIFY)
+                && hasMP(15)) {
+            return skillAll("FORTIFY_TEAM", allies);
+        }
+
+        // 2. TAUNT jika banyak musuh dan musuh tidak sedang fokus ke kita
+        if (enemies.stream().filter(Entity::isAlive).count() >= 2
+                && !selfHasEffect(arclightcity.entity.status.StatusEffectType.TAUNT)
+                && hasMP(12)) {
+            return skillAll("TAUNT", enemies);
+        }
+
+        // 3. Shield diri sendiri jika HP rendah
+        if (getHpPercent() < 0.45 && hasMP(10)) {
+            return skill("IRON_SHIELD", this);
+        }
+
+        // 4. Basic attack
+        return attack(target);
+    }
+
 }

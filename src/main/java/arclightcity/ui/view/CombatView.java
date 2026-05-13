@@ -377,8 +377,6 @@ public class CombatView {
     private HBox buildPartyBar() {
         partyBar = new HBox(0);
         partyBar.setStyle("-fx-background-color:#0A0603;-fx-border-color:#C8860A44;-fx-border-width:1 0 0 0;");
-        partyBar.setPrefHeight(110);
-        partyBar.setMaxHeight(110);
         return partyBar;
     }
 
@@ -386,20 +384,26 @@ public class CombatView {
         if (partyBar==null||cm==null) return;
         partyBar.getChildren().clear();
         List<Entity> allies = cm.getAllAllies();
-        double slotW = (double) ArclightApp.GAME_WIDTH / Math.max(allies.size(), 3);
+        int n = allies.size();
+
+        // Height adaptif: 3+ member lebih compact
+        double barH = n >= 3 ? 82 : 100;
+        partyBar.setPrefHeight(barH); partyBar.setMaxHeight(barH);
+
+        double slotW = (double) ArclightApp.GAME_WIDTH / Math.max(n, 3);
         for (Entity ally : allies)
-            partyBar.getChildren().add(buildPartySlot(ally, slotW));
-        // Fill kosong
-        for (int i = allies.size(); i < 3; i++) {
-            Region empty = new Region();
-            empty.setPrefWidth(slotW);
+            partyBar.getChildren().add(buildPartySlot(ally, slotW, n));
+        // Slot kosong
+        for (int i = n; i < 3; i++) {
+            Region empty = new Region(); empty.setPrefWidth(slotW);
             empty.setStyle("-fx-border-color:#1A1008;-fx-border-width:0 1 0 0;");
             partyBar.getChildren().add(empty);
         }
-        HBox.setHgrow(partyBar.getChildren().get(partyBar.getChildren().size()-1), Priority.ALWAYS);
+        if (!partyBar.getChildren().isEmpty())
+            HBox.setHgrow(partyBar.getChildren().get(partyBar.getChildren().size()-1), Priority.ALWAYS);
     }
 
-    private VBox buildPartySlot(Entity ally, double slotW) {
+    private VBox buildPartySlot(Entity ally, double slotW, int totalMembers) {
         boolean cur = cm.getCurrentActor()!=null && cm.getCurrentActor().getId().equals(ally.getId());
         boolean sel = selectedAlly!=null && selectedAlly.getId().equals(ally.getId());
 
@@ -417,16 +421,19 @@ public class CombatView {
 
         // Portrait lingkaran
         StackPane circle = new StackPane();
-        circle.setMinSize(36,36); circle.setMaxSize(36,36);
+        double circSz = totalMembers >= 3 ? 28 : 36;
+        circle.setMinSize(circSz,circSz); circle.setMaxSize(circSz,circSz);
+        double cr = circSz/2.0;
         circle.setStyle("-fx-background-color:"+(cur?"#C8860A22":"#1A1208")+
-            ";-fx-background-radius:18;-fx-border-color:"+(cur?"#C8860A":"#3A2810")+
-            ";-fx-border-width:2;-fx-border-radius:18;");
+            ";-fx-background-radius:"+cr+";-fx-border-color:"+(cur?"#C8860A":"#3A2810")+
+            ";-fx-border-width:2;-fx-border-radius:"+cr+";");
         javafx.scene.image.Image portrait = null;
         if (ally instanceof Player) portrait = AssetManager.portraitAsuna();
         else if (ally instanceof Mercenary m) portrait = AssetManager.portraitGuildmate(m.getName(),false);
         if (portrait!=null) {
-            var iv = AssetManager.makeIV(portrait,32,32);
-            javafx.scene.shape.Circle clip = new javafx.scene.shape.Circle(16,16,16);
+            double pvSz = circSz-4;
+            var iv = AssetManager.makeIV(portrait,(int)pvSz,(int)pvSz);
+            javafx.scene.shape.Circle clip = new javafx.scene.shape.Circle(pvSz/2,pvSz/2,pvSz/2);
             iv.setClip(clip); circle.getChildren().add(iv);
         } else {
             Label init = new Label(ally.getName().substring(0,1).toUpperCase());
@@ -439,8 +446,9 @@ public class CombatView {
         int lv = ally instanceof Mercenary m2 ? m2.getLoyaltyLevel() : ally instanceof Player p ? p.getLevel() : 1;
         VBox nameCol = new VBox(1);
         Label nmLbl = new Label(dn.toUpperCase());
+        String nmSize = totalMembers >= 3 ? "9px" : "10px";
         nmLbl.setStyle("-fx-text-fill:"+(cur?"#FFB830":"#AA9060")+
-            ";-fx-font-family:'Courier New';-fx-font-size:10px;-fx-font-weight:bold;");
+            ";-fx-font-family:'Courier New';-fx-font-size:"+nmSize+";-fx-font-weight:bold;");
         Label status = new Label(cur?"READY \u25c4":"LV."+lv);
         status.setStyle("-fx-text-fill:"+(cur?"#C8860A":"#5A3A10")+
             ";-fx-font-family:'Courier New';-fx-font-size:8px;");
@@ -454,7 +462,7 @@ public class CombatView {
             dead.setStyle("-fx-text-fill:#660000;-fx-font-family:'Courier New';-fx-font-size:9px;");
             slot.getChildren().add(dead);
         } else {
-            double bw = slotW - 20;
+            double bw = slotW - (totalMembers >= 3 ? 110 : 20);
             double maxHp = ally.getStats().get(StatType.MAX_HP);
             double maxShd = ally.getStats().get(StatType.MAX_SHIELD);
             double maxMp  = ally.getStats().get(StatType.MAX_MP);

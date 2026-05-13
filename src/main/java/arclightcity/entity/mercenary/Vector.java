@@ -162,4 +162,32 @@ public class Vector extends Mercenary {
     }
 
     public boolean isDetected() { return detected; }
+    @Override
+    public CombatAction decideAction(java.util.List<Entity> allies, java.util.List<Entity> enemies) {
+        Entity target = highestHpEnemy(enemies);
+        if (target == null) return CombatAction.defend();
+        Entity lowest = enemies.stream().filter(Entity::isAlive)
+            .min(java.util.Comparator.comparingDouble(Entity::getHpPercent)).orElse(target);
+
+        // 1. BUFF: STEALTH (evasion) ke diri sendiri jika belum aktif
+        if (!selfHasEffect(arclightcity.entity.status.StatusEffectType.STEALTH) && hasMP(14)) {
+            return skill("STEALTH_STEP", this);
+        }
+
+        // 2. EXECUTE jika ada musuh HP < 30%
+        if (lowest.getHpPercent() < 0.30 && hasMP(20)) {
+            return skill("EXECUTE", lowest);
+        }
+
+        // 3. CC: BLEED musuh yang belum berdarah
+        Entity unbled = enemyWithout(enemies, arclightcity.entity.status.StatusEffectType.BLEED);
+        if (unbled != null && hasMP(12)) {
+            return skill("BLEED_SLASH", unbled);
+        }
+
+        // 4. SHADOW_STEP attack
+        if (hasMP(18)) return skill("SHADOW_STEP", target);
+        return attack(target);
+    }
+
 }

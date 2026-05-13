@@ -172,4 +172,35 @@ public class EchoNull extends Mercenary {
             stats.addBase(StatType.COOLDOWN_REDUCE,  0.15);
         }
     }
+    @Override
+    public CombatAction decideAction(java.util.List<Entity> allies, java.util.List<Entity> enemies) {
+        Entity target = highestHpEnemy(enemies);
+        if (target == null) return CombatAction.defend();
+
+        // 1. BUFF: SYNC (speed buff) ke team jika belum aktif
+        if (!teamHasBuff(allies, arclightcity.entity.status.StatusEffectType.SYNC)
+                && hasMP(14)) {
+            return skillAll("SYNC_TEAM", allies);
+        }
+
+        // 2. CC: FREEZE musuh paling berbahaya (HP tertinggi yang belum freeze)
+        Entity unfrozen = enemyWithout(enemies, arclightcity.entity.status.StatusEffectType.FREEZE);
+        if (unfrozen != null && hasMP(22)) {
+            return skill("FREQUENCY_LOCK", unfrozen);
+        }
+
+        // 3. CC: STUN jika ada musuh yang belum stun
+        Entity unstunned = enemyWithout(enemies, arclightcity.entity.status.StatusEffectType.STUN);
+        if (unstunned != null && hasMP(16)) {
+            return skill("EMP_BURST", unstunned);
+        }
+
+        // 4. SIGNAL_JAM: slow semua musuh
+        if (!target.hasEffect(arclightcity.entity.status.StatusEffectType.SLOW) && hasMP(18)) {
+            return skillAll("SIGNAL_JAM", enemies.stream().filter(Entity::isAlive).toList());
+        }
+
+        return attack(target);
+    }
+
 }
