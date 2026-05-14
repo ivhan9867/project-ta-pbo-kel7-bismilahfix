@@ -224,8 +224,7 @@ public abstract class Mercenary extends Entity {
         this.currentMp     = Math.min(mp,     maxMp);
         this.currentShield = Math.min(shield, maxShield);
     }
-    /** Override setHpDirect untuk reset alive=true saat HP > 0 */
-    @Override
+    /** Revive Mercenary — set HP dan reset alive=true */
     public void setHpDirect(double hp) {
         this.currentHp = Math.min(Math.max(0, hp),
             stats.get(arclightcity.entity.stats.StatType.MAX_HP));

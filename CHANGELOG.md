@@ -1,5 +1,49 @@
 # CHANGELOG — Mythic Item Obtained
 
+## v0.7.9 (2026-05-14)
+### Bug Fix — Kritis
+- Fixed: Equipment stats (lifesteal, burn/bleed/poison on-hit, dll.) TIDAK PERNAH masuk ke StatSheet
+  - Root cause: `Player.recalcEquipStats()` tidak ada — `equipment` layer di StatSheet selalu 0
+  - Fix: Tambah `Player.recalcEquipStats(Inventory)`, dipanggil sebelum tiap combat di DungeonManager
+  - Impact: Semua on-hit weapon effects kini benar-benar aktif; lifesteal kini berfungsi
+
+### Bug Fix — Party Battle
+- Fixed: Guildmate ke-3 hilang dari combat — `CombatManager` hardcode max 2 merc, diubah ke 3
+- Fixed: Party bar tidak muat 4 slot (player + 3 merc) — slot dilebarkan ke 4, height lebih compact
+
+### Bug Fix — Dungeon Floor Naming
+- Fixed: Tema area berganti tiap 5 lantai, seharusnya tiap 10
+  - 1-10: Pasar Malam Gaib | 11-20: Candi Terlarang | 21-30: Hutan Angker
+  - 31-40: Goa Naga | 41+: Kahyangan Rusak
+
+### Improvement — Item Stat Scaling
+- Rarity kini memiliki stat minimum yang berbeda (bukan hanya ceiling)
+  - Common weapon ATK: 14-29 | Legendary weapon ATK: 46-91 (tidak lagi overlap)
+  - Helmet HP: Common 15-45 → Legendary 75-145
+  - Calibrate bonus juga scale dari rarity minimum
+
+## v0.7.8b (2026-05-14)
+### Bug Fix
+- Fixed: method `buildSellRow(Item, int)` hilang saat refactor — deklarasi method ditambahkan kembali
+
+## v0.7.8a (2026-05-14)
+### Bug Fix
+- Fixed: `buildSellRow(Item, Integer)` — `priceOf.apply()` returns boxed `Integer`, ditambah explicit cast `(int)` agar match signature primitive
+
+## v0.7.8 (2026-05-14)
+### Performance Fix
+- Fixed: Progressive lag — animasi `DungeonGridMap` (pulseAnim + marchAnim INDEFINITE) tidak pernah di-stop saat navigasi; setelah 10x kunjungan dungeon map = 20+ timer berjalan sekaligus
+  - Fix: `DungeonMapView.stopAnimations()` + `SceneRouter` memanggil stop sebelum replace view
+- Fixed: `CombatView.combatLoop` / `floatLoop` dapat bocor jika combat di-replace; `stopAll()` kini dipanggil SceneRouter
+- Perintah `giveMaterialBonus()` diextract ke helper agar tidak duplikat antara jual satuan dan batch
+
+### New Feature — Penadah Barang: Batch Sell
+- Filter bar rarity: SEMUA | Common | Uncommon | Rare | Epic | Legendary
+- Filter tipe: ⚔ Equip | ◈ Material
+- Tombol **JUAL SEKALIGUS** — jual semua item yang lolos filter sekaligus
+- Preview otomatis: jumlah item + total ⚙ gold sebelum konfirmasi
+- Filter bar sticky di atas, item list scroll sendiri di bawah
+
 ## v0.7.4c (2026-05-13)
 ### Bug Fix
 - Fixed: "Coba lagi" setelah gugur — karakter langsung mati kembali saat masuk dungeon

@@ -65,6 +65,13 @@
                         <option>javafx.graphics/com.sun.javafx.application=ALL-UNNAMED</option>
                         <option>--enable-native-access=javafx.graphics</option>
                     </options>
+                    <!-- Batasi heap agar tidak crash di PC spek rendah -->
+                    <jvmArgs>
+                        <jvmArg>-Xms64m</jvmArg>
+                        <jvmArg>-Xmx256m</jvmArg>
+                        <jvmArg>-XX:+UseSerialGC</jvmArg>
+                        <jvmArg>-XX:MaxMetaspaceSize=128m</jvmArg>
+                    </jvmArgs>
                 </configuration>
             </plugin>
 

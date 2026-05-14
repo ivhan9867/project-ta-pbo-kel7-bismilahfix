@@ -48,25 +48,23 @@ public abstract class Enemy extends Entity {
 
         if (this instanceof arclightcity.entity.enemy.Boss) {
             // BOSS: semua stat naik normal (+10% per floor)
-            double bossScale = 1.0 + (floor - 1) * 0.10;
+            double bossScale = 1.0 + (floor - 1) * 0.14;  // Boss +14%/floor
             stats.scaleBase(bossScale);
         } else {
-            // KROCO: HP naik banyak (+12% per floor), ATK hampir tidak naik (+3%)
-            double hpScale  = 1.0 + (floor - 1) * 0.12;
-            double atkScale = 1.0 + (floor - 1) * 0.03;
+            // KROCO: HP naik +15%/floor, ATK +5%/floor, DEF = 0 (pure HP)
+            // Scaling lebih agresif agar challenge meningkat seiring lantai
+            double hpScale  = 1.0 + (floor - 1) * 0.15;
+            double atkScale = 1.0 + (floor - 1) * 0.05;
 
-            double baseHp  = stats.get(arclightcity.entity.stats.StatType.MAX_HP);
-            double baseAtk = stats.get(arclightcity.entity.stats.StatType.PHYSICAL_ATK);
-            double baseDef = stats.get(arclightcity.entity.stats.StatType.PHYSICAL_DEF);
-
-            stats.setBase(arclightcity.entity.stats.StatType.MAX_HP,     baseHp  * hpScale);
-            stats.setBase(arclightcity.entity.stats.StatType.PHYSICAL_ATK, baseAtk * atkScale);
-            stats.setBase(arclightcity.entity.stats.StatType.CYBER_ATK,    stats.get(arclightcity.entity.stats.StatType.CYBER_ATK) * atkScale);
-            stats.setBase(arclightcity.entity.stats.StatType.ENERGY_ATK,   stats.get(arclightcity.entity.stats.StatType.ENERGY_ATK) * atkScale);
-            // DEF kroco TIDAK naik — player selalu bisa deal damage yang masuk akal
-            // (DEF tetap base, tidak scale per floor)
-
-            // Kroco: hapus shield dan MP
+            double baseHp = stats.get(arclightcity.entity.stats.StatType.MAX_HP);
+            stats.setBase(arclightcity.entity.stats.StatType.MAX_HP, baseHp * hpScale);
+            stats.setBase(arclightcity.entity.stats.StatType.PHYSICAL_ATK,
+                stats.get(arclightcity.entity.stats.StatType.PHYSICAL_ATK) * atkScale);
+            // DEF = 0: player damage selalu masuk penuh ke HP
+            stats.setBase(arclightcity.entity.stats.StatType.PHYSICAL_DEF, 0);
+            stats.setBase(arclightcity.entity.stats.StatType.CYBER_DEF, 0);
+            stats.setBase(arclightcity.entity.stats.StatType.ENERGY_DEF, 0);
+            // Hapus shield dan MP untuk kroco
             stats.setBase(arclightcity.entity.stats.StatType.MAX_SHIELD, 0);
             stats.setBase(arclightcity.entity.stats.StatType.MAX_MP, 0);
         }
@@ -80,19 +78,7 @@ public abstract class Enemy extends Entity {
 
     @Override
     public CombatAction decideAction(List<Entity> allies, List<Entity> enemies) {
-        turnsSinceLastSpecial++;
-
-        // Cek kondisi: HP rendah → prioritas survive
-        if (getHpPercent() < 0.25 && shouldUseDesperateAction()) {
-            return desperateAction(allies, enemies);
-        }
-
-        // Cek cooldown skill khusus
-        if (turnsSinceLastSpecial >= getSpecialCooldown() && canUseSpecial()) {
-            turnsSinceLastSpecial = 0;
-            return specialAction(allies, enemies);
-        }
-
+        // Enemy hanya basic attack — tanpa skill/buff/debuff
         return normalAction(allies, enemies);
     }
 
@@ -102,7 +88,10 @@ public abstract class Enemy extends Entity {
     protected abstract CombatAction normalAction(List<Entity> allies, List<Entity> enemies);
 
     /** Aksi spesial (skill kuat, dipanggil tiap N turn) */
-    protected abstract CombatAction specialAction(List<Entity> allies, List<Entity> enemies);
+    /** Aksi spesial — di-override oleh subclass, default: basic attack */
+    protected CombatAction specialAction(List<Entity> allies, List<Entity> enemies) {
+        return normalAction(allies, enemies);
+    }
 
     /** Aksi saat HP sangat rendah */
     protected CombatAction desperateAction(List<Entity> allies, List<Entity> enemies) {

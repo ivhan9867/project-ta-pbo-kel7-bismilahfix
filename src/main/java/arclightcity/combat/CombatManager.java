@@ -78,7 +78,7 @@ public class CombatManager {
         // Setup allies
         this.allAllies.add(player);
         for (Mercenary m : mercs) {
-            if (activeMercs.size() < 2) { // max 2 merc
+            if (activeMercs.size() < 3) { // max 3 merc
                 activeMercs.add(m);
                 allAllies.add(m);
             }
@@ -321,6 +321,50 @@ public class CombatManager {
             double ls = DamageCalculator.applyLifesteal(actor, result.damage);
             if (ls > 0) events.add(CombatEvent.heal(actor.getId(), actor.getName(),
                     actor.getId(), actor.getName(), ls));
+
+            // WEAPON ON-HIT EFFECTS (dari stat senjata)
+            arclightcity.entity.stats.StatSheet actorStats = actor.getStats();
+            double bleedChance = actorStats.get(arclightcity.entity.stats.StatType.BLEED_ON_HIT);
+            double burnChance  = actorStats.get(arclightcity.entity.stats.StatType.BURN_ON_HIT);
+            double poisonChance= actorStats.get(arclightcity.entity.stats.StatType.POISON_ON_HIT);
+            java.util.Random rngHit = new java.util.Random();
+            if (bleedChance > 0 && rngHit.nextDouble() < bleedChance && target.isAlive()) {
+                target.applyEffect(new arclightcity.entity.status.StatusEffect(
+                    arclightcity.entity.status.StatusEffectType.BLEED, 3, 7.0, actor.getId()));
+                events.add(new CombatEvent.Builder(CombatEvent.EventType.EFFECT_APPLIED)
+                    .actor(actor.getId(),actor.getName())
+                    .message(target.getName() + " terkena BLEED!").build());
+            }
+            if (burnChance > 0 && rngHit.nextDouble() < burnChance && target.isAlive()) {
+                target.applyEffect(new arclightcity.entity.status.StatusEffect(
+                    arclightcity.entity.status.StatusEffectType.BURN, 3, 8.0, actor.getId()));
+                events.add(new CombatEvent.Builder(CombatEvent.EventType.EFFECT_APPLIED)
+                    .actor(actor.getId(),actor.getName())
+                    .message(target.getName() + " terkena BURN!").build());
+            }
+            if (poisonChance > 0 && rngHit.nextDouble() < poisonChance && target.isAlive()) {
+                target.applyEffect(new arclightcity.entity.status.StatusEffect(
+                    arclightcity.entity.status.StatusEffectType.VIRUS, 3, 6.0, actor.getId()));
+                events.add(new CombatEvent.Builder(CombatEvent.EventType.EFFECT_APPLIED)
+                    .actor(actor.getId(),actor.getName())
+                    .message(target.getName() + " terkena VIRUS!").build());
+            }
+
+            // THORN — target mengembalikan damage ke attacker
+            if (target.isAlive()) {
+                double thornPct = target.getStats().get(arclightcity.entity.stats.StatType.THORN);
+                if (thornPct > 0 && rngHit.nextDouble() < 0.70) { // 70% chance trigger
+                    double thornDmg = result.damage * thornPct;
+                    if (thornDmg > 0.5 && actor.isAlive()) {
+                        actor.receiveDamage(thornDmg, arclightcity.entity.stats.DamageType.TRUE, false);
+                        events.add(new CombatEvent.Builder(CombatEvent.EventType.DAMAGE_DEALT)
+                            .actor(target.getId(),target.getName())
+                            .target(actor.getId(),actor.getName())
+                            .value(thornDmg)
+                            .message("Thorn! " + actor.getName() + " kena " + (int)thornDmg + " balik").build());
+                    }
+                }
+            }
 
             // Death check
             if (!target.isAlive()) {

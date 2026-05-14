@@ -63,7 +63,7 @@ public class CombatView {
     // Scene
     private javafx.scene.layout.Pane enemyPane;  // absolute positioning untuk enemy
     private HBox    enemyZone; // legacy, tidak dipakai
-    private VBox    allyZone;
+    private javafx.scene.layout.Pane allyPane; // formation absolut
     private VBox    actionOverlay;
     private Canvas  floatCanvas;
     private StackPane sceneStack;
@@ -202,23 +202,23 @@ public class CombatView {
         HBox zones = new HBox(0);
         zones.setPrefSize(W,H); zones.setMaxSize(W,H);
 
-        // ALLY zone — KIRI, VBox vertikal
-        allyZone = new VBox(10);
-        allyZone.setPrefWidth(W*0.28); allyZone.setMinWidth(W*0.28);
-        allyZone.setPrefHeight(H);
-        allyZone.setAlignment(Pos.CENTER_LEFT);
-        allyZone.setPadding(new Insets(20,0,50,14));
+        // ALLY zone — KIRI, Pane dengan absolute positioning (formation)
+        double allyW = W * 0.30;
+        allyPane = new javafx.scene.layout.Pane();
+        allyPane.setPrefSize(allyW, H);
+        allyPane.setMinWidth(allyW);
+        allyPane.setMaxWidth(allyW);
 
         Region spacer = new Region(); HBox.setHgrow(spacer, Priority.ALWAYS);
 
         // ENEMY zone — KANAN, Pane untuk absolute positioning
-        double enemyW = W*0.46;
+        double enemyW = W * 0.44;
         enemyPane = new javafx.scene.layout.Pane();
         enemyPane.setPrefSize(enemyW, H);
         enemyPane.setMinWidth(enemyW);
         enemyPane.setMaxWidth(enemyW);
 
-        zones.getChildren().addAll(allyZone, spacer, enemyPane);
+        zones.getChildren().addAll(allyPane, spacer, enemyPane);
         sceneStack.getChildren().add(zones);
 
         // Layer 3: Action overlay (tengah scene)
@@ -251,7 +251,7 @@ public class CombatView {
     // ════════════════════════════════════════════════
     private VBox buildEnemyCard(Entity e, int totalEnemies) {
         boolean isBoss = e instanceof Boss;
-        double sz = isBoss ? 145 : (totalEnemies<=1?125:totalEnemies<=2?108:totalEnemies<=4?88:70);
+        double sz = isBoss ? 130 : (totalEnemies<=1?110:totalEnemies<=2?95:totalEnemies<=4?78:62);
         boolean cur = cm.getCurrentActor()!=null && cm.getCurrentActor().getId().equals(e.getId());
         boolean alive = e.isAlive();
 
@@ -313,30 +313,21 @@ public class CombatView {
     // ════════════════════════════════════════════════
     //  ALLY SPRITE — zona kanan, clickable
     // ════════════════════════════════════════════════
-    private HBox buildAllySprite(Entity ally, int total) {
+    private StackPane buildAllySprite(Entity ally, int total, int szPx) {
         boolean cur = cm.getCurrentActor()!=null && cm.getCurrentActor().getId().equals(ally.getId());
         boolean sel = selectedAlly!=null && selectedAlly.getId().equals(ally.getId());
-        double sz = total<=1?110:total==2?96:80;
+        double sz = szPx > 0 ? szPx : (total<=1?110:total==2?96:80);
 
-        HBox wrapper = new HBox(6); wrapper.setAlignment(Pos.CENTER_RIGHT); wrapper.setCursor(javafx.scene.Cursor.HAND);
-
-        // HP bar vertikal mini di kiri sprite
-        double hpPct = ally.getHpPercent();
-        double hbH = sz;
-        Region hbg = new Region(); hbg.setPrefSize(4,hbH);
-        hbg.setStyle("-fx-background-color:#1A0808;-fx-background-radius:2;");
-        Region hf  = new Region(); hf.setPrefSize(4, hbH*hpPct); hf.setMaxHeight(hbH*hpPct);
-        hf.setStyle("-fx-background-color:"+(hpPct>.5?"#CC2211":hpPct>.25?"#FF5500":"#FF1100")+";-fx-background-radius:2;");
-        StackPane hpV = new StackPane(); hpV.setAlignment(Pos.BOTTOM_CENTER);
-        hpV.setMinSize(4,hbH); hpV.setMaxSize(4,hbH);
-        hpV.getChildren().addAll(hbg,hf);
+        // Wrapper StackPane (tidak ada HP bar — sudah ada di party bar bawah)
+        StackPane wrapper = new StackPane();
+        wrapper.setMinSize(sz, sz); wrapper.setMaxSize(sz, sz);
+        wrapper.setCursor(javafx.scene.Cursor.HAND);
 
         // Sprite
         String pose = poseState.getOrDefault(ally.getId(), "idle");
         var sprite = ally instanceof Player
             ? AssetManager.spriteAsuna(pose)
             : ally instanceof Mercenary m ? AssetManager.spriteGuildmate(m.getName(), pose) : null;
-        // Fallback ke idle jika pose tidak ada
         if (sprite == null && !pose.equals("idle")) {
             sprite = ally instanceof Player
                 ? AssetManager.spriteAsuna("idle")
@@ -352,28 +343,35 @@ public class CombatView {
             sp.getChildren().add(iv);
         }
 
-        // Glow style
+        // Glow saat dipilih / giliran
         String glow = sel
             ? "-fx-effect:dropshadow(gaussian,#FFB830DD,22,0.7,0,0);"
             : cur ? "-fx-effect:dropshadow(gaussian,#FFB830AA,14,0.4,0,0);"
                   : "-fx-effect:dropshadow(gaussian,#00000066,4,0.2,0,1);";
-        sp.setStyle(glow);
+        wrapper.setStyle(glow);
 
         // Pulse saat giliran ini
         if (cur && ally.isAlive()) {
-            FadeTransition pt = new FadeTransition(Duration.millis(650), sp);
+            FadeTransition pt = new FadeTransition(Duration.millis(650), wrapper);
             pt.setFromValue(1.0); pt.setToValue(0.72);
             pt.setCycleCount(Animation.INDEFINITE); pt.setAutoReverse(true); pt.play();
         }
 
-        wrapper.getChildren().addAll(hpV, sp);
+        // Label nama singkat (kecil di bawah sprite)
+        String shortName = ally instanceof Mercenary mm
+            ? mm.getMercenaryType().displayName.split(" ")[0] : ally.getName();
+        Label nameLbl = new Label(shortName);
+        nameLbl.setStyle("-fx-text-fill:#FFB83099;-fx-font-family:'Courier New';" +
+            "-fx-font-size:8px;-fx-effect:dropshadow(gaussian,#000,3,0.8,0,1);");
+        StackPane.setAlignment(nameLbl, Pos.BOTTOM_CENTER);
+        StackPane.setMargin(nameLbl, new Insets(0,0,2,0));
+
+        wrapper.getChildren().addAll(sp, nameLbl);
         wrapper.setOnMouseClicked(ev -> { ev.consume(); onAllyClick(ally); });
         return wrapper;
     }
 
-    // ════════════════════════════════════════════════
-    //  PARTY BAR — horizontal, info only, no buttons
-    // ════════════════════════════════════════════════
+
     private HBox buildPartyBar() {
         partyBar = new HBox(0);
         partyBar.setStyle("-fx-background-color:#0A0603;-fx-border-color:#C8860A44;-fx-border-width:1 0 0 0;");
@@ -387,14 +385,14 @@ public class CombatView {
         int n = allies.size();
 
         // Height adaptif: 3+ member lebih compact
-        double barH = n >= 3 ? 82 : 100;
+        double barH = n >= 4 ? 76 : n >= 3 ? 82 : 100;
         partyBar.setPrefHeight(barH); partyBar.setMaxHeight(barH);
 
-        double slotW = (double) ArclightApp.GAME_WIDTH / Math.max(n, 3);
+        double slotW = (double) ArclightApp.GAME_WIDTH / Math.max(n, 4);
         for (Entity ally : allies)
             partyBar.getChildren().add(buildPartySlot(ally, slotW, n));
         // Slot kosong
-        for (int i = n; i < 3; i++) {
+        for (int i = n; i < 4; i++) {
             Region empty = new Region(); empty.setPrefWidth(slotW);
             empty.setStyle("-fx-border-color:#1A1008;-fx-border-width:0 1 0 0;");
             partyBar.getChildren().add(empty);
@@ -556,10 +554,44 @@ public class CombatView {
             enemyPane.getChildren().add(card);
         }
 
-        // Ally zone
-        allyZone.getChildren().clear();
-        for (int i=allies.size()-1;i>=0;i--)
-            allyZone.getChildren().add(buildAllySprite(allies.get(i), allies.size()));
+        // Ally zone — formation absolut
+        allyPane.getChildren().clear();
+        double aW = allyPane.getPrefWidth();
+        double aH = allyPane.getPrefHeight();
+        if (aW == 0) aW = ArclightApp.GAME_WIDTH * 0.30;
+        if (aH == 0) aH = ArclightApp.SCREEN_HEIGHT * 0.63;
+        int na = allies.size();
+        // Slot formation [xPct, yPct] per jumlah ally
+        // Urutan: [player/0, ally1/1, ally2/2, ally3/3]
+        // Formation slots: [xPct, yPct] dari Pane (allyW × aH)
+        // Asuna/player selalu depan-tengah, guildmate di belakang
+        //
+        //  1 ally:    [ A1 ]  tengah
+        //  2 ally:  [A2]  [A1]  depan-kanan, belakang-kiri
+        //  3 ally: [A2][A3]     dua belakang
+        //              [A1]     satu depan
+        //  4 ally: [A3][A4]     dua belakang atas
+        //          [A2][A1]     dua depan bawah
+        double[][] slots1 = {{0.40, 0.52}};
+        double[][] slots2 = {{0.58, 0.60}, {0.18, 0.35}};
+        double[][] slots3 = {{0.50, 0.70}, {0.12, 0.28}, {0.65, 0.25}};
+        double[][] slots4 = {{0.58, 0.68}, {0.15, 0.65}, {0.58, 0.20}, {0.12, 0.22}};
+        double[][] slotMap = na<=1?slots1:na==2?slots2:na==3?slots3:slots4;
+        // Urutan ally: player pertama, lalu guildmate urut
+        java.util.List<Entity> orderedAllies = new java.util.ArrayList<>();
+        for (Entity a : allies) if (a instanceof arclightcity.entity.player.Player) orderedAllies.add(0, a);
+        for (Entity a : allies) if (!(a instanceof arclightcity.entity.player.Player)) orderedAllies.add(a);
+        for (int i=0; i<orderedAllies.size(); i++) {
+            Entity a = orderedAllies.get(i);
+            double[] slot = i<slotMap.length ? slotMap[i] : slotMap[slotMap.length-1];
+            int szPx = na<=1?90:na==2?78:na==3?66:58;
+            var card = buildAllySprite(a, na, szPx);
+            double cx = aW * slot[0] - szPx/2.0;
+            double cy = aH * slot[1] - szPx/2.0;
+            card.setLayoutX(Math.max(0, Math.min(aW-szPx-4, cx)));
+            card.setLayoutY(Math.max(0, Math.min(aH-szPx-20, cy)));
+            allyPane.getChildren().add(card);
+        }
 
         // Header
         Entity actor = cm.getCurrentActor();
@@ -1029,4 +1061,11 @@ public class CombatView {
 
     // Legacy alias
     public void refreshActionPanel() { refresh(); }
+    /** Hentikan semua timer — dipanggil SceneRouter saat navigasi keluar dari combat */
+    public void stopAll() {
+        if (combatLoop != null) { combatLoop.stop(); combatLoop = null; }
+        if (floatLoop  != null) { floatLoop.stop();  floatLoop  = null; }
+    }
+
+
 }

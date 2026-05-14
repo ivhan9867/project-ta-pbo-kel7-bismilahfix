@@ -711,20 +711,29 @@ public static class InventoryViewImpl {
     private String buildStatSummary(Item item) {
         if (item instanceof Equipment eq) {
             StringBuilder sb = new StringBuilder();
+            // Sort: tampilkan stat paling impactful dulu (ATK, HP, DEF)
             eq.getStatBonuses().entrySet().stream()
-                .limit(3)
+                .sorted((a, b) -> {
+                    // Prioritas tampil: ATK > HP > DEF > lainnya
+                    int ap = statPriority(a.getKey()), bp = statPriority(b.getKey());
+                    return Integer.compare(ap, bp);
+                })
+                .limit(4)
                 .forEach(entry -> {
                     String name = entry.getKey().displayName;
                     double val  = entry.getValue();
-                    // Format persentase untuk stat yang memang dalam bentuk 0.0-1.0
-                    boolean isPct = entry.getKey().name().contains("CHANCE") ||
-                                    entry.getKey().name().contains("EVASION") ||
-                                    entry.getKey().name().contains("PIERCE") ||
-                                    entry.getKey().name().contains("MULT")   ||
-                                    entry.getKey().name().contains("LIFESTEAL");
-                    sb.append(name).append(": +")
-                      .append(isPct ? String.format("%.0f%%", val * 100) : String.format("%.0f", val))
-                      .append("  ");
+                    // Logika format: jika nilai < 2 → kemungkinan persen (0.0-1.0 range)
+                    // Jika nilai >= 2 → tampil sebagai integer
+                    String formatted;
+                    if (val >= 2.0) {
+                        formatted = "+" + (int)val;
+                    } else if (val > 0) {
+                        // Persentase: crit, evasion, lifesteal, mult, on-hit, thorn, dll
+                        formatted = "+" + String.format("%.0f%%", val * 100);
+                    } else {
+                        return; // skip nilai 0 atau negatif
+                    }
+                    sb.append(name).append(" ").append(formatted).append("  ");
                 });
             return sb.length() > 0 ? sb.toString().trim() : item.getDescription();
         }
@@ -737,6 +746,21 @@ public static class InventoryViewImpl {
                    " x" + mat.getQuantity();
         }
         return item.getDescription();
+    }
+
+    private static int statPriority(arclightcity.entity.stats.StatType st) {
+        return switch(st) {
+            case PHYSICAL_ATK, CYBER_ATK, ENERGY_ATK -> 1;
+            case MAX_HP -> 2;
+            case MAX_SHIELD -> 3;
+            case PHYSICAL_DEF, CYBER_DEF, ENERGY_DEF -> 4;
+            case CRIT_CHANCE, CRIT_DAMAGE -> 5;
+            case DAMAGE_MULT -> 6;
+            case LIFESTEAL -> 7;
+            case BLEED_ON_HIT, BURN_ON_HIT, POISON_ON_HIT -> 8;
+            case THORN -> 9;
+            default -> 10;
+        };
     }
 
     private void showAlert(String message) {
@@ -763,7 +787,21 @@ public static class MercenaryViewImpl {
     }
 
     Parent build() {
+        StackPane rootStack = new StackPane();
         BorderPane root = UIFactory.screenRootBorder();
+
+        // Background hub untuk layar guildmate
+        try {
+            var bg = arclightcity.ui.util.AssetManager.bgHub();
+            if (bg != null) {
+                var iv = arclightcity.ui.util.AssetManager.makeIVFill(bg,
+                    arclightcity.ui.ArclightApp.GAME_WIDTH,
+                    arclightcity.ui.ArclightApp.SCREEN_HEIGHT);
+                iv.setOpacity(0.45); iv.setMouseTransparent(true);
+                rootStack.getChildren().add(iv);
+            }
+        } catch(Exception ignored) {}
+        rootStack.getChildren().add(root);
 
         VBox top = new VBox(0);
         top.getChildren().add(UIFactory.headerWithResources(
@@ -799,7 +837,7 @@ public static class MercenaryViewImpl {
         root.setTop(top);
         root.setCenter(buildCenter());
         UIFactory.fadeIn(root, 300);
-        return root;
+        return rootStack;
     }
 
     private ScrollPane buildCenter() {
@@ -1584,7 +1622,6 @@ public static class GameOverViewImpl {
             "-fx-font-family: 'Courier New', monospace;" +
             "-fx-font-size: 32px;" +
             "-fx-font-weight: bold;"
-        );"
         );
 
         Label sub = new Label("perjalananmu terhenti... namun belum berakhir");

@@ -41,13 +41,13 @@ public class Equipment extends Item {
         calibrationCount++;
         if (bonusStats.isEmpty()) {
             StatType newStat = getRandomOffensiveStat(rng);
-            double   val     = 5 + rng.nextDouble() * 15 * rarity.statMultiplier;
+            double   val     = (3 + rarity.ordinal()*3) + rng.nextDouble() * 15 * rarity.statMultiplier;
             bonusStats.put(newStat, val);
             return newStat;
         }
         List<StatType> keys = new ArrayList<>(bonusStats.keySet());
         StatType rerolled   = keys.get(rng.nextInt(keys.size()));
-        double   newVal     = 5 + rng.nextDouble() * 15 * rarity.statMultiplier;
+        double   newVal     = (3 + rarity.ordinal()*3) + rng.nextDouble() * 15 * rarity.statMultiplier;
         bonusStats.put(rerolled, newVal);
         return rerolled;
     }

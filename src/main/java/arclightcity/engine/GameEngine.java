@@ -72,6 +72,7 @@ public class GameEngine {
 
         // Selalu buat DungeonManager baru untuk clean state
         dungeonManager = new DungeonManager();
+        dungeonManager.setInventory(inventory);
         wireDungeonListeners();
 
         // Beri starter items

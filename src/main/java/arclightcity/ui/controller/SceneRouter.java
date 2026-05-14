@@ -292,6 +292,8 @@ public class SceneRouter {
     }
 
     public void showDungeonMap() {
+        // Stop animasi view lama sebelum diganti (cegah INDEFINITE timer leak)
+        if (dungeonMapView != null) dungeonMapView.stopAnimations();
         // Buat DungeonMapView baru untuk fresh UI
         dungeonMapView = new DungeonMapView(engine, this);
         // WAJIB re-wire listener karena instance baru dibuat
@@ -309,6 +311,7 @@ public class SceneRouter {
     }
 
     public void showCombat() {
+        if (combatView != null) combatView.stopAll();
         combatView = new CombatView(engine, this);
         showWithChat(combatView.build());
         combatView.startCombatLoop();

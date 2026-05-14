@@ -273,4 +273,22 @@ public class Player extends Entity {
     public void              setDungeonDepth(int d) { dungeonDepth = Math.max(dungeonDepth, d); }
     public PlayerBackground  getBackground()        { return background; }
     public java.util.Map<String,String> getEquippedItems() { return equippedItems; }
+    /**
+     * Hitung ulang semua bonus dari equipment yang terpasang ke StatSheet.
+     * WAJIB dipanggil setiap kali memulai combat agar on-hit effects,
+     * lifesteal, burn chance, dll. benar-benar aktif.
+     */
+    public void recalcEquipStats(arclightcity.item.Inventory inv) {
+        stats.clearEquipmentBonuses();
+        for (String itemId : equippedItems.values()) {
+            if (itemId == null || itemId.isEmpty()) continue;
+            arclightcity.item.Item item = inv.findById(itemId);
+            if (item instanceof arclightcity.item.Equipment eq) {
+                eq.getStatBonuses().forEach((type, val) ->
+                    stats.addEquipmentBonus(type, val));
+            }
+        }
+    }
+
+
 }

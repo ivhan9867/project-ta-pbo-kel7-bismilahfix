@@ -84,7 +84,7 @@ public class CityView {
                 arclightcity.ui.util.AssetManager.makeIVFill(cityBg,
                     arclightcity.ui.ArclightApp.GAME_WIDTH,
                     arclightcity.ui.ArclightApp.SCREEN_HEIGHT);
-            bgView.setOpacity(0.30);
+            bgView.setOpacity(0.60);
             bgView.setMouseTransparent(true);
             root.getChildren().add(0, bgView);
         }
@@ -525,45 +525,215 @@ public class CityView {
         btn.setDisable(!enabled);
     }
 
-    // ── Pawnshop (Penadah Barang) ─────────────────────────────
+    // ── Pawnshop (Penadah Barang) — Batch Sell ──────────────────
 
-    private VBox buildPawnshop() {
-        VBox list = new VBox(8);
-        list.setPadding(new Insets(6, 12, 6, 12));
+    // Filter state (persistent selama view aktif)
+    private String pawnFilter    = "SEMUA";  // rarity key atau "EQUIPMENT"/"MATERIAL"
+
+    /** Mengembalikan BorderPane agar filter bar sticky dan list bisa scroll sendiri */
+    private BorderPane buildPawnshop() {
+        BorderPane pane = new BorderPane();
+        pane.setStyle("-fx-background-color: transparent;");
+
+        // ── Top: desc + filter bar ─────────────────────────
+        VBox topBox = new VBox(8);
+        topBox.setPadding(new Insets(10, 12, 6, 12));
+        topBox.setStyle("-fx-background-color: #0A0604;");
 
         Label desc = new Label("Jual itemmu dengan harga 40% dari nilai aslinya.");
         desc.setStyle("-fx-text-fill: #5A3A10; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
-        list.getChildren().add(desc);
 
-        Inventory inv = engine.getInventory();
-        List<Item> sellable = new ArrayList<>(inv.getAllBagItems());
+        HBox filterBar = new HBox(5);
+        filterBar.setAlignment(Pos.CENTER_LEFT);
+        filterBar.setPadding(new Insets(2, 0, 2, 0));
 
-        if (sellable.isEmpty()) {
-            Label none = new Label("Tidak ada item untuk dijual.");
-            none.setStyle("-fx-text-fill: #3A2810; -fx-font-family: 'Courier New';" +
-                          "-fx-font-size: 11px; -fx-padding: 20;");
-            list.getChildren().add(none);
-        } else {
-            for (Item item : sellable) {
-                if (item.getRarity() == Item.Rarity.MYTHIC) continue; // tidak bisa jual mythic
-                list.getChildren().add(buildSellRow(item));
+        // Filter pill definition: key -> label
+        String[][] pills = {
+            {"SEMUA", "SEMUA"},
+            {"COMMON",    "Common"},
+            {"UNCOMMON",  "Uncommon"},
+            {"RARE",      "Rare"},
+            {"EPIC",      "Epic"},
+            {"LEGENDARY", "Legendary"},
+            {"EQUIPMENT", "⚔ Equip"},
+            {"MATERIAL",  "◈ Material"},
+        };
+
+        // Batch bar (ref agar bisa di-update dari filter)
+        HBox batchBar = new HBox(10);
+        batchBar.setAlignment(Pos.CENTER_LEFT);
+        batchBar.setPadding(new Insets(6, 0, 2, 0));
+
+        // Item list container
+        VBox listBox = new VBox(6);
+        listBox.setPadding(new Insets(6, 12, 12, 12));
+
+        // Helper: hitung sell price item
+        java.util.function.Function<Item, Integer> priceOf = item -> {
+            int seed = Math.abs(item.getId().hashCode());
+            int base = switch (item.getRarity()) {
+                case COMMON    -> 15  + (seed % 10);
+                case UNCOMMON  -> 45  + (seed % 20);
+                case RARE      -> 120 + (seed % 50);
+                case EPIC      -> 300 + (seed % 100);
+                case LEGENDARY -> 700 + (seed % 200);
+                case MYTHIC    -> 0;
+            };
+            return (int)(base * 0.4);
+        };
+
+        // Helper: filter items
+        java.util.function.Supplier<List<Item>> getFiltered = () -> {
+            List<Item> all = new ArrayList<>(engine.getInventory().getAllBagItems());
+            return all.stream()
+                .filter(it -> it.getRarity() != Item.Rarity.MYTHIC)
+                .filter(it -> switch (pawnFilter) {
+                    case "COMMON"    -> it.getRarity() == Item.Rarity.COMMON;
+                    case "UNCOMMON"  -> it.getRarity() == Item.Rarity.UNCOMMON;
+                    case "RARE"      -> it.getRarity() == Item.Rarity.RARE;
+                    case "EPIC"      -> it.getRarity() == Item.Rarity.EPIC;
+                    case "LEGENDARY" -> it.getRarity() == Item.Rarity.LEGENDARY;
+                    case "EQUIPMENT" -> it.getItemType() != Item.ItemType.MATERIAL;
+                    case "MATERIAL"  -> it.getItemType() == Item.ItemType.MATERIAL;
+                    default          -> true; // SEMUA
+                })
+                .collect(java.util.stream.Collectors.toList());
+        };
+
+        // Helper: refresh list + batch bar
+        Runnable[] refreshRef = {null};
+        refreshRef[0] = () -> {
+            List<Item> filtered = getFiltered.get();
+
+            // Batch bar
+            batchBar.getChildren().clear();
+            if (!filtered.isEmpty()) {
+                int total = filtered.stream().mapToInt(it -> priceOf.apply(it)).sum();
+                Label info = new Label("📦 " + filtered.size() + " item  ·  ⚙ " + total);
+                info.setStyle("-fx-text-fill: #C8860A; -fx-font-family: \'Courier New\'; -fx-font-size: 11px;");
+
+                Button batchBtn = new Button("JUAL SEKALIGUS");
+                batchBtn.setStyle(
+                    "-fx-background-color: #8B220022; -fx-border-color: #CC3300; -fx-border-width: 1;" +
+                    "-fx-text-fill: #FF7755; -fx-font-family: \'Courier New\'; -fx-font-size: 11px;" +
+                    "-fx-font-weight: bold; -fx-padding: 3 14; -fx-cursor: hand;");
+                batchBtn.setOnMouseEntered(e -> batchBtn.setStyle(
+                    "-fx-background-color: #CC330044; -fx-border-color: #FF5533; -fx-border-width: 1;" +
+                    "-fx-text-fill: #FFAA88; -fx-font-family: \'Courier New\'; -fx-font-size: 11px;" +
+                    "-fx-font-weight: bold; -fx-padding: 3 14; -fx-cursor: hand;"));
+                batchBtn.setOnMouseExited(e -> batchBtn.setStyle(
+                    "-fx-background-color: #8B220022; -fx-border-color: #CC3300; -fx-border-width: 1;" +
+                    "-fx-text-fill: #FF7755; -fx-font-family: \'Courier New\'; -fx-font-size: 11px;" +
+                    "-fx-font-weight: bold; -fx-padding: 3 14; -fx-cursor: hand;"));
+
+                final int finalTotal = total;
+                final List<Item> toSell = new ArrayList<>(filtered);
+                batchBtn.setOnAction(e -> {
+                    int goldGain = 0;
+                    for (Item it : toSell) {
+                        int sp = priceOf.apply(it);
+                        engine.getInventory().removeItem(it.getId());
+                        engine.getPlayer().addGold(sp);
+                        goldGain += sp;
+                        // Material bonus (sama seperti sell satuan)
+                        giveMaterialBonus(it.getRarity());
+                    }
+                    router.addSystemChat("✦ " + toSell.size() + " item dijual · ⚙ +" + goldGain);
+                    engine.autoSave();
+                    router.showCityArea("PENADAH");
+                });
+
+                batchBar.getChildren().addAll(info, batchBtn);
+            } else {
+                Label none2 = new Label("— tidak ada item di filter ini —");
+                none2.setStyle("-fx-text-fill: #3A2810; -fx-font-family: \'Courier New\'; -fx-font-size: 10px;");
+                batchBar.getChildren().add(none2);
             }
+
+            // Item list
+            listBox.getChildren().clear();
+            if (filtered.isEmpty()) {
+                Label none = new Label("Tidak ada item untuk dijual.");
+                none.setStyle("-fx-text-fill: #3A2810; -fx-font-family: \'Courier New\'; -fx-font-size: 11px; -fx-padding: 20;");
+                listBox.getChildren().add(none);
+            } else {
+                for (Item item : filtered) {
+                    listBox.getChildren().add(buildSellRow(item, (int) priceOf.apply(item)));
+                }
+            }
+        };
+
+        // Build filter pills
+        for (String[] pill : pills) {
+            String key = pill[0];
+            String lbl = pill[1];
+
+            // Separator sebelum EQUIPMENT
+            if (key.equals("EQUIPMENT")) {
+                Label sep = new Label("|");
+                sep.setStyle("-fx-text-fill: #3A2810; -fx-font-family: \'Courier New\'; -fx-padding: 0 4;");
+                filterBar.getChildren().add(sep);
+            }
+
+            Button b = new Button(lbl);
+            boolean active = pawnFilter.equals(key);
+            String activeStyle = "-fx-background-color: #C8860A44; -fx-border-color: #C8860A; -fx-border-width: 1;" +
+                "-fx-text-fill: #FFD080; -fx-font-family: \'Courier New\'; -fx-font-size: 10px;" +
+                "-fx-padding: 3 10; -fx-cursor: hand;";
+            String inactiveStyle = "-fx-background-color: transparent; -fx-border-color: #2A1808; -fx-border-width: 1;" +
+                "-fx-text-fill: #5A3A10; -fx-font-family: \'Courier New\'; -fx-font-size: 10px;" +
+                "-fx-padding: 3 10; -fx-cursor: hand;";
+            b.setStyle(active ? activeStyle : inactiveStyle);
+
+            Runnable[] ref = {refreshRef[0]};
+            b.setOnAction(ev -> {
+                pawnFilter = key;
+                // Update semua pill style
+                for (javafx.scene.Node n : filterBar.getChildren()) {
+                    if (n instanceof Button pb) {
+                        boolean isActive = pb.getText().equals(lbl) ||
+                            (pb == b);
+                        // re-style based on pawnFilter match
+                    }
+                }
+                // Simpler: just rebuild filter styles
+                for (javafx.scene.Node n : filterBar.getChildren()) {
+                    if (n instanceof Button pb) {
+                        boolean isThis = pb == b;
+                        // find key from pills
+                        for (String[] p2 : pills) {
+                            if (p2[1].equals(pb.getText())) {
+                                pb.setStyle(p2[0].equals(pawnFilter) ? activeStyle : inactiveStyle);
+                                break;
+                            }
+                        }
+                    }
+                }
+                refreshRef[0].run();
+            });
+            filterBar.getChildren().add(b);
         }
-        return list;
+
+        // Separator line
+        javafx.scene.control.Separator sepLine = new javafx.scene.control.Separator();
+        sepLine.setStyle("-fx-background-color: #2A1808;");
+
+        topBox.getChildren().addAll(desc, filterBar, batchBar, sepLine);
+        pane.setTop(topBox);
+
+        // ── Center: scrollable item list ──────────────────
+        ScrollPane scroll = new ScrollPane(listBox);
+        scroll.setFitToWidth(true);
+        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scroll.setStyle("-fx-background-color: #0A0604; -fx-background: #0A0604; -fx-border-color: transparent;");
+        pane.setCenter(scroll);
+
+        // Initial render
+        refreshRef[0].run();
+        return pane;
     }
 
-    private HBox buildSellRow(Item item) {
-        int seed = Math.abs(item.getId().hashCode());
-        int basePrice = switch (item.getRarity()) {
-            case COMMON    -> 15  + (seed % 10);
-            case UNCOMMON  -> 45  + (seed % 20);
-            case RARE      -> 120 + (seed % 50);
-            case EPIC      -> 300 + (seed % 100);
-            case LEGENDARY -> 700 + (seed % 200);
-            case MYTHIC    -> 0;
-        };
-        int sellPrice = (int)(basePrice * 0.4);
-
+    private HBox buildSellRow(Item item, int sellPrice) {
         String rc = UIFactory.rarityColor(item.getRarity());
         HBox row = new HBox(10);
         row.setPadding(new Insets(8, 0, 8, 0));
@@ -593,64 +763,46 @@ public class CityView {
         sellBtn.setOnAction(e -> {
             engine.getInventory().removeItem(item.getId());
             engine.getPlayer().addGold(fp);
-
-            // FIX 10: Jual item juga kasih material berdasarkan rarity
-            arclightcity.item.Item.Rarity rarity = item.getRarity();
-            java.util.Random rng = new java.util.Random();
-            String matGain = "";
-            if (rarity != null) {
-                switch (rarity) {
-                    case COMMON -> {
-                        // 40% chance scrap x1
-                        if (rng.nextDouble() < 0.40) {
-                            engine.getInventory().addItem(new Material("Scrap Metal", "", rarity, Material.MaterialType.SCRAP_METAL));
-                            matGain = " + Scrap";
-                        }
-                    }
-                    case UNCOMMON -> {
-                        // 60% scrap, 20% chip
-                        engine.getInventory().addItem(new Material("Scrap Metal", "", rarity, Material.MaterialType.SCRAP_METAL));
-                        matGain = " + Scrap";
-                        if (rng.nextDouble() < 0.20) {
-                            engine.getInventory().addItem(new Material("Circuit Chip", "", rarity, Material.MaterialType.CYBER_CHIP));
-                            matGain += " + Chip";
-                        }
-                    }
-                    case RARE -> {
-                        // scrap + 50% chip
-                        engine.getInventory().addItem(new Material("Scrap Metal", "", rarity, Material.MaterialType.SCRAP_METAL));
-                        if (rng.nextDouble() < 0.50) {
-                            engine.getInventory().addItem(new Material("Circuit Chip", "", rarity, Material.MaterialType.CYBER_CHIP));
-                            matGain = " + Chip";
-                        }
-                        if (rng.nextDouble() < 0.15) {
-                            engine.getInventory().addItem(new Material("Neon Crystal", "", rarity, Material.MaterialType.NEON_CRYSTAL));
-                            matGain += " + Crystal";
-                        }
-                    }
-                    case EPIC, LEGENDARY -> {
-                        // chip pasti, crystal 40%, cal kit 10%
-                        engine.getInventory().addItem(new Material("Circuit Chip", "", rarity, Material.MaterialType.CYBER_CHIP));
-                        matGain = " + Chip";
-                        if (rng.nextDouble() < 0.40) {
-                            engine.getInventory().addItem(new Material("Neon Crystal", "", rarity, Material.MaterialType.NEON_CRYSTAL));
-                            matGain += " + Crystal";
-                        }
-                        if (rng.nextDouble() < 0.10) {
-                            engine.getInventory().addItem(new Material("Cal Kit", "", rarity, Material.MaterialType.CALIBRATION_KIT));
-                            matGain += " + Cal Kit";
-                        }
-                    }
-                    default -> {}
-                }
-            }
-            router.addSystemChat("✓ " + item.getName() + " dijual ⚙" + fp + matGain);
+            giveMaterialBonus(item.getRarity());
+            router.addSystemChat("✓ " + item.getName() + " dijual ⚙" + fp);
             engine.autoSave();
             router.showCityArea("PENADAH");
         });
 
         row.getChildren().addAll(info, priceLabel, sellBtn);
         return row;
+    }
+
+    /** Berikan material bonus saat jual item (dipanggil batch maupun satuan) */
+    private void giveMaterialBonus(Item.Rarity rarity) {
+        java.util.Random rng = new java.util.Random();
+        if (rarity == null) return;
+        switch (rarity) {
+            case COMMON -> {
+                if (rng.nextDouble() < 0.40)
+                    engine.getInventory().addItem(new Material("Scrap Metal", "", rarity, Material.MaterialType.SCRAP_METAL));
+            }
+            case UNCOMMON -> {
+                engine.getInventory().addItem(new Material("Scrap Metal", "", rarity, Material.MaterialType.SCRAP_METAL));
+                if (rng.nextDouble() < 0.20)
+                    engine.getInventory().addItem(new Material("Circuit Chip", "", rarity, Material.MaterialType.CYBER_CHIP));
+            }
+            case RARE -> {
+                engine.getInventory().addItem(new Material("Scrap Metal", "", rarity, Material.MaterialType.SCRAP_METAL));
+                if (rng.nextDouble() < 0.50)
+                    engine.getInventory().addItem(new Material("Circuit Chip", "", rarity, Material.MaterialType.CYBER_CHIP));
+                if (rng.nextDouble() < 0.15)
+                    engine.getInventory().addItem(new Material("Neon Crystal", "", rarity, Material.MaterialType.NEON_CRYSTAL));
+            }
+            case EPIC, LEGENDARY -> {
+                engine.getInventory().addItem(new Material("Circuit Chip", "", rarity, Material.MaterialType.CYBER_CHIP));
+                if (rng.nextDouble() < 0.40)
+                    engine.getInventory().addItem(new Material("Neon Crystal", "", rarity, Material.MaterialType.NEON_CRYSTAL));
+                if (rng.nextDouble() < 0.10)
+                    engine.getInventory().addItem(new Material("Cal Kit", "", rarity, Material.MaterialType.CALIBRATION_KIT));
+            }
+            default -> {}
+        }
     }
 
     // ── Helpers ───────────────────────────────────────────────

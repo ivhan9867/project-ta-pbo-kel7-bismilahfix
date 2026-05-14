@@ -232,7 +232,7 @@ public class ProceduralGenerator {
 
     private static Floor.FloorTheme selectTheme(int floor) {
         Floor.FloorTheme[] themes = Floor.FloorTheme.values();
-        int themeIndex = ((floor - 1) / 5) % themes.length;
+        int themeIndex = ((floor - 1) / 10) % themes.length;
         if (RNG.nextDouble() < 0.20) themeIndex = RNG.nextInt(themes.length);
         return themes[themeIndex];
     }

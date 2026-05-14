@@ -35,6 +35,7 @@ public class DungeonManager {
 
     // ── Sub-managers ─────────────────────────────────────────
     private final CombatManager combatManager = new CombatManager();
+    private arclightcity.item.Inventory inventory; // untuk recalcEquipStats sebelum combat
 
     // ── Event Listeners (Observer) ───────────────────────────
     private Consumer<DungeonStateEvent> stateListener;
@@ -46,6 +47,8 @@ public class DungeonManager {
     // ── Constructor ─────────────────────────────────────────
 
     public DungeonManager() { }
+
+    public void setInventory(arclightcity.item.Inventory inv) { this.inventory = inv; }
 
     // ════════════════════════════════════════════════════════
     // DUNGEON LIFECYCLE
@@ -213,6 +216,8 @@ public class DungeonManager {
             return;
         }
 
+        // Recalc equipment stats sebelum combat (fix: on-hit effects)
+        if (inventory != null) player.recalcEquipStats(inventory);
         // Setup combat
         combatManager.setup(player, activeMercs, enemies);
 

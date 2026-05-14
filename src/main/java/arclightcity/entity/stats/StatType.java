@@ -26,6 +26,7 @@ public enum StatType {
     CRIT_DAMAGE     ("Crit Damage",     "Multiplier damage saat critical (default 1.5)"),
     ARMOR_PIERCE    ("Armor Pierce",    "Persentase armor musuh yang diabaikan"),
     LIFESTEAL       ("Lifesteal",       "Persentase damage yang kembali jadi HP"),
+    THORN           ("Thorn",           "Persentase damage dikembalikan ke penyerang saat hit"),
 
     // ── DEFENSE ────────────────────────────────────────────
     PHYSICAL_DEF    ("Physical DEF",    "Reduksi damage fisik"),
@@ -34,6 +35,9 @@ public enum StatType {
     EVASION         ("Evasion",         "Chance menghindari serangan (0.0 - 1.0)"),
     BLOCK_CHANCE    ("Block Chance",    "Chance memblok & reduce damage 50%"),
     TENACITY        ("Tenacity",        "Reduksi durasi status effect"),
+    BLEED_ON_HIT    ("Bleed on Hit",    "Chance BLEED tiap basic attack (0.0-1.0)"),
+    BURN_ON_HIT     ("Burn on Hit",     "Chance BURN tiap basic attack (0.0-1.0)"),
+    POISON_ON_HIT   ("Poison on Hit",   "Chance VIRUS/Poison tiap basic attack (0.0-1.0)"),
 
     // ── UTILITY ────────────────────────────────────────────
     SPEED           ("Speed",           "Menentukan urutan giliran"),

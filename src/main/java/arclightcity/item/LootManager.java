@@ -126,15 +126,15 @@ public class LootManager {
 
         switch (bias) {
             case "CYBER" -> {
-                stats.put(StatType.CYBER_ATK,    20 + RNG.nextDouble() * 15 * mult);
+                stats.put(StatType.CYBER_ATK,    (12 + rarity.ordinal()*8) + RNG.nextDouble() * 15 * mult);
                 stats.put(StatType.ARMOR_PIERCE, 0.05 + RNG.nextDouble() * 0.10);
             }
             case "ENERGY" -> {
-                stats.put(StatType.ENERGY_ATK,   18 + RNG.nextDouble() * 15 * mult);
+                stats.put(StatType.ENERGY_ATK,   (12 + rarity.ordinal()*8) + RNG.nextDouble() * 15 * mult);
                 stats.put(StatType.SKILL_POWER,  0.05 + RNG.nextDouble() * 0.15);
             }
             default -> { // PHYSICAL / MIXED
-                stats.put(StatType.PHYSICAL_ATK, 22 + RNG.nextDouble() * 15 * mult);
+                stats.put(StatType.PHYSICAL_ATK, (14 + rarity.ordinal()*8) + RNG.nextDouble() * 15 * mult);
                 stats.put(StatType.CRIT_CHANCE,  0.03 + RNG.nextDouble() * 0.07);
             }
         }
@@ -142,14 +142,31 @@ public class LootManager {
         // Bonus stat untuk rarity tinggi
         if (rarity.ordinal() >= Item.Rarity.RARE.ordinal()) {
             stats.put(StatType.CRIT_DAMAGE,  0.10 + RNG.nextDouble() * 0.20 * mult);
-            stats.put(StatType.DAMAGE_MULT,  0.03 + RNG.nextDouble() * 0.07); // +3-10% damage
+            stats.put(StatType.DAMAGE_MULT,  0.05 + RNG.nextDouble() * 0.10);
+        }
+        // On-hit effects berdasarkan rarity (semakin tinggi semakin banyak)
+        if (rarity == Item.Rarity.UNCOMMON) {
+            // 1 effect: bleed chance 15-25%
+            stats.put(StatType.BLEED_ON_HIT, 0.15 + RNG.nextDouble() * 0.10);
+        }
+        if (rarity == Item.Rarity.RARE) {
+            stats.put(StatType.BLEED_ON_HIT, 0.20 + RNG.nextDouble() * 0.15);
+            if (RNG.nextBoolean()) stats.put(StatType.BURN_ON_HIT, 0.10 + RNG.nextDouble() * 0.10);
+            stats.put(StatType.LIFESTEAL, 0.03 + RNG.nextDouble() * 0.05);
         }
         if (rarity.ordinal() >= Item.Rarity.EPIC.ordinal()) {
-            stats.put(StatType.DAMAGE_MULT,  0.08 + RNG.nextDouble() * 0.12); // override: +8-20%
+            stats.put(StatType.DAMAGE_MULT,  0.10 + RNG.nextDouble() * 0.12);
+            stats.put(StatType.BLEED_ON_HIT, 0.25 + RNG.nextDouble() * 0.20);
+            stats.put(StatType.BURN_ON_HIT,  0.15 + RNG.nextDouble() * 0.15);
+            stats.put(StatType.POISON_ON_HIT,0.10 + RNG.nextDouble() * 0.15);
+            stats.put(StatType.LIFESTEAL,    0.06 + RNG.nextDouble() * 0.08);
         }
         if (rarity == Item.Rarity.LEGENDARY) {
-            stats.put(StatType.LIFESTEAL,    0.05 + RNG.nextDouble() * 0.10);
-            stats.put(StatType.DAMAGE_MULT,  0.15 + RNG.nextDouble() * 0.15); // legendary: +15-30%
+            stats.put(StatType.DAMAGE_MULT,  0.20 + RNG.nextDouble() * 0.15);
+            stats.put(StatType.BLEED_ON_HIT, 0.35 + RNG.nextDouble() * 0.20);
+            stats.put(StatType.BURN_ON_HIT,  0.25 + RNG.nextDouble() * 0.15);
+            stats.put(StatType.POISON_ON_HIT,0.20 + RNG.nextDouble() * 0.15);
+            stats.put(StatType.LIFESTEAL,    0.10 + RNG.nextDouble() * 0.10);
         }
 
         String[] names = getWeaponNames(bias);
@@ -161,6 +178,14 @@ public class LootManager {
             default       -> RNG.nextBoolean() ? Weapon.WeaponType.KATANA : Weapon.WeaponType.SHADOW_BLADE;
         };
 
+        // Ensure minimum stat values (tidak boleh < 1 untuk stat integer)
+        stats.replaceAll((stat, val) -> {
+            if (stat == StatType.PHYSICAL_ATK || stat == StatType.CYBER_ATK ||
+                stat == StatType.ENERGY_ATK || stat == StatType.MAX_HP) {
+                return Math.max(1.0, val);
+            }
+            return val;
+        });
         return new Weapon(name, "Generated weapon — " + rarity.displayName, rarity, wType, stats);
     }
 
@@ -171,7 +196,7 @@ public class LootManager {
         // Stat berdasarkan tipe slot
         switch (armorType) {
             case HELMET -> {
-                stats.put(StatType.MAX_HP,       20 + RNG.nextDouble() * 30 * mult);
+                stats.put(StatType.MAX_HP,       (15 + rarity.ordinal()*10) + RNG.nextDouble() * 30 * mult);
                 stats.put(StatType.PHYSICAL_DEF, 5  + RNG.nextDouble() * 10 * mult);
                 if (rarity.ordinal() >= Item.Rarity.RARE.ordinal())
                     stats.put(StatType.CRIT_CHANCE, 0.02 + RNG.nextDouble() * 0.06);
@@ -183,22 +208,44 @@ public class LootManager {
                     stats.put(StatType.INITIATIVE, 2 + RNG.nextDouble() * 4 * mult);
             }
             case RING -> {
-                stats.put(StatType.CRIT_CHANCE,  0.04 + RNG.nextDouble() * 0.08);
-                stats.put(StatType.CRIT_DAMAGE,  0.10 + RNG.nextDouble() * 0.20 * mult);
-                if (rarity.ordinal() >= Item.Rarity.RARE.ordinal())
-                    stats.put(StatType.DAMAGE_MULT, 0.03 + RNG.nextDouble() * 0.07 * mult);
+                // Ring bisa bermacam-macam focus
+                int ringRoll = RNG.nextInt(3);
+                if (ringRoll == 0) {
+                    // ATK-focused
+                    stats.put(StatType.CRIT_CHANCE,  0.05 + RNG.nextDouble() * 0.10);
+                    stats.put(StatType.CRIT_DAMAGE,  0.15 + RNG.nextDouble() * 0.20 * mult);
+                    if (rarity.ordinal() >= Item.Rarity.RARE.ordinal())
+                        stats.put(StatType.DAMAGE_MULT, 0.05 + RNG.nextDouble() * 0.10 * mult);
+                } else if (ringRoll == 1) {
+                    // HP/Shield-focused (baru!)
+                    stats.put(StatType.MAX_HP,     20 + RNG.nextDouble() * 35 * mult);
+                    stats.put(StatType.MAX_SHIELD, 10 + RNG.nextDouble() * 20 * mult);
+                    if (rarity.ordinal() >= Item.Rarity.RARE.ordinal())
+                        stats.put(StatType.SHIELD_REGEN, 2 + RNG.nextDouble() * 4 * mult);
+                } else {
+                    // Mixed: lifesteal + HP
+                    stats.put(StatType.MAX_HP,     15 + RNG.nextDouble() * 25 * mult);
+                    stats.put(StatType.LIFESTEAL,  0.03 + RNG.nextDouble() * 0.06);
+                    if (rarity.ordinal() >= Item.Rarity.EPIC.ordinal())
+                        stats.put(StatType.BLEED_ON_HIT, 0.10 + RNG.nextDouble() * 0.15);
+                }
             }
             default -> { // MEDIUM, HEAVY, dll
-                stats.put(StatType.MAX_HP,       30 + RNG.nextDouble() * 40 * mult);
+                stats.put(StatType.MAX_HP,       (20 + rarity.ordinal()*15) + RNG.nextDouble() * 40 * mult);
                 stats.put(StatType.MAX_SHIELD,   15 + RNG.nextDouble() * 25 * mult);
                 stats.put(StatType.PHYSICAL_DEF, 10 + RNG.nextDouble() * 15 * mult);
                 stats.put(StatType.CYBER_DEF,    6  + RNG.nextDouble() * 10 * mult);
                 stats.put(StatType.ENERGY_DEF,   6  + RNG.nextDouble() * 10 * mult);
                 if (rarity.ordinal() >= Item.Rarity.RARE.ordinal())
                     stats.put(StatType.EVASION, 0.02 + RNG.nextDouble() * 0.08);
+                if (rarity.ordinal() >= Item.Rarity.EPIC.ordinal()) {
+                    // THORN: kembalikan damage ke penyerang saat kena hit
+                    stats.put(StatType.THORN, 0.08 + RNG.nextDouble() * 0.12); // 8-20% reflect
+                }
                 if (rarity == Item.Rarity.LEGENDARY) {
                     stats.put(StatType.TENACITY, 0.10 + RNG.nextDouble() * 0.15);
                     stats.put(StatType.HP_REGEN, 3 + RNG.nextDouble() * 5);
+                    stats.put(StatType.THORN, 0.15 + RNG.nextDouble() * 0.15); // 15-30% reflect
                 }
             }
         }

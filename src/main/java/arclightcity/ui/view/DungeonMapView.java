@@ -160,7 +160,7 @@ public class DungeonMapView {
                 var iv = arclightcity.ui.util.AssetManager.makeIVFill(
                     bg, arclightcity.ui.ArclightApp.GAME_WIDTH,
                     arclightcity.ui.ArclightApp.SCREEN_HEIGHT);
-                iv.setOpacity(0.12); iv.setMouseTransparent(true);
+                iv.setOpacity(0.20); iv.setMouseTransparent(true);
                 root.getChildren().add(0, iv);
             }
         } catch (Exception ignored) {}
@@ -741,4 +741,10 @@ public class DungeonMapView {
             case TRAP    -> "This room triggered a hazard.";
         };
     }
+    /** Hentikan semua animasi (dipanggil SceneRouter sebelum view ini diganti) */
+    public void stopAnimations() {
+        if (dungeonGridMap != null) dungeonGridMap.stopAnimations();
+    }
+
+
 }

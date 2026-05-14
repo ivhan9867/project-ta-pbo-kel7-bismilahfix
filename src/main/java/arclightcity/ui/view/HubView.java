@@ -40,7 +40,7 @@ public class HubView {
                 arclightcity.ui.util.AssetManager.makeIVFill(bgImg,
                     arclightcity.ui.ArclightApp.GAME_WIDTH,
                     arclightcity.ui.ArclightApp.SCREEN_HEIGHT);
-            bgView.setOpacity(0.18);
+            bgView.setOpacity(0.55);
             bgView.setMouseTransparent(true);
             javafx.scene.layout.StackPane bgLayer = new javafx.scene.layout.StackPane(bgView);
             bgLayer.setMouseTransparent(true);
