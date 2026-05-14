@@ -117,6 +117,11 @@ public class GameStateConverter {
             md.loyaltyLevel  = merc.getLoyaltyLevel();
             md.currentHp     = merc.getCurrentHp();
             md.currentMp     = merc.getCurrentMp();
+            // Simpan stat aktual agar level-up HP tidak hilang saat load
+            md.savedMaxHp    = merc.getStats().get(arclightcity.entity.stats.StatType.MAX_HP);
+            md.savedPhysAtk  = merc.getStats().get(arclightcity.entity.stats.StatType.PHYSICAL_ATK);
+            md.savedCyberAtk = merc.getStats().get(arclightcity.entity.stats.StatType.CYBER_ATK);
+            md.savedSpeed    = merc.getStats().get(arclightcity.entity.stats.StatType.SPEED);
             md.currentShield = merc.getCurrentShield();
             md.isActive      = engine.getActiveMercs().contains(merc);
             md.isActive = engine.getActiveMercs().stream()
@@ -370,13 +375,14 @@ public class GameStateConverter {
                 // Restore loyalty — set langsung ke field (tidak ada gainLoyalty)
                 merc.setLoyaltyDirect(md.loyaltyLevel);
 
-                // Restore vitals — gunakan receiveHeal/restoreMp setelah entity dibuat
-                // Entity dimulai dengan HP/MP penuh, kurangi sesuai save jika perlu
-                double maxHp     = merc.getStats().get(StatType.MAX_HP);
-                double maxMp     = merc.getStats().get(StatType.MAX_MP);
-                double maxShield = merc.getStats().get(StatType.MAX_SHIELD);
-
-                // Set langsung via protected field accessor di Mercenary
+                // Restore stat aktual dari save (level-up bonuses tidak hilang)
+                if (md.savedMaxHp > 0) {
+                    merc.getStats().setBase(StatType.MAX_HP,       md.savedMaxHp);
+                    merc.getStats().setBase(StatType.PHYSICAL_ATK, md.savedPhysAtk);
+                    merc.getStats().setBase(StatType.CYBER_ATK,    md.savedCyberAtk);
+                    merc.getStats().setBase(StatType.SPEED,        md.savedSpeed);
+                }
+                // Restore vitals menggunakan MAX_HP yang sudah benar
                 merc.restoreVitals(md.currentHp, md.currentMp, md.currentShield);
 
                 engine.addOwnedMercForLoad(merc);

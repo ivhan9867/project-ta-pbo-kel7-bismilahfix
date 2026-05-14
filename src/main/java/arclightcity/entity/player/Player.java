@@ -279,14 +279,20 @@ public class Player extends Entity {
      * lifesteal, burn chance, dll. benar-benar aktif.
      */
     public void recalcEquipStats(arclightcity.item.Inventory inv) {
+        double oldMaxHp = stats.get(arclightcity.entity.stats.StatType.MAX_HP);
+        double hpPct    = oldMaxHp > 0 ? (currentHp / oldMaxHp) : 1.0;
+
         stats.clearEquipmentBonuses();
-        for (String itemId : equippedItems.values()) {
-            if (itemId == null || itemId.isEmpty()) continue;
-            arclightcity.item.Item item = inv.findById(itemId);
-            if (item instanceof arclightcity.item.Equipment eq) {
-                eq.getStatBonuses().forEach((type, val) ->
-                    stats.addEquipmentBonus(type, val));
-            }
+        // Baca langsung dari slot Inventory (player.equippedItems tidak pernah diisi)
+        for (arclightcity.item.Equipment eq : inv.getAllEquipped()) {
+            eq.getStatBonuses().forEach((type, val) ->
+                stats.addEquipmentBonus(type, val));
+        }
+
+        // Scale currentHp proporsional agar tidak tiba-tiba terlihat 25%
+        double newMaxHp = stats.get(arclightcity.entity.stats.StatType.MAX_HP);
+        if (newMaxHp > 0) {
+            currentHp = Math.min(newMaxHp, Math.max(1, newMaxHp * hpPct));
         }
     }
 

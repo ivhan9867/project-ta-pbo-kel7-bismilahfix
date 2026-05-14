@@ -444,30 +444,27 @@ public class CityView {
         card.setStyle("-fx-background-color: #1A1008; -fx-border-color: " + rc + "33;" +
                       "-fx-border-width: 1 1 1 3;");
 
+        // Header
         HBox nameRow = new HBox(8);
         Label name = new Label(eq.getFullName());
-        name.setStyle("-fx-text-fill: " + rc + "; -fx-font-family: 'Courier New';" +
+        name.setStyle("-fx-text-fill: " + rc + "; -fx-font-family: \'Courier New\';" +
                       "-fx-font-size: 12px; -fx-font-weight: bold;");
-        Label lvl = new Label("+" + eq.getUpgradeLevel());
-        lvl.setStyle("-fx-text-fill: #2D7A45; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
-        HBox.setHgrow(name, Priority.ALWAYS);
-        nameRow.getChildren().addAll(name, lvl);
-
-        // Button row
-        HBox btnRow = new HBox(8);
-
-        // Ultra Enhance — hanya jika sudah +8, butuh Ultra Core
         int curLvl = eq.getUpgradeLevel();
-        boolean canUltra = curLvl >= 8 && curLvl < 10
-                        && countMaterial(Material.MaterialType.ULTRA_ENHANCE_CORE) > 0;
-        boolean canCal = countMaterial(Material.MaterialType.CALIBRATOR) > 0;
+        Label lvl = new Label("+" + curLvl + (curLvl >= eq.getMaxUpgradeFromTier() ? " ✓MAX" : ""));
+        lvl.setStyle("-fx-text-fill: #2D7A45; -fx-font-family: \'Courier New\'; -fx-font-size: 11px;");
+        Label tier = new Label("Tier " + eq.getItemTier());
+        tier.setStyle("-fx-text-fill: #5A3A10; -fx-font-family: \'Courier New\'; -fx-font-size: 9px;");
+        HBox.setHgrow(name, Priority.ALWAYS);
+        nameRow.getChildren().addAll(name, lvl, tier);
 
-        if (curLvl < 8) {
-            // Upgrade biasa +1 (max +8) — pakai gold
-            int upgCost = 100 * (curLvl + 1);
-            Button upg = new Button("UPGRADE +" + (curLvl + 1) + "  ⚙" + upgCost);
+        // ── UPGRADE section ─────────────────────────────────
+        HBox upgradeRow = new HBox(8);
+        int maxLvl = eq.getMaxUpgradeFromTier();
+        if (curLvl < maxLvl) {
+            int upgCost = 80 * (curLvl + 1) * eq.getItemTier();
             boolean afford = engine.getPlayer().getGold() >= upgCost;
-            upg.setDisable(!afford);
+            Button upg = new Button("⬆ UPGRADE +" + (curLvl+1) + "  ⚙" + upgCost);
+            upg.setDisable(!afford || !eq.canUpgrade());
             styleWorkshopBtn(upg, afford ? "#2D7A45" : "#3A2810", afford);
             upg.setOnAction(e -> {
                 if (engine.getPlayer().spendGold(upgCost)) {
@@ -476,42 +473,31 @@ public class CityView {
                     router.showCityArea("BENGKEL");
                 }
             });
-            btnRow.getChildren().add(upg);
-        } else if (curLvl < 10) {
-            // Ultra Enhance +9/+10 — butuh Kristal Ultra, ada chance gagal
-            int rate = curLvl == 8 ? 70 : 40; // 70% sukses untuk +9, 40% untuk +10
-            Button ultra = new Button("ULTRA +" + (curLvl + 1) + "  [" + rate + "% sukses]");
-            styleWorkshopBtn(ultra, canUltra ? "#FF8833" : "#3A2810", canUltra);
-            ultra.setOnAction(e -> {
-                consumeMaterial(Material.MaterialType.ULTRA_ENHANCE_CORE);
-                if (new Random().nextInt(100) < rate) {
-                    eq.applyUpgrade();
-                    router.addSystemChat("✨ BERHASIL! " + eq.getName() + " +" + eq.getUpgradeLevel() + "!");
-                } else {
-                    // Gagal — turun 1 level (tidak hancur)
-                    router.addSystemChat("💥 GAGAL... " + eq.getName() + " tetap +" + eq.getUpgradeLevel());
-                }
-                router.showCityArea("BENGKEL");
-            });
-            btnRow.getChildren().add(ultra);
+            upgradeRow.getChildren().add(upg);
         } else {
-            Label maxed = new Label("✓ UPGRADE MAKSIMUM (+10)");
-            maxed.setStyle("-fx-text-fill: #FF8833; -fx-font-family: 'Courier New'; -fx-font-size: 10px;");
-            btnRow.getChildren().add(maxed);
+            Label maxed = new Label("✓ UPGRADE MAKSIMUM (+" + maxLvl + ")");
+            maxed.setStyle("-fx-text-fill: #C8860A; -fx-font-family: \'Courier New\'; -fx-font-size: 10px;");
+            upgradeRow.getChildren().add(maxed);
         }
 
-        // Kalibrasi premium
-        Button cal = new Button("KALIBRASI PREMIUM");
-        styleWorkshopBtn(cal, canCal ? "#7755BB" : "#3A2810", canCal);
-        cal.setOnAction(e -> {
-            consumeMaterial(Material.MaterialType.CALIBRATOR);
-            eq.calibrate(new Random());
-            router.addSystemChat("◈ " + eq.getName() + " dikalibrasi! Stat bonus diperbarui.");
+        // ── KALIBRASI section ────────────────────────────────
+        HBox calibRow = new HBox(8);
+        boolean hasCalKit = countMaterial(Material.MaterialType.CALIBRATOR) > 0;
+        String calLabel = "◈ KALIBRASI" + (hasCalKit ? "  (Cal Kit: " + countMaterial(Material.MaterialType.CALIBRATOR) + ")" : "  (Cal Kit: 0)");
+        Button calBtn = new Button(calLabel);
+        calBtn.setDisable(!hasCalKit);
+        styleWorkshopBtn(calBtn, hasCalKit ? "#4455CC" : "#3A2810", hasCalKit);
+        calBtn.setOnAction(e -> {
+            if (!hasCalKit) return;
+            var res = engine.getInventory().calibrateItem(eq.getId(), 1);
+            router.addSystemChat(res.success
+                ? "◈ " + eq.getName() + " dikalibrasi! " + res.message.replace("Calibration successful. ", "")
+                : "✗ Kalibrasi: " + res.message);
             router.showCityArea("BENGKEL");
         });
-        btnRow.getChildren().add(cal);
+        calibRow.getChildren().add(calBtn);
 
-        card.getChildren().addAll(nameRow, btnRow);
+        card.getChildren().addAll(nameRow, upgradeRow, calibRow);
         return card;
     }
 

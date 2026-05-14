@@ -252,6 +252,7 @@ public static class InventoryViewImpl {
 
     /** Popup detail item seperti screenshot game RPG */
     private void showItemDetailPopup(Equipment eq, Inventory inv) {
+        boolean isEquipped = inv.getAllEquipped().contains(eq);
         javafx.stage.Stage popup = new javafx.stage.Stage();
         popup.initModality(javafx.stage.Modality.APPLICATION_MODAL);
         popup.setTitle(eq.getFullName());
@@ -350,15 +351,76 @@ public static class InventoryViewImpl {
         HBox actions = new HBox(8);
         actions.setPadding(new Insets(10, 16, 14, 16));
 
-        Button unequipBtn = new Button("LEPAS");
-        unequipBtn.setStyle("-fx-background-color: transparent; -fx-border-color: #CC3300;" +
-                            "-fx-border-width: 1; -fx-text-fill: #FF5533;" +
-                            "-fx-font-family: 'Courier New'; -fx-font-size: 11px;" +
+        Button unequipBtn = new Button(isEquipped ? "LEPAS" : "PAKAI");
+        String btnColor = isEquipped ? "#CC3300" : "#006633";
+        String btnText  = isEquipped ? "#FF5533" : "#44FF88";
+        unequipBtn.setStyle("-fx-background-color: transparent; -fx-border-color: " + btnColor + ";" +
+                            "-fx-border-width: 1; -fx-text-fill: " + btnText + ";" +
+                            "-fx-font-family: \'Courier New\'; -fx-font-size: 11px;" +
                             "-fx-padding: 6 14; -fx-cursor: hand;");
         unequipBtn.setOnAction(e -> {
-            inv.unequip(eq);
-            popup.close();
-            router.showInventory();
+            if (isEquipped) {
+                inv.unequip(eq);
+                router.addSystemChat("✓ " + eq.getName() + " dilepas.");
+                popup.close();
+                router.showInventory();
+            } else {
+                // Cek apakah perlu pilih slot (ring/aksesori saat kedua slot penuh)
+                boolean needSlotPick = false;
+                String forcedSlot = null;
+                if (eq instanceof arclightcity.item.Armor ar &&
+                    ar.getArmorType() == arclightcity.item.Armor.ArmorType.RING &&
+                    inv.getEquippedRing1() != null && inv.getEquippedRing2() != null) {
+                    needSlotPick = true;
+                } else if (eq.getItemType() == arclightcity.item.Item.ItemType.ACCESSORY &&
+                    inv.getEquippedAccessory1() != null && inv.getEquippedAccessory2() != null) {
+                    needSlotPick = true;
+                }
+
+                if (needSlotPick) {
+                    boolean isRing = eq instanceof arclightcity.item.Armor ar2 &&
+                                     ar2.getArmorType() == arclightcity.item.Armor.ArmorType.RING;
+                    String s1 = isRing ? "RING_1" : "ACCESSORY_1";
+                    String s2 = isRing ? "RING_2" : "ACCESSORY_2";
+                    // Tampilkan mini-dialog pilih slot
+                    javafx.stage.Stage slotDlg = new javafx.stage.Stage();
+                    slotDlg.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+                    slotDlg.setTitle("Pilih Slot");
+                    javafx.scene.layout.VBox dlgBox = new javafx.scene.layout.VBox(10);
+                    dlgBox.setPadding(new javafx.geometry.Insets(16));
+                    dlgBox.setStyle("-fx-background-color: #0D0805;");
+                    javafx.scene.control.Label dlgLbl = new javafx.scene.control.Label("Ganti slot mana?");
+                    dlgLbl.setStyle("-fx-text-fill: #C8860A; -fx-font-family: \'Courier New\'; -fx-font-size: 12px;");
+                    String n1 = isRing ? (inv.getEquippedRing1() != null ? inv.getEquippedRing1().getName() : "-") :
+                                         (inv.getEquippedAccessory1() != null ? inv.getEquippedAccessory1().getName() : "-");
+                    String n2 = isRing ? (inv.getEquippedRing2() != null ? inv.getEquippedRing2().getName() : "-") :
+                                         (inv.getEquippedAccessory2() != null ? inv.getEquippedAccessory2().getName() : "-");
+                    javafx.scene.control.Button b1 = new javafx.scene.control.Button("Slot 1: " + n1);
+                    javafx.scene.control.Button b2 = new javafx.scene.control.Button("Slot 2: " + n2);
+                    String btnStyle = "-fx-background-color: #1A1008; -fx-border-color: #C8860A; -fx-border-width: 1;" +
+                                      "-fx-text-fill: #FFB830; -fx-font-family: \'Courier New\'; -fx-font-size: 11px; -fx-cursor: hand;";
+                    b1.setStyle(btnStyle); b2.setStyle(btnStyle);
+                    b1.setMaxWidth(Double.MAX_VALUE); b2.setMaxWidth(Double.MAX_VALUE);
+                    b1.setOnAction(ev2 -> {
+                        inv.unequip(s1); inv.equip(eq);
+                        router.addSystemChat("✓ " + eq.getName() + " ke Slot 1.");
+                        slotDlg.close(); popup.close(); router.showInventory();
+                    });
+                    b2.setOnAction(ev2 -> {
+                        inv.unequip(s2); inv.equip(eq);
+                        router.addSystemChat("✓ " + eq.getName() + " ke Slot 2.");
+                        slotDlg.close(); popup.close(); router.showInventory();
+                    });
+                    dlgBox.getChildren().addAll(dlgLbl, b1, b2);
+                    slotDlg.setScene(new javafx.scene.Scene(dlgBox, 280, 130));
+                    slotDlg.showAndWait();
+                } else {
+                    inv.equip(eq);
+                    router.addSystemChat("✓ " + eq.getName() + " dipakai.");
+                    popup.close();
+                    router.showInventory();
+                }
+            }
         });
 
         // Tombol Upgrade langsung dari popup — tampil biaya dulu

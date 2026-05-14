@@ -284,6 +284,8 @@ public class GameEngine {
     }
 
     public void returnToHub() {
+        // Sync equipment stats sebelum kembali ke hub agar HP/MAX_HP konsisten
+        if (player != null && inventory != null) player.recalcEquipStats(inventory);
         // Pastikan player tidak dalam keadaan mati saat kembali ke hub
         // Selalu revive player saat kembali ke hub (tidak hanya jika mati)
         // Revive = set alive=true + restore HP
@@ -372,6 +374,8 @@ public class GameEngine {
         // Restore skills
         pd.unlockedSkillIds.forEach(player::forceUnlockSkill);
         pd.equippedSkillIds.forEach(player::equipSkill);
+        // Sync equipment stats dari save
+        if (inventory != null) player.recalcEquipStats(inventory);
 
         transitionTo(GameState.HUB);
     }

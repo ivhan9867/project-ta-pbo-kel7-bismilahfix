@@ -181,7 +181,15 @@ public class AssetManager {
             case "gajah mungkur","gajah" -> "gajahmungkur";
             case "manananggal" -> "manananggal";
             case "leyak penyihir","leyak" -> "leyakpenyihir";
-            case "rangkiang raksasa","rangkiang" -> "rangkiangraksasa";
+            case "rangkiang raksasa","rangkiang"        -> "rangkiangraksasa";
+            // ── Sprite belum ada — fallback ke musuh yang mirip ──────────────
+            case "rangda merah","rangdamerah"            -> "leyakpenyihir";
+            case "barong rusak","barongrusak"            -> "banaspatimekanik";
+            case "babi ngepet","babingepet"              -> "celengbuto";
+            case "neon serpent","neonserpent"            -> "nagabanda";
+            case "glitch drone","glitchdrone"            -> "demitpabrik";
+            case "garuda korup","garudakorup"            -> "leakpengembara";
+            case "detya wesi","detyawesi"                -> "raksasakala";
             case "naga cyber","naga" -> "nagacyber";
             case "tank rx-9","tank-rx9","tank rx9","tank" -> "rx9";
             // Fallback: strip spasi dan karakter non-alpha

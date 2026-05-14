@@ -74,6 +74,11 @@ public class GameSaveState implements Serializable {
         public double  currentMp;
         public double  currentShield;
         public boolean isActive;
+        // Simpan MAX_HP aktual agar stat dari level-up tidak hilang saat load
+        public double  savedMaxHp;
+        public double  savedPhysAtk;
+        public double  savedCyberAtk;
+        public double  savedSpeed;
     }
 
     public static class ItemData implements Serializable {

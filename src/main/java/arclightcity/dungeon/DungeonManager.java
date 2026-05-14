@@ -103,8 +103,8 @@ public class DungeonManager {
 
         emit(DungeonStateEvent.floorEntered(currentFloorNumber, currentFloor.getTheme()));
 
-        // Auto-masuk room pertama (EMPTY)
-        enterRoom(0);
+        // Mulai dari edge tile acak (atas/bawah/kiri/kanan)
+        enterRoom(pickEdgeStartTile());
     }
 
     /**
@@ -368,14 +368,13 @@ public class DungeonManager {
         player.restoreMp(maxMp); // MP penuh
         player.restoreShield(maxShd); // Shield penuh
 
-        // Guildmate: restore via party dari activeParty (DungeonManager punya reference)
+        // Guildmate: beri sedikit regen antar lantai tapi JANGAN reset ke 25%
         for (var merc : getActiveMercs()) {
             if (merc != null && merc.isAlive()) {
-                merc.restoreVitals(
-                    merc.getStats().get(StatType.MAX_HP) * 0.25,
-                    merc.getStats().get(StatType.MAX_SHIELD),
-                    merc.getStats().get(StatType.MAX_MP)
-                );
+                double mercMaxHp = merc.getStats().get(StatType.MAX_HP);
+                double heal      = mercMaxHp * 0.15;
+                double newHp     = Math.min(merc.getCurrentHp() + heal, mercMaxHp);
+                merc.setHpDirect(newHp);
             }
         }
 
@@ -424,4 +423,18 @@ public class DungeonManager {
                 .filter(r -> r != null)
                 .toList();
     }
+    /** Pilih tile start acak dari tepi grid (atas/bawah/kiri/kanan) */
+    private int pickEdgeStartTile() {
+        int totalRooms = currentFloor.getTotalRooms();
+        if (totalRooms <= 1) return 0;
+        int cols = arclightcity.dungeon.ProceduralGenerator.COLS;
+        int rows = (totalRooms + cols - 1) / cols;
+        java.util.List<Integer> edges = new java.util.ArrayList<>();
+        for (int c2 = 0; c2 < cols; c2++) { edges.add(c2); edges.add((rows-1)*cols + c2); } // top + bottom
+        for (int r = 1; r < rows-1; r++) { edges.add(r*cols); edges.add(r*cols + cols-1); } // left + right
+        edges.removeIf(i -> i >= totalRooms);
+        return edges.isEmpty() ? 0 : edges.get(new java.util.Random().nextInt(edges.size()));
+    }
+
+
 }

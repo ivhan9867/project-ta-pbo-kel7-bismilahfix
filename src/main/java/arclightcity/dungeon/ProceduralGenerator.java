@@ -25,16 +25,15 @@ import java.util.*;
 public class ProceduralGenerator {
 
     private static final Random RNG  = new Random();
-    public  static final int    COLS = 5;  // lebar grid
+    public  static final int    COLS = 12; // lebar grid — memenuhi area 940px (12*72+8=872px)
 
     // ── Floor Size Config ─────────────────────────────────────
 
     /** Jumlah baris grid berdasarkan floor */
     private static int getGridRows(int floor) {
-        if (floor <= 3)  return 3;  // 15 tile
-        if (floor <= 8)  return 4;  // 20 tile
-        if (floor <= 15) return 5;  // 25 tile
-        return 6;                   // 30 tile (floor 16+)
+        if (floor <= 5)  return 2;  // 24 tile (2×12)
+        if (floor <= 15) return 3;  // 36 tile (3×12)
+        return 4;                   // 48 tile (4×12, floor 16+)
     }
 
     // ── Main Generate ────────────────────────────────────────
@@ -233,7 +232,6 @@ public class ProceduralGenerator {
     private static Floor.FloorTheme selectTheme(int floor) {
         Floor.FloorTheme[] themes = Floor.FloorTheme.values();
         int themeIndex = ((floor - 1) / 10) % themes.length;
-        if (RNG.nextDouble() < 0.20) themeIndex = RNG.nextInt(themes.length);
         return themes[themeIndex];
     }
 

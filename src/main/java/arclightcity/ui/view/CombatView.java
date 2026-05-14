@@ -70,6 +70,8 @@ public class CombatView {
 
     // Party bar (bottom, horizontal)
     private HBox    partyBar;
+    // Entity float-x positions: diisi saat updateBattleScene
+    private final java.util.Map<String,Double> entityFloatX = new java.util.HashMap<>();
 
     // Header
     private Label   turnLabel;
@@ -549,9 +551,12 @@ public class CombatView {
             double xPos = epW * slot[0] - sz/2;
             double yPos = epH * slot[1] - sz - 30; // -30 untuk HP bar di atas
 
-            card.setLayoutX(Math.max(0, Math.min(epW-sz-10, xPos)));
+            double ex = Math.max(0, Math.min(epW-sz-10, xPos));
+            card.setLayoutX(ex);
             card.setLayoutY(Math.max(10, Math.min(epH-sz-40, yPos)));
             enemyPane.getChildren().add(card);
+            // Simpan floatX: offset ke floatCanvas (enemyPane start ~30% dari lebar)
+            if (en.getId() != null) entityFloatX.put(en.getId(), epW*0.30 + ex + sz/2);
         }
 
         // Ally zone — formation absolut
@@ -584,13 +589,16 @@ public class CombatView {
         for (int i=0; i<orderedAllies.size(); i++) {
             Entity a = orderedAllies.get(i);
             double[] slot = i<slotMap.length ? slotMap[i] : slotMap[slotMap.length-1];
-            int szPx = na<=1?90:na==2?78:na==3?66:58;
+            int szPx = na<=1?105:na==2?92:na==3?80:70;
             var card = buildAllySprite(a, na, szPx);
             double cx = aW * slot[0] - szPx/2.0;
             double cy = aH * slot[1] - szPx/2.0;
-            card.setLayoutX(Math.max(0, Math.min(aW-szPx-4, cx)));
+            double ax = Math.max(0, Math.min(aW-szPx-4, cx));
+            card.setLayoutX(ax);
             card.setLayoutY(Math.max(0, Math.min(aH-szPx-20, cy)));
             allyPane.getChildren().add(card);
+            // Simpan floatX: ally pane di sisi kiri canvas
+            if (a.getId() != null) entityFloatX.put(a.getId(), ax + szPx/2.0);
         }
 
         // Header
@@ -925,7 +933,16 @@ public class CombatView {
         if (floatCanvas==null) return;
         String msg=ev.getMessage(); if(msg==null) return;
         double H=floatCanvas.getHeight();
-        double x=60+Math.random()*560, y=H*0.45+Math.random()*50;
+        // Posisi X berdasarkan entity yang terkena/melakukan aksi
+        String targetId = ev.getTargetId() != null ? ev.getTargetId() : ev.getActorId();
+        double x;
+        if (targetId != null && entityFloatX.containsKey(targetId)) {
+            x = entityFloatX.get(targetId) + (Math.random()-0.5)*40;
+        } else {
+            // Fallback: sisi kiri untuk ally-related, kanan untuk enemy
+            x = 60 + Math.random() * 560;
+        }
+        double y=H*0.45+Math.random()*50;
         String txt=null, col=null;
         switch(ev.getType()) {
             case CRITICAL_HIT   ->{txt="\u26a1 "+(int)num(msg)+"!!"; col="#FFD700";}

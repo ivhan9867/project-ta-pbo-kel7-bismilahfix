@@ -75,6 +75,9 @@ public class LootManager {
     // ── Item Roll ─────────────────────────────────────────────
 
     private static Item rollLootTable(String tableId, Item.Rarity rarity) {
+        return rollLootTable(tableId, rarity, 1);
+    }
+    private static Item rollLootTable(String tableId, Item.Rarity rarity, int floorTier) {
         // Tentukan tipe item
         double typeRoll = RNG.nextDouble();
 
@@ -109,8 +112,11 @@ public class LootManager {
     // ── Equipment Generator ───────────────────────────────────
 
     private static Equipment generateEquipment(Item.Rarity rarity, String bias) {
+        return generateEquipment(rarity, bias, 1);
+    }
+    private static Equipment generateEquipment(Item.Rarity rarity, String bias, int floorTier) {
         int slotRoll = RNG.nextInt(6);
-        return switch (slotRoll) {
+        Equipment eq = switch (slotRoll) {
             case 0 -> generateWeapon(rarity, bias);
             case 1 -> generateArmor(rarity, Armor.ArmorType.MEDIUM);
             case 2 -> generateArmor(rarity, Armor.ArmorType.HELMET);
@@ -118,6 +124,8 @@ public class LootManager {
             case 4 -> generateArmor(rarity, Armor.ArmorType.RING);
             default -> generateAccessory(rarity, bias);
         };
+        eq.setItemTier(floorTier);
+        return eq;
     }
 
     private static Weapon generateWeapon(Item.Rarity rarity, String bias) {
@@ -186,7 +194,8 @@ public class LootManager {
             }
             return val;
         });
-        return new Weapon(name, "Generated weapon — " + rarity.displayName, rarity, wType, stats);
+        Weapon w = new Weapon(name, "Generated weapon — " + rarity.displayName, rarity, wType, stats);
+        return w;
     }
 
     private static Armor generateArmor(Item.Rarity rarity, Armor.ArmorType armorType) {

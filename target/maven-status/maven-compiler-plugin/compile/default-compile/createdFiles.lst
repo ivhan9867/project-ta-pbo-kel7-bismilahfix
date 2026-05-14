@@ -67,6 +67,7 @@ arclightcity\dungeon\Room$RoomType.class
 arclightcity\combat\CombatEvent$EventType.class
 arclightcity\combat\CombatAction$ActionType.class
 arclightcity\ui\view\MercenaryDialogue$Trigger.class
+arclightcity\item\Equipment$1.class
 arclightcity\item\Weapon$WeaponType.class
 arclightcity\dungeon\DungeonStateEvent.class
 arclightcity\entity\enemy\ThreatLevel.class
