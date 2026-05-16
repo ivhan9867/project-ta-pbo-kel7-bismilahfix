@@ -295,6 +295,6 @@ Kelompok 7 — Semester 2
 
 <div align="center">
 
-*Built with ❤️ using Java 25 + JavaFX 25 · No external game engine · Pure OOP*
+*Built with using Java 25 + JavaFX 25 · No external game engine · Pure OOP*
 
 </div>
