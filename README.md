@@ -25,7 +25,7 @@
 **Mythic Item Obtained** adalah game **RPG Dungeon Crawler berbasis giliran (turn-based)** yang dibangun sepenuhnya dengan **Java + JavaFX** tanpa engine eksternal. Terinspirasi dari estetika dark-fantasy dan mitologi Indonesia, game ini menggabungkan sistem combat yang dalam, item procedural, dan enam jenis dungeon dengan tema Nusantara.
 
 > 🏆 **Proyek Akhir — Pemrograman Berorientasi Objek (OOP)**
-> Universitas · Kelompok 7 · Semester 2
+> Universitas Negeri Surabaya · Kelompok 7 · Semester 2
 
 ---
 
