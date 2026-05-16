@@ -402,6 +402,11 @@ public class GameEngine {
 
     public Player          getPlayer()         { return player; }
     public Inventory       getInventory()      { return inventory; }
+    public int             getFloorNumber()    { return dungeonManager != null ? dungeonManager.getCurrentFloorNumber() : 0; }
+    public boolean         isBossRoom()        { return dungeonManager != null && dungeonManager.isCurrentRoomBoss(); }
+    public boolean         cutscenePlayed(String id)   { return playedCutscenes.contains(id); }
+    public void            markCutscenePlayed(String id){ playedCutscenes.add(id); }
+    private final java.util.Set<String> playedCutscenes = new java.util.HashSet<>();
     public DungeonManager  getDungeonManager() { return dungeonManager; }
     public GameState       getCurrentState()   { return currentState; }
     public List<Mercenary> getOwnedMercs()     { return java.util.Collections.unmodifiableList(ownedMercs); }

@@ -1621,7 +1621,11 @@ public static class VictoryViewImpl {
             "-fx-font-weight: bold; -fx-padding: 8 14; -fx-cursor: hand;" +
             "-fx-effect: dropshadow(gaussian, #C8860A, 8, 0.3, 0, 0);"
         );
-        cont.setOnAction(e -> router.showDungeonMap());
+        cont.setOnAction(e -> {
+            // Trigger boss POST cutscene jika applicable (setelah menang boss)
+            int floor = engine.getFloorNumber();
+            router.triggerBossPostCutscene(floor, () -> router.showDungeonMap());
+        });
 
         Button hub = UIFactory.btnPrimary("◈  KEMBALI KE MARKAS");
         hub.setMaxWidth(Double.MAX_VALUE);

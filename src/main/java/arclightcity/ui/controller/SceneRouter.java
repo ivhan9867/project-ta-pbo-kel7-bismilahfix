@@ -8,6 +8,8 @@ import arclightcity.ui.ArclightApp;
 import arclightcity.ui.view.*;
 import javafx.application.Platform;
 import javafx.scene.Scene;
+import arclightcity.ui.lore.CutsceneView;
+import arclightcity.ui.lore.DialogScript;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
@@ -37,6 +39,8 @@ public class SceneRouter {
     // ── Persistent layout (TIDAK pernah diganti) ─────────────
     private final HBox       persistentLayout;   // root HBox
     private final StackPane  gameArea;           // kiri — diganti setiap navigasi
+    private final StackPane  overlayRoot;        // wrapper untuk overlay cutscene
+    private boolean            cutscenePlaying = false; // guard anti-tumpuk
 
     private MainMenuView        mainMenuView;
     private CharacterCreateView charCreateView;
@@ -69,9 +73,12 @@ public class SceneRouter {
         this.persistentLayout.setStyle("-fx-background-color: #0A0604;");
         this.persistentLayout.getChildren().addAll(gameArea, chatPanel);
 
-        // Buat Scene SEKALI dengan persistent layout
+        // overlayRoot membungkus persistentLayout — cutscene ditambah di atasnya
+        this.overlayRoot = new StackPane(persistentLayout);
+
+        // Buat Scene SEKALI dengan overlayRoot sebagai root
         Scene scene = new Scene(
-            persistentLayout,
+            overlayRoot,
             ArclightApp.SCREEN_WIDTH,
             ArclightApp.SCREEN_HEIGHT
         );
@@ -289,6 +296,13 @@ public class SceneRouter {
         hubView = new HubView(engine, this);
         showWithChat(hubView.build());
         emitChatDelayed(MercenaryDialogue.Trigger.HUB_IDLE, 700);
+
+        // Trigger OPENING saat pertama kali masuk hub (new game)
+        if (!engine.cutscenePlayed("OPENING") && engine.getPlayer() != null
+            && engine.getFloorNumber() == 0) {
+            engine.markCutscenePlayed("OPENING");
+            javafx.application.Platform.runLater(() -> playCutscene("OPENING"));
+        }
     }
 
     public void showDungeonMap() {
@@ -300,6 +314,11 @@ public class SceneRouter {
         dungeonMapView.wireEngineListeners();
         showWithChat(dungeonMapView.build());
         emitChatDelayed(MercenaryDialogue.Trigger.DUNGEON_ENTER_FLOOR, 600);
+
+        if (!engine.cutscenePlayed("FIRST_DUNGEON") && engine.getPlayer() != null) {
+            engine.markCutscenePlayed("FIRST_DUNGEON");
+            javafx.application.Platform.runLater(() -> playCutscene("FIRST_DUNGEON"));
+        }
     }
 
     /** Dipanggil SEKALI saat SceneRouter dibuat — pasang semua engine listener */
@@ -314,8 +333,44 @@ public class SceneRouter {
         if (combatView != null) combatView.stopAll();
         combatView = new CombatView(engine, this);
         showWithChat(combatView.build());
-        combatView.startCombatLoop();
-        emitChatDelayed(MercenaryDialogue.Trigger.COMBAT_START, 1000);
+
+        // Trigger pre-boss cutscene jika applicable
+        String bossPreKey = resolveBossCutsceneKey(engine.getFloorNumber(), true);
+        if (bossPreKey != null && !engine.cutscenePlayed(bossPreKey)
+            && engine.isBossRoom()) {
+            engine.markCutscenePlayed(bossPreKey);
+            playCutscene(bossPreKey, () -> {
+                combatView.startCombatLoop();
+                emitChatDelayed(MercenaryDialogue.Trigger.COMBAT_START, 400);
+            });
+        } else {
+            combatView.startCombatLoop();
+            emitChatDelayed(MercenaryDialogue.Trigger.COMBAT_START, 1000);
+        }
+    }
+
+    /** Trigger post-boss cutscene — dipanggil dari VictoryView setelah boss menang */
+    public void triggerBossPostCutscene(int floor, Runnable after) {
+        String key = resolveBossCutsceneKey(floor, false);
+        if (key != null && !engine.cutscenePlayed(key)) {
+            engine.markCutscenePlayed(key);
+            playCutscene(key, after);
+        } else {
+            if (after != null) after.run();
+        }
+    }
+
+    private String resolveBossCutsceneKey(int floor, boolean isPre) {
+        String s = isPre ? "_PRE" : "_POST";
+        return switch (floor) {
+            case 10 -> "BOSS1" + s;
+            case 20 -> "BOSS2" + s;
+            case 30 -> "BOSS3" + s;
+            case 40 -> "BOSS4" + s;
+            case 50 -> "BOSS5" + s;
+            default -> (floor >= 51) ? (isPre ? "FINAL_BOSS_PRE" : "ENDING")
+                     : (floor >= 1 && floor <= 9 && isPre) ? "RAKSAKALA_PRE" : null;
+        };
     }
 
     public void showInventory() {
@@ -347,6 +402,13 @@ public class SceneRouter {
     public void showEvent(DungeonEvent event) {
         eventView = new EventView(engine, this, event);
         showWithChat(eventView.build());
+    }
+
+    public void triggerFirstShopIfNeeded() {
+        if (!engine.cutscenePlayed("FIRST_SHOP")) {
+            engine.markCutscenePlayed("FIRST_SHOP");
+            playCutscene("FIRST_SHOP");
+        }
     }
 
     public void showShop() {
@@ -441,4 +503,28 @@ public class SceneRouter {
 
     public Stage      getStage()  { return stage; }
     public GameEngine getEngine() { return engine; }
+    // ── Cutscene / Dialog System ──────────────────────────────
+
+    /** Mainkan cutscene berdasarkan script ID. Otomatis return ke game saat selesai. */
+    public void playCutscene(String scriptId, Runnable onComplete) {
+        if (cutscenePlaying) { if (onComplete != null) onComplete.run(); return; }
+        if (!DialogScript.has(scriptId)) { if (onComplete != null) onComplete.run(); return; }
+        cutscenePlaying = true;
+        var beats = DialogScript.get(scriptId);
+        CutsceneView cv = new CutsceneView(beats, () -> {
+            cutscenePlaying = false;
+            javafx.application.Platform.runLater(() ->
+                overlayRoot.getChildren().removeIf(n -> n instanceof CutsceneView));
+            if (onComplete != null) onComplete.run();
+        });
+        javafx.application.Platform.runLater(() -> {
+            overlayRoot.getChildren().add(cv);
+            cv.start();
+        });
+    }
+
+    /** Mainkan cutscene tanpa callback. */
+    public void playCutscene(String scriptId) { playCutscene(scriptId, null); }
+
+
 }

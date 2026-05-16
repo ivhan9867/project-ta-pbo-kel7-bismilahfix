@@ -437,4 +437,11 @@ public class DungeonManager {
     }
 
 
+    /** True jika room saat ini adalah boss room (floor milestone) */
+    public boolean isCurrentRoomBoss() {
+        int f = getCurrentFloorNumber();
+        return (f == 10 || f == 20 || f == 30 || f == 40 || f == 50 || f >= 51);
+    }
+
+
 }
