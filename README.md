@@ -14,7 +14,7 @@
 
 > *"Asuna, seorang gamer dari dunia modern, tersesat ke dimensi Nusantara yang kacau.*
 > *Dungeon penuh makhluk mistis, artefak kuno, dan kutukan leluhur menantinya.*
-> *Satu-satunya jalan pulang — kumpulkan **Mythic Item** dan taklukkan Kahyangan Rusak."*
+> *Satu-satunya jalan pulang kumpulkan **Mythic Item** dan taklukkan Kahyangan Rusak."*
 
 ---
 
