@@ -53,6 +53,10 @@ public class CombatEvent {
 
         // CC
         ACTION_PREVENTED,   // stun/freeze/sleep mencegah aksi
+
+        // Item / Artifact
+        ITEM_USED,          // player pakai item (bonus action, tidak end turn)
+        ARTIFACT_ACTIVATED, // artifact diaktifkan
     }
 
     // ── Fields ───────────────────────────────────────────────

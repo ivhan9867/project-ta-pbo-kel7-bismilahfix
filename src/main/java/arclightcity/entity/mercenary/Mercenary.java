@@ -1,4 +1,5 @@
 package arclightcity.entity.mercenary;
+import arclightcity.item.Artifact;
 import arclightcity.combat.CombatManager;
 import arclightcity.combat.CombatAction;
 import arclightcity.entity.base.EntityType;
@@ -148,6 +149,23 @@ public abstract class Mercenary extends Entity {
     }
 
     // ── Equipment ────────────────────────────────────────────
+
+    // ── Artifact slot ─────────────────────────────────────────
+    private Artifact equippedArtifact = null;
+
+    public Artifact getEquippedArtifact()     { return equippedArtifact; }
+    public void     equipArtifact(Artifact a) { this.equippedArtifact = a; }
+    public void     unequipArtifact()          { this.equippedArtifact = null; }
+
+    /** Tick artifact CD — dipanggil tiap awal giliran */
+    public void tickArtifactCooldown() {
+        if (equippedArtifact != null) equippedArtifact.tickCooldown();
+    }
+
+    /** True jika artifact terpasang dan siap dipakai oleh AI */
+    public boolean hasReadyArtifact() {
+        return equippedArtifact != null && equippedArtifact.isReady();
+    }
 
     public void equipWeapon(String itemId)    { this.weaponItemId    = itemId; }
     public void equipArmor(String itemId)     { this.armorItemId     = itemId; }

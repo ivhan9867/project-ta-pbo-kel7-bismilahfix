@@ -34,9 +34,9 @@ public class ArclightApp extends Application {
         router.initEngineListeners();
 
         // Setup stage
-        stage.setTitle("MYTHIC ITEM OBTAINED  v0.8.5");
+        stage.setTitle("MYTHIC ITEM OBTAINED  v0.9.2");
         stage.setWidth(SCREEN_WIDTH);
-        stage.setHeight(SCREEN_HEIGHT);
+        // Height tidak di-set manual — biarkan sizeToScene() sesuaikan
         stage.setResizable(false);
 
         // Coba load icon (opsional)

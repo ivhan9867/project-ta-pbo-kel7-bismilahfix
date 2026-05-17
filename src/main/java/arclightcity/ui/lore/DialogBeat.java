@@ -35,6 +35,13 @@ public record DialogBeat(
         return new DialogBeat("lore/cutscene/" + imgPath, null, null, null, null, null, true, null);
     }
     // ── Video mp4 ─────────────────────────────────────────
+    /** Layar gelap dengan teks judul terpusat — seperti ACT title card */
+    public static DialogBeat title(String titleLine, String subLine) {
+        // speaker = "__TITLE__" sebagai marker khusus di CutsceneView
+        return new DialogBeat(null, null, null, "__TITLE__",
+            titleLine + "\n" + subLine, null, false, null);
+    }
+
     public static DialogBeat video(String filename) {
         return new DialogBeat(null, null, null, null, null, "lore/video/" + filename, false, null);
     }
@@ -43,7 +50,8 @@ public record DialogBeat(
     public static String bg(String f)   { return "lore/bg/" + f; }
     public static String gm(String n)   { return "portraits/guildmate/" + n + "_normal.png"; }
     public static String gmA(String n)  { return "portraits/guildmate/" + n + "_alt.png"; }
-    public static String asuna()        { return "portraits/asuna/asuna_normal.png"; }
+    public static String asuna()     { return "portraits/asuna/asuna_lore1.png";  } // lore before teleport
+    public static String asunaPost() { return "portraits/asuna/asuna_lore2.png";  } // idleasuna after lore
     public static String asunaL(int n)  { return "portraits/asuna/asuna_lore" + n + ".png"; }
     public static String boss(String n) { return "portraits/boss/" + n + "_normal.png"; }
     public static String bossA(String n){ return "portraits/boss/" + n + "_angry.png"; }

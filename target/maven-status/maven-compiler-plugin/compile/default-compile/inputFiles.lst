@@ -58,9 +58,13 @@ D:\KULIAH PEMROGRAMAN\SEMESTER 2\JAVA OOP SEMESTER 2\Mythic Item Obtained\src\ma
 D:\KULIAH PEMROGRAMAN\SEMESTER 2\JAVA OOP SEMESTER 2\Mythic Item Obtained\src\main\java\arclightcity\entity\status\StatusEffectType.java
 D:\KULIAH PEMROGRAMAN\SEMESTER 2\JAVA OOP SEMESTER 2\Mythic Item Obtained\src\main\java\arclightcity\item\Accessory.java
 D:\KULIAH PEMROGRAMAN\SEMESTER 2\JAVA OOP SEMESTER 2\Mythic Item Obtained\src\main\java\arclightcity\item\Armor.java
+D:\KULIAH PEMROGRAMAN\SEMESTER 2\JAVA OOP SEMESTER 2\Mythic Item Obtained\src\main\java\arclightcity\item\Artifact.java
+D:\KULIAH PEMROGRAMAN\SEMESTER 2\JAVA OOP SEMESTER 2\Mythic Item Obtained\src\main\java\arclightcity\item\ArtifactRole.java
+D:\KULIAH PEMROGRAMAN\SEMESTER 2\JAVA OOP SEMESTER 2\Mythic Item Obtained\src\main\java\arclightcity\item\ArtifactType.java
 D:\KULIAH PEMROGRAMAN\SEMESTER 2\JAVA OOP SEMESTER 2\Mythic Item Obtained\src\main\java\arclightcity\item\CalibrationSystem.java
 D:\KULIAH PEMROGRAMAN\SEMESTER 2\JAVA OOP SEMESTER 2\Mythic Item Obtained\src\main\java\arclightcity\item\Consumable.java
 D:\KULIAH PEMROGRAMAN\SEMESTER 2\JAVA OOP SEMESTER 2\Mythic Item Obtained\src\main\java\arclightcity\item\Equipment.java
+D:\KULIAH PEMROGRAMAN\SEMESTER 2\JAVA OOP SEMESTER 2\Mythic Item Obtained\src\main\java\arclightcity\item\GachaSystem.java
 D:\KULIAH PEMROGRAMAN\SEMESTER 2\JAVA OOP SEMESTER 2\Mythic Item Obtained\src\main\java\arclightcity\item\Inventory.java
 D:\KULIAH PEMROGRAMAN\SEMESTER 2\JAVA OOP SEMESTER 2\Mythic Item Obtained\src\main\java\arclightcity\item\Item.java
 D:\KULIAH PEMROGRAMAN\SEMESTER 2\JAVA OOP SEMESTER 2\Mythic Item Obtained\src\main\java\arclightcity\item\LootManager.java
@@ -83,6 +87,7 @@ D:\KULIAH PEMROGRAMAN\SEMESTER 2\JAVA OOP SEMESTER 2\Mythic Item Obtained\src\ma
 D:\KULIAH PEMROGRAMAN\SEMESTER 2\JAVA OOP SEMESTER 2\Mythic Item Obtained\src\main\java\arclightcity\ui\view\DungeonGridMap.java
 D:\KULIAH PEMROGRAMAN\SEMESTER 2\JAVA OOP SEMESTER 2\Mythic Item Obtained\src\main\java\arclightcity\ui\view\DungeonMapView.java
 D:\KULIAH PEMROGRAMAN\SEMESTER 2\JAVA OOP SEMESTER 2\Mythic Item Obtained\src\main\java\arclightcity\ui\view\EventView.java
+D:\KULIAH PEMROGRAMAN\SEMESTER 2\JAVA OOP SEMESTER 2\Mythic Item Obtained\src\main\java\arclightcity\ui\view\GachaView.java
 D:\KULIAH PEMROGRAMAN\SEMESTER 2\JAVA OOP SEMESTER 2\Mythic Item Obtained\src\main\java\arclightcity\ui\view\GameOverView.java
 D:\KULIAH PEMROGRAMAN\SEMESTER 2\JAVA OOP SEMESTER 2\Mythic Item Obtained\src\main\java\arclightcity\ui\view\HubView.java
 D:\KULIAH PEMROGRAMAN\SEMESTER 2\JAVA OOP SEMESTER 2\Mythic Item Obtained\src\main\java\arclightcity\ui\view\InventoryView.java

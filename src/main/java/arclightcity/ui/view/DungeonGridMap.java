@@ -116,7 +116,18 @@ public class DungeonGridMap extends StackPane {
                 revealAround(r.getRoomIndex());
             }
         }
-        visibleTiles.add(0);
+        // getCurrentRoomIndex() mungkin belum benar saat initFog dipanggil pertama kali
+        // (player belum diposisikan). syncPlayer() akan memanggil revealFromCurrentRoom()
+        // setelah player benar-benar diposisikan.
+    }
+
+    /** Reveal dari posisi player saat ini — dipanggil setelah floor + player siap */
+    public void revealFromCurrentRoom() {
+        if (floor == null) return;
+        int idx = floor.getCurrentRoomIndex();
+        visibleTiles.add(idx);
+        revealAround(idx);
+        draw();
     }
 
     /** Reveal semua tiles di floor saat ini (MAP_REVEALED event) */
@@ -143,7 +154,13 @@ public class DungeonGridMap extends StackPane {
 
     private void syncPlayer() {
         if (floor == null) return;
-        playerTileIdx  = floor.getCurrentRoomIndex();
+        int newIdx = floor.getCurrentRoomIndex();
+        // Reveal area sekitar posisi baru player (hanya pertama kali atau saat pindah)
+        if (!visibleTiles.contains(newIdx)) {
+            visibleTiles.add(newIdx);
+            revealAround(newIdx);
+        }
+        playerTileIdx  = newIdx;
         playerVisualX  = tileX(playerTileIdx % COLS);
         playerVisualY  = tileY(playerTileIdx / COLS);
     }

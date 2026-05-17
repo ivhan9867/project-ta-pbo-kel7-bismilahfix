@@ -591,4 +591,25 @@ public class UIFactory {
     }
 
 
+    /** Tampilkan popup dialog sederhana di atas game window */
+    public static void showPopup(javafx.scene.layout.VBox content,
+                                  javafx.stage.Stage owner) {
+        javafx.stage.Stage popup = new javafx.stage.Stage();
+        popup.initOwner(owner);
+        popup.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+        popup.initStyle(javafx.stage.StageStyle.UNDECORATED);
+        popup.setScene(new javafx.scene.Scene(content));
+        popup.getScene().setFill(javafx.scene.paint.Color.TRANSPARENT);
+        popup.sizeToScene();
+        popup.centerOnScreen();
+
+        // Klik di luar popup → tutup
+        content.setOnMouseClicked(e -> { /* handled by children */ });
+        popup.focusedProperty().addListener((obs, was, now) -> {
+            if (!now) popup.close();
+        });
+        popup.show();
+    }
+
+
 }

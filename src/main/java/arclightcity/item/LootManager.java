@@ -464,4 +464,13 @@ public class LootManager {
             arclightcity.item.Material.MaterialType.MYTHIC_FRAGMENT
         );
     }
+    /** Drop gacha ticket dari boss/elite (public helper dipanggil DungeonManager) */
+    public static void tryDropGachaTicket(arclightcity.engine.GameEngine engine, boolean isBoss) {
+        double chance = isBoss ? 0.18 : 0.05;
+        if (RNG.nextDouble() < chance) {
+            engine.addGachaTickets(1);
+        }
+    }
+
+
 }

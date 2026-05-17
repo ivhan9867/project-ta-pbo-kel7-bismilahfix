@@ -331,15 +331,34 @@ public class HubView {
             "#5A3A10", "transparent", "#3A2810", false);
         save.setOnAction(e -> router.showSaveLoad(true));
 
+        Button loadGame = buildNavButton("📂  MUAT GAME", "Load save sebelumnya",
+            "#5A3A10", "transparent", "#3A2810", false);
+        loadGame.setOnAction(e -> router.showSaveLoad(false));
+
+        Button mainMenu = buildNavButton("⌂  MENU UTAMA", "Kembali ke layar awal",
+            "#5A2810", "transparent", "#4A1808", false);
+        mainMenu.setOnAction(e -> router.returnToMainMenu());
+
+        Button gacha = buildNavButton("⬡  ALTAR ARTEFAK", "Gacha & kelola artefak",
+            "#3A1A5A", "transparent", "#5A2A8A", false);
+        gacha.setOnAction(e -> router.showGacha());
+
+        GridPane.setHgrow(gacha, Priority.ALWAYS);
+        grid.add(gacha, 0, 3, 2, 1); // full width di bawah
+
         GridPane.setHgrow(guildmate, Priority.ALWAYS);
         GridPane.setHgrow(inv, Priority.ALWAYS);
         GridPane.setHgrow(profile, Priority.ALWAYS);
         GridPane.setHgrow(save, Priority.ALWAYS);
+        GridPane.setHgrow(loadGame, Priority.ALWAYS);
+        GridPane.setHgrow(mainMenu, Priority.ALWAYS);
 
         grid.add(guildmate,  0, 0);
-        grid.add(inv,     1, 0);
-        grid.add(profile, 0, 1);
-        grid.add(save,    1, 1);
+        grid.add(inv,        1, 0);
+        grid.add(profile,    0, 1);
+        grid.add(save,       1, 1);
+        grid.add(loadGame,   0, 2);
+        grid.add(mainMenu,   1, 2);
 
         sec.getChildren().add(grid);
         return sec;

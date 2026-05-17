@@ -407,6 +407,8 @@ public class GameEngine {
     public boolean         cutscenePlayed(String id)   { return playedCutscenes.contains(id); }
     public void            markCutscenePlayed(String id){ playedCutscenes.add(id); }
     private final java.util.Set<String> playedCutscenes = new java.util.HashSet<>();
+    private final GachaSystem gachaSystem = new GachaSystem();
+    private int gachaTickets = 0; // jumlah tiket gacha player
     public DungeonManager  getDungeonManager() { return dungeonManager; }
     public GameState       getCurrentState()   { return currentState; }
     public List<Mercenary> getOwnedMercs()     { return java.util.Collections.unmodifiableList(ownedMercs); }
@@ -415,4 +417,69 @@ public class GameEngine {
     public CombatManager getActiveCombat() {
         return dungeonManager != null ? dungeonManager.getCombatManager() : null;
     }
+    // ── Gacha System ──────────────────────────────────────────
+
+    public GachaSystem getGachaSystem() { return gachaSystem; }
+    public int  getGachaTickets()       { return gachaTickets; }
+    public void addGachaTickets(int n)  { gachaTickets = Math.max(0, gachaTickets + n); }
+
+    public GachaSystem.PullResult pullSingle() {
+        long gold   = player != null ? player.getGold() : 0L;
+        var result  = gachaSystem.pullSingle((int)Math.min(gold, Integer.MAX_VALUE), gachaTickets);
+        if (result.success) {
+            if (result.goldSpent    > 0 && player != null) player.spendGold(result.goldSpent);
+            if (result.ticketsSpent > 0) gachaTickets -= result.ticketsSpent;
+        }
+        return result;
+    }
+
+    public GachaSystem.PullResult pullTen() {
+        long goldL = player != null ? player.getGold() : 0L;
+        var result = gachaSystem.pullTen((int)Math.min(goldL, Integer.MAX_VALUE), gachaTickets);
+        if (result.success) {
+            if (result.goldSpent    > 0 && player != null) player.spendGold(result.goldSpent);
+            if (result.ticketsSpent > 0) gachaTickets -= result.ticketsSpent;
+        }
+        return result;
+    }
+
+    /** Equip artefak ke player — slot otomatis */
+    public boolean equipArtifactToPlayer(Artifact artifact) {
+        if (inventory == null) return false;
+        return inventory.equipArtifact(artifact);
+    }
+
+    /** Unequip artefak dari player */
+    public void unequipArtifactFromPlayer(int slot) {
+        if (inventory != null) inventory.unequipArtifact(slot);
+    }
+
+    /** Aktifkan artefak player di slot tertentu */
+    public void activatePlayerArtifact(int slot) {
+        arclightcity.combat.CombatManager cm = getActiveCombat();
+        if (inventory == null || cm == null) return;
+        Artifact a = (slot == 1) ? inventory.getArtifactSlot1() : inventory.getArtifactSlot2();
+        if (a != null && a.isReady()) cm.activatePlayerArtifact(a);
+    }
+
+
+    /** Sync artifact dari inventory ke CombatManager saat mulai combat */
+    public void syncArtifactsToCombat() {
+        arclightcity.combat.CombatManager cm = getActiveCombat();
+        if (cm == null || inventory == null) return;
+
+        java.util.List<Artifact> playerArts = new java.util.ArrayList<>();
+        if (inventory.getArtifactSlot1() != null) playerArts.add(inventory.getArtifactSlot1());
+        if (inventory.getArtifactSlot2() != null) playerArts.add(inventory.getArtifactSlot2());
+
+        java.util.Map<String, Artifact> mercArts = new java.util.LinkedHashMap<>();
+        for (arclightcity.entity.mercenary.Mercenary merc : getActiveMercs()) {
+            if (merc.getEquippedArtifact() != null)
+                mercArts.put(merc.getId(), merc.getEquippedArtifact());
+        }
+
+        cm.setArtifacts(playerArts, mercArts);
+    }
+
+
 }

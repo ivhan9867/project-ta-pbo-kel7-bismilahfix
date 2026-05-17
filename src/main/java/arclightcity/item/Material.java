@@ -6,7 +6,7 @@ import java.util.Map;
 public class Material extends Item {
 
     public enum MaterialType {
-        SCRAP_METAL, CYBER_CHIP, NEON_CRYSTAL, VOID_FRAGMENT,
+        SCRAP_METAL, CYBER_CHIP, NEON_CRYSTAL, VOID_FRAGMENT, GACHA_TICKET,
         MYTHIC_FRAGMENT,    // Serpihan Red Essence dari boss
         CALIBRATION_KIT,    // Kalibrasi biasa
         CALIBRATOR,         // Kalibrator premium (beli di Bengkel Empu kota)

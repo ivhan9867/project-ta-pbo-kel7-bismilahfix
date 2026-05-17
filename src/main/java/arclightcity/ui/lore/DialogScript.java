@@ -42,25 +42,35 @@ public final class DialogScript {
     // ══════════════════════════════════════════════════════════
     private static void opening() {
         SCRIPTS.put("OPENING", List.of(
-            image("cut_opening_nusantara_freeze.png"),
-            narration(bg("bg_pasar_malam_chaos.png"),
-                "Nusantara selalu hangat.\nSelalu hidup.\nSampai ia datang."),
-            image("cut_opening_theresa_silhouette.png"),
-            narration(bg("bg_pasar_malam_chaos.png"),
-                "Dan membawa kedinginan yang abadi."),
 
-            // Kamar Asuna
-            image("cut_asuna_room_night.png"),
-            left(bg("bg_pasar_malam_chaos.png"), asuna(), "ASUNA",
+            // ── Title Card gelap ───────────────────────────────────
+            title("— BABAK 0 —", "TERSERET"),
+
+            // ── Nusantara membeku: gambar + teks yang cocok ────────
+            narration(cut("cut_opening_nusantara_freeze.png"),
+                "Nusantara selalu hangat.\nSelalu hidup."),
+            narration(cut("cut_opening_theresa_silhouette.png"),
+                "Sampai ia datang.\nDan membawa kedinginan yang abadi."),
+
+            // ── Kamar Asuna ────────────────────────────────────────
+            narration(cut("cut_asuna_room_night.png"),
+                "Suatu malam di Jakarta. Asuna grind game, nunggu reset server."),
+            left(cut("cut_asuna_room_night.png"), asuna(), "ASUNA",
                 "Server maintenance jam segini...? Gila apa."),
-            image("cut_pc_screen_glitch.png"),
-            left(bg("bg_pasar_malam_chaos.png"), asuna(), "ASUNA",
+            narration(cut("cut_pc_screen_glitch.png"),
+                "Layar PC tiba-tiba menampilkan pusaran hitam yang aneh..."),
+            left(cut("cut_pc_screen_glitch.png"), asuna(), "ASUNA",
                 "Eh? Bug apa ini..."),
-            image("cut_asuna_sucked_in.png"),
-            image("cut_asuna_falling_pasar.png"),
 
-            // Mendarat
-            image("cut_asuna_landing_canopy.png"),
+            // ── Tersedot dan jatuh ─────────────────────────────────
+            narration(cut("cut_asuna_sucked_in.png"),
+                "Sesuatu menariknya masuk ke dalam layar.\nSebelum sempat bereaksi —"),
+            narration(cut("cut_asuna_falling_pasar.png"),
+                "Asuna jatuh dari ketinggian... ke tempat yang sama sekali tidak dikenal."),
+            narration(cut("cut_asuna_landing_canopy.png"),
+                "Ia mendarat keras di atas kanopi pasar yang kacau balau."),
+
+            // ── Dialog dengan Ki Ageng ─────────────────────────────
             left(bg("bg_pasar_malam_chaos.png"), asuna(), "ASUNA",
                 "...Ini... di mana?! Ini bukan Jakarta!"),
             left(bg("bg_pasar_hidden_corner.png"), gm("kiageng"), "KI AGENG",
@@ -70,27 +80,25 @@ public final class DialogScript {
             left(bg("bg_pasar_hidden_corner.png"), gm("kiageng"), "KI AGENG",
                 "Namaku Ki Ageng. Dan kamu baru saja tiba di Nusantara —\ntepat saat dia mulai membekukannya."),
             left(bg("bg_pasar_hidden_corner.png"), gm("kiageng"), "KI AGENG",
-                "Theresa. Dia datang dari celah antardimensi tiga bulan lalu.\nDi mana pun dia melangkah, tanah membeku."),
+                "Theresa datang dari celah antardimensi. Di mana pun dia melangkah,\ntanah membeku. Lima Penjaga Agung kami sudah terancam."),
             left(bg("bg_pasar_hidden_corner.png"), gm("kiageng"), "KI AGENG",
-                "Lima Penjaga Agung kami sudah dua yang jatuh.\nJika semua lima — Nusantara tidak punya kehangatan lagi."),
+                "Jika semua lima Penjaga jatuh... Nusantara tidak punya\nkehangatan untuk dipertahankan."),
             choose(bg("bg_pasar_hidden_corner.png"), asuna(), "ASUNA",
                 "Dan aku bisa bantu karena...?",
-                "Karena aku gamer dan sudah sering kalahkan dungeon?",
-                "...Ini kayak plot isekai banget sih.",
-                "Oke, apapun alasannya. Aku bantu."),
+                "Karena aku gamer? Sering kalahkan dungeon di game?",
+                "...Ini kayak plot game isekai banget sih.",
+                "Oke, apapun alasannya — aku bantu."),
             left(bg("bg_pasar_hidden_corner.png"), gm("kiageng"), "KI AGENG",
-                "Void Ice tidak bisa membekukan seseorang dari dimensi lain.\nKamu satu-satunya yang bisa mendekati para Penjaga."),
-            left(bg("bg_pasar_hidden_corner.png"), asuna(), "ASUNA",
-                "...Ini persis plot game isekai. Kecuali ini beneran."),
-            left(bg("bg_pasar_hidden_corner.png"), asuna(), "ASUNA",
-                "Oke. Tunjukkan dungeonnya.")
+                "Karena Void Ice tidak bisa membekukan seseorang\ndari dimensi lain. Kamu satu-satunya yang bisa mendekati\npara Penjaga yang sudah terinfeksi."),
+            choose(bg("bg_pasar_hidden_corner.png"), asuna(), "ASUNA",
+                "Siap. Aku bantu.",
+                "Oke. Tunjukkan dungeonnya.",
+                "Kalau mati beneran nggak, kan?",
+                "Deal. Tapi setelah ini aku mau pulang ya.")
         ));
     }
 
-    // ══════════════════════════════════════════════════════════
-    // EVENT TRIGGERS
-    // ══════════════════════════════════════════════════════════
-    private static void firstDungeon() {
+        private static void firstDungeon() {
         SCRIPTS.put("FIRST_DUNGEON", List.of(
             left(bg("bg_dungeon_entrance_pasar.png"), gm("kiageng"), "KI AGENG",
                 "Makhluk di dalam bukan jahat dari asalnya."),
@@ -289,7 +297,7 @@ public final class DialogScript {
                 "Rangda Agung bukan iblis. Dia penjaga batas\nantara dunia hidup dan dunia roh."),
             left(bg("bg_hutan_angker_deep.png"), gmA("dewisri"), "DEWI SRI",
                 "Tanpa dia, arwah yang gelisah bisa masuk ke\ndunia kita kapan saja. Banyak nyawa bergantung ini."),
-            left(bg("bg_hutan_angker_deep.png"), asuna(), "ASUNA",
+            left(bg("bg_hutan_angker_deep.png"), asunaPost(), "ASUNA",
                 "Dan sekarang Theresa memakainya jadi penjaga dungeon."),
             left(bg("bg_hutan_angker_deep.png"), gmA("dewisri"), "DEWI SRI",
                 "Membebaskannya berarti batas itu kembali terjaga.\nAyo.")
@@ -317,7 +325,7 @@ public final class DialogScript {
                 "Garuda adalah alasan aku jadi pemanah.\nKata ibuku — anak panah yang benar terbang setinggi Garuda."),
             left(bg("bg_goa_naga_deep.png"), gmA("srikandi"), "SRIKANDI",
                 "Kalau dia sudah dibekukan...\nberarti langit pun sudah tidak bebas lagi."),
-            left(bg("bg_goa_naga_deep.png"), asuna(), "ASUNA",
+            left(bg("bg_goa_naga_deep.png"), asunaPost(), "ASUNA",
                 "Maka kita kembalikan kebebasannya.")
         ));
     }
@@ -346,7 +354,7 @@ public final class DialogScript {
             left(bg("bg_kahyangan_ruins.png"), gm("kiageng"), "KI AGENG",
                 "Semar membiarkan dirinya terinfeksi — supaya yang lain\ntidak ikut jatuh. Dia menahan Void Ice dari menyebar."),
             image("cut_party_shocked_semar.png"),
-            left(bg("bg_kahyangan_ruins.png"), asuna(), "ASUNA",
+            left(bg("bg_kahyangan_ruins.png"), asunaPost(), "ASUNA",
                 "Jadi dia... mengorbankan dirinya sendiri?"),
             left(bg("bg_kahyangan_ruins.png"), gm("kiageng"), "KI AGENG",
                 "Dan sekarang giliran kita membebaskannya\ndari pengorbanan itu.")
@@ -365,7 +373,7 @@ public final class DialogScript {
                 "Kelima shard melayang dan bersatu.\nCahaya merah-emas meledak dari pusatnya."),
             left(bg("bg_kahyangan_ruins.png"), gm("rangga"), "RANGGA",
                 "Red Blossom Katana. Satu-satunya yang bisa\nmenembus Void Ice Theresa."),
-            left(bg("bg_kahyangan_ruins.png"), asuna(), "ASUNA",
+            left(bg("bg_kahyangan_ruins.png"), asunaPost(), "ASUNA",
                 "Oke. Sekarang kita akhiri ini.")
         ));
     }
@@ -383,14 +391,14 @@ public final class DialogScript {
             image("cut_asuna_theresa_faceoff.png"),
             right(bg("bg_void_dimension.png"), boss("theresa"), "THERESA",
                 "Gadis lemah dari dunia lain...\nberani menantangku?"),
-            choose(bg("bg_void_dimension.png"), asuna(), "ASUNA",
+            choose(bg("bg_void_dimension.png"), asunaPost(), "ASUNA",
                 "Kamu takut sendiri. Itu kenapa kamu mau Nusantara ikut beku.",
                 "Kedinginan itu bukan kedamaian. Itu kesepian.",
                 "Kamu takut sendiri. Itu yang sebenarnya.",
                 "Aku mengerti. Tapi bukan begitu caranya."),
             right(bg("bg_void_dimension.png"), bossA("theresa"), "THERESA",
                 "Tutup mulutmu. Kau tidak tahu apa-apa."),
-            left(bg("bg_void_dimension.png"), asuna(), "ASUNA",
+            left(bg("bg_void_dimension.png"), asunaPost(), "ASUNA",
                 "Di dimensimu — tidak ada siapa-siapa, kan.\nKedinginan yang kamu bilang damai itu bukan damai.\nItu kesepian yang sudah lama banget."),
             right(bg("bg_void_dimension.png"), bossA("theresa"), "THERESA",
                 "Sekarang — tunjukkan kekuatanmu!")
@@ -412,27 +420,27 @@ public final class DialogScript {
 
             // Baru scene Theresa defeated
             image("cut_theresa_defeated.png"),
-            left(bg("bg_void_dimension.png"), asuna(), "ASUNA",
+            left(bg("bg_void_dimension.png"), asunaPost(), "ASUNA",
                 "Kamu takut sendirian. Itu saja."),
             image("cut_asuna_theresa_intimate.png"),
             right(bg("bg_void_dimension.png"), boss("theresa"), "THERESA",
                 "...Kenapa hangat?"),
-            left(bg("bg_void_dimension.png"), asuna(), "ASUNA",
+            left(bg("bg_void_dimension.png"), asunaPost(), "ASUNA",
                 "Karena kamu baru saja kalah dari seseorang yang\npeduli sama tempat ini. Dan kamu merasakan itu."),
             right(bg("bg_void_dimension.png"), boss("theresa"), "THERESA",
                 "...Aku tidak tahu harus pergi ke mana."),
-            left(bg("bg_void_dimension.png"), asuna(), "ASUNA",
+            left(bg("bg_void_dimension.png"), asunaPost(), "ASUNA",
                 "Itu urusan nanti."),
 
             // Kembali ke Nusantara
             image("cut_party_laughing.png"),
             left(bg("bg_kahyangan_ruins.png"), gm("kiageng"), "KI AGENG",
                 "Energimu memudar. Portal akan terbuka tidak lama lagi."),
-            left(bg("bg_kahyangan_ruins.png"), asuna(), "ASUNA",
+            left(bg("bg_kahyangan_ruins.png"), asunaPost(), "ASUNA",
                 "...Sudah?"),
             left(bg("bg_kahyangan_ruins.png"), gm("gatotkaca"), "GATOT KACA",
                 "Memangnya mau tinggal di sini selamanya?"),
-            left(bg("bg_kahyangan_ruins.png"), asuna(), "ASUNA",
+            left(bg("bg_kahyangan_ruins.png"), asunaPost(), "ASUNA",
                 "Tidak. Tapi... aku belum selesai UAS."),
             narration(bg("bg_kahyangan_ruins.png"),
                 "Seluruh party tertawa — untuk pertama kalinya,\ntawa yang benar-benar lepas."),

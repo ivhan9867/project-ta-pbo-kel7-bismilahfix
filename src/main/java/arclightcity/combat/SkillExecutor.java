@@ -463,7 +463,10 @@ public class SkillExecutor {
                                                 List<CombatEvent> events) {
         double skillPower = caster.getStats().get(StatType.SKILL_POWER);
         for (Entity target : targets) {
-            double healAmt = 30 * skillPower;
+            // Scale heal dengan max HP target agar tetap relevan di lantai tinggi
+            double healFlat = Math.max(30 * skillPower,
+                target.getStats().get(arclightcity.entity.stats.StatType.MAX_HP) * 0.12);
+            double healAmt = healFlat;
             double actual  = target.receiveHeal(healAmt);
             events.add(CombatEvent.heal(caster.getId(), caster.getName(),
                     target.getId(), target.getName(), actual));

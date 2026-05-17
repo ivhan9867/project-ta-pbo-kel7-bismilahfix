@@ -199,19 +199,63 @@ public class CombatManager {
      */
     public void submitPlayerAction(CombatAction action) {
         if (!waitingForPlayer || !combatActive) return;
-        waitingForPlayer = false;
 
+        // USE_ITEM dan USE_ARTIFACT tidak memakan giliran
+        // Player dapat aksi lagi setelah memakai item/artefak
+        boolean isBonusAction = action.getActionType() == CombatAction.ActionType.USE_ITEM
+                             || action.getActionType() == CombatAction.ActionType.USE_ARTIFACT;
+
+        waitingForPlayer = false;
         Entity playerEntity = player;
         executeAction(playerEntity, action);
 
+        if (isBonusAction) {
+            // Tidak advance turn — berikan player giliran lagi
+            waitingForPlayer = true;
+            // Emit event untuk refresh UI
+            emit(new CombatEvent.Builder(CombatEvent.EventType.ITEM_USED)
+                .actor(player.getId(), player.getName())
+                .message("Item digunakan — giliran dilanjutkan.")
+                .build());
+            return;
+        }
+
         playerEntity.onTurnEnd();
+        tickAllArtifactCooldowns();
         turnQueue.advance();
+        autoTriggerReadyArtifacts(false); // artifact merc setelah turn player
 
         CombatResult result = checkEndCondition();
         if (result != null) {
             combatActive = false;
             emitCombatEnd(result);
         }
+    }
+
+    /** Aktifkan artifact player — dipanggil dari GameEngine */
+    public void activatePlayerArtifact(arclightcity.item.Artifact artifact) {
+        if (artifact == null || !artifact.isReady()) return;
+        artifact.activate();
+        applyArtifactEffect(player, artifact);
+        emit(new CombatEvent.Builder(CombatEvent.EventType.SKILL_USED)
+            .actor(player.getId(), player.getName())
+            .message("⬡ Artefak [" + artifact.getArtifactType().displayName + "] diaktifkan!")
+            .build());
+        // Tidak advance turn — item/artifact adalah bonus action
+        waitingForPlayer = true;
+    }
+
+    /** Aktifkan artifact mercenary — dipanggil oleh AI */
+    public void activateMercenaryArtifact(arclightcity.entity.mercenary.Mercenary merc) {
+        if (merc == null || !merc.hasReadyArtifact()) return;
+        arclightcity.item.Artifact a = merc.getEquippedArtifact();
+        if (a == null) return;
+        a.activate();
+        applyArtifactEffect(merc, a);
+        emit(new CombatEvent.Builder(CombatEvent.EventType.SKILL_USED)
+            .actor(merc.getId(), merc.getName())
+            .message("⬡ " + merc.getName() + " menggunakan [" + a.getArtifactType().displayName + "]!")
+            .build());
     }
 
     // ════════════════════════════════════════════════════════
@@ -714,4 +758,152 @@ public class CombatManager {
     public List<Entity> getLivingAllies() {
         return allAllies.stream().filter(Entity::isAlive).toList();
     }
+    /** Eksekusi efek artefak berdasarkan ArtifactType.Mode */
+    private void applyArtifactEffect(arclightcity.entity.base.Entity user,
+                                      arclightcity.item.Artifact artifact) {
+        arclightcity.item.ArtifactType type = artifact.getArtifactType();
+        double val  = artifact.getScaledValue();
+        int    dur  = artifact.getScaledDuration();
+
+        switch (type.mode) {
+            case STATUS_SELF -> {
+                if (type.statusType != null)
+                    user.applyEffect(new arclightcity.entity.status.StatusEffect(
+                        type.statusType, dur, val, "ARTIFACT"));
+            }
+            case STATUS_ENEMY -> {
+                if (type.statusType != null && !getAllEnemies().isEmpty()) {
+                    Entity target = getAllEnemies().get(
+                        new java.util.Random().nextInt(getAllEnemies().size()));
+                    target.applyEffect(new arclightcity.entity.status.StatusEffect(
+                        type.statusType, dur, val, "ARTIFACT"));
+                }
+            }
+            case STATUS_PARTY -> {
+                if (type.statusType != null) {
+                    for (arclightcity.entity.mercenary.Mercenary m : getActiveMercs())
+                        m.applyEffect(new arclightcity.entity.status.StatusEffect(
+                            type.statusType, dur, val, "ARTIFACT"));
+                    user.applyEffect(new arclightcity.entity.status.StatusEffect(
+                        type.statusType, dur, val, "ARTIFACT"));
+                }
+            }
+            case STAT_SELF -> {
+                if (type.statType != null) {
+                    // Map stat ke StatusEffect yang sesuai untuk simplisitas
+                    arclightcity.entity.status.StatusEffectType mapped =
+                        mapStatToStatus(type.statType);
+                    if (mapped != null) {
+                        user.applyEffect(new arclightcity.entity.status.StatusEffect(
+                            mapped, dur, val, "ARTIFACT"));
+                    } else {
+                        // Fallback: EMPOWERED untuk stat boost generik
+                        user.applyEffect(new arclightcity.entity.status.StatusEffect(
+                            arclightcity.entity.status.StatusEffectType.EMPOWERED,
+                            dur, val, "ARTIFACT"));
+                    }
+                }
+            }
+            case HEAL_SELF -> {
+                double heal = user.getStats().get(
+                    arclightcity.entity.stats.StatType.MAX_HP) * val;
+                double actual = user.receiveHeal(heal);
+                emit(new CombatEvent.Builder(CombatEvent.EventType.HEAL_RECEIVED)
+                    .actor(user.getId(), user.getName())
+                    .target(user.getId(), user.getName())
+                    .value(actual)
+                    .message("+" + (int)actual + " HP dari artefak")
+                    .build());
+            }
+            case CLEANSE_PARTY -> {
+                for (arclightcity.entity.status.StatusEffectType debuff :
+                    new arclightcity.entity.status.StatusEffectType[]{
+                        arclightcity.entity.status.StatusEffectType.BLEED,
+                        arclightcity.entity.status.StatusEffectType.BURN,
+                        arclightcity.entity.status.StatusEffectType.CORRODE,
+                        arclightcity.entity.status.StatusEffectType.FREEZE,
+                        arclightcity.entity.status.StatusEffectType.STUN,
+                        arclightcity.entity.status.StatusEffectType.WEAKEN
+                    }) {
+                    user.removeEffect(debuff);
+                    for (arclightcity.entity.mercenary.Mercenary m : getActiveMercs())
+                        m.removeEffect(debuff);
+                }
+            }
+        }
+    }
+
+
+    private arclightcity.entity.status.StatusEffectType mapStatToStatus(
+            arclightcity.entity.stats.StatType stat) {
+        return switch (stat) {
+            case PHYSICAL_ATK, CYBER_ATK, ENERGY_ATK, DAMAGE_MULT -> 
+                arclightcity.entity.status.StatusEffectType.EMPOWERED;
+            case PHYSICAL_DEF, CYBER_DEF, ENERGY_DEF ->
+                arclightcity.entity.status.StatusEffectType.FORTIFY;
+            case SPEED ->
+                arclightcity.entity.status.StatusEffectType.OVERCLOCK;
+            case CRIT_CHANCE, CRIT_DAMAGE, ACCURACY ->
+                arclightcity.entity.status.StatusEffectType.FOCUS;
+            case EVASION ->
+                arclightcity.entity.status.StatusEffectType.STEALTH;
+            default -> null; // fallback ke EMPOWERED di caller
+        };
+    }
+
+
+    /** Dipanggil dari GameEngine saat memulai combat — register semua artifact aktif */
+    public void setArtifacts(
+            java.util.List<arclightcity.item.Artifact> playerArts,
+            java.util.Map<String, arclightcity.item.Artifact> mercArts) {
+        playerArtifacts.clear();
+        if (playerArts != null) playerArtifacts.addAll(playerArts);
+        mercArtifacts.clear();
+        if (mercArts != null) mercArtifacts.putAll(mercArts);
+    }
+
+    /**
+     * Auto-trigger artifact yang CD = 0 setelah aksi selesai.
+     * Tidak memakan turn — dipanggil sebelum advanceTurn().
+     */
+    private void autoTriggerReadyArtifacts(boolean isPlayerTurn) {
+        if (!combatActive) return;
+
+        if (isPlayerTurn) {
+            for (arclightcity.item.Artifact art : playerArtifacts) {
+                if (art != null && art.isReady()) {
+                    art.activate(); // mulai CD
+                    applyArtifactEffect(player, art);
+                    emit(new CombatEvent.Builder(CombatEvent.EventType.SKILL_USED)
+                        .actor(player.getId(), player.getName())
+                        .message("⬡ [" + art.getArtifactType().displayName + "] aktif otomatis!")
+                        .build());
+                }
+            }
+        } else {
+            // Mercenary artifacts
+            for (arclightcity.entity.mercenary.Mercenary merc : getActiveMercs()) {
+                arclightcity.item.Artifact art = merc.getEquippedArtifact();
+                if (art != null && art.isReady()) {
+                    art.activate();
+                    applyArtifactEffect(merc, art);
+                    emit(new CombatEvent.Builder(CombatEvent.EventType.SKILL_USED)
+                        .actor(merc.getId(), merc.getName())
+                        .message("⬡ " + merc.getName() + " [" + art.getArtifactType().displayName + "] aktif!")
+                        .build());
+                }
+            }
+        }
+    }
+
+    /** Tick semua artifact CD — dipanggil setelah setiap giliran */
+    private void tickAllArtifactCooldowns() {
+        for (arclightcity.item.Artifact art : playerArtifacts)
+            if (art != null) art.tickCooldown();
+        for (arclightcity.entity.mercenary.Mercenary merc : getActiveMercs())
+            if (merc.getEquippedArtifact() != null)
+                merc.getEquippedArtifact().tickCooldown();
+    }
+
+
 }

@@ -75,6 +75,7 @@ public class SceneRouter {
 
         // overlayRoot membungkus persistentLayout — cutscene ditambah di atasnya
         this.overlayRoot = new StackPane(persistentLayout);
+        // Biarkan layout engine mengelola ukuran berdasarkan scene (sizeToScene)
 
         // Buat Scene SEKALI dengan overlayRoot sebagai root
         Scene scene = new Scene(
@@ -292,6 +293,14 @@ public class SceneRouter {
         showWithChat(view.build());
     }
 
+    public void returnToMainMenu() {
+        showMainMenu();
+    }
+
+    public void showGacha() {
+        showFullWidth(new arclightcity.ui.view.GachaView(engine, this).build());
+    }
+
     public void showHub() {
         hubView = new HubView(engine, this);
         showWithChat(hubView.build());
@@ -333,6 +342,7 @@ public class SceneRouter {
         if (combatView != null) combatView.stopAll();
         combatView = new CombatView(engine, this);
         showWithChat(combatView.build());
+        engine.syncArtifactsToCombat(); // sync artifact ke combatManager
 
         // Trigger pre-boss cutscene jika applicable
         String bossPreKey = resolveBossCutsceneKey(engine.getFloorNumber(), true);

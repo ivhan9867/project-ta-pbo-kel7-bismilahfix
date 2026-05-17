@@ -26,7 +26,7 @@ public abstract class Item {
         }
     }
 
-    public enum ItemType { WEAPON, ARMOR, ACCESSORY, CONSUMABLE, MATERIAL }
+    public enum ItemType { WEAPON, ARMOR, ACCESSORY, CONSUMABLE, MATERIAL, ARTIFACT }
 
     // ── Fields ───────────────────────────────────────────────
     protected final String   id;

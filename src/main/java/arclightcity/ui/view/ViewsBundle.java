@@ -338,8 +338,12 @@ public static class InventoryViewImpl {
             Label sn = new Label(stat.displayName);
             sn.setStyle("-fx-text-fill: #A09070; -fx-font-family: 'Courier New'; -fx-font-size: 11px;");
             HBox.setHgrow(sn, Priority.ALWAYS);
-            String formatted = (val < 1.0 && val > 0) ? String.format("+%.0f%%", val * 100)
-                                                        : String.format("+%.0f", val);
+            // Gunakan StatType.isPercent() — lebih akurat dari val<1.0 heuristic
+            // (CRIT_DAMAGE bisa 1.20+ tapi tetap percent stat)
+            String formatted = stat.isPercent()
+                ? String.format("+%.0f%%", val * 100)
+                : (val >= 1 ? String.format("+%.0f", val)
+                            : String.format("+%.2f", val));
             Label sv = new Label(formatted);
             sv.setStyle("-fx-text-fill: #2D7A45; -fx-font-family: 'Courier New';" +
                         "-fx-font-size: 11px; -fx-font-weight: bold;");
@@ -756,7 +760,7 @@ public static class InventoryViewImpl {
                     " -fx-font-family: 'Courier New'; -fx-font-size: 11px;" +
                     " -fx-padding: 3 6; -fx-cursor: hand;");
             useBtn.setOnAction(e -> {
-                boolean used = inv.useConsumable(item.getId(), engine.getPlayer());
+                boolean used = inv.useConsumable(item.getId(), engine.getPlayer(), engine.getFloorNumber());
                 if (used) {
                     showAlert("✅ Used: " + item.getName());
                     refreshItemList(inv);
@@ -787,11 +791,11 @@ public static class InventoryViewImpl {
                     // Logika format: jika nilai < 2 → kemungkinan persen (0.0-1.0 range)
                     // Jika nilai >= 2 → tampil sebagai integer
                     String formatted;
-                    if (val >= 2.0) {
-                        formatted = "+" + (int)val;
-                    } else if (val > 0) {
-                        // Persentase: crit, evasion, lifesteal, mult, on-hit, thorn, dll
+                    // Gunakan isPercent() untuk konsistensi — gantikan heuristik val >= 2.0
+                    if (entry.getKey().isPercent()) {
                         formatted = "+" + String.format("%.0f%%", val * 100);
+                    } else if (val > 0) {
+                        formatted = "+" + (val >= 1 ? (int)val : String.format("%.2f", val));
                     } else {
                         return; // skip nilai 0 atau negatif
                     }
@@ -1952,6 +1956,93 @@ public static class GameOverViewImpl {
 
         dialog.setScene(new javafx.scene.Scene(root));
         dialog.show();
+    }
+
+
+    /** Slot artefak untuk guildmate — ditampilkan di detail guildmate */
+    private static VBox buildMercArtifactSlot(
+            arclightcity.entity.mercenary.Mercenary merc,
+            arclightcity.engine.GameEngine engine,
+            arclightcity.ui.controller.SceneRouter router) {
+
+        VBox row = new VBox(4);
+        row.setStyle("-fx-background-color:#080312; -fx-border-color:#3A1A5A;" +
+                     "-fx-border-width:1; -fx-padding:8 12; -fx-margin:0 0 8 0;");
+        row.setMaxWidth(Double.MAX_VALUE);
+
+        Label header = new Label("⬡  SLOT ARTEFAK GUILDMATE");
+        header.setStyle("-fx-text-fill:rgba(170,102,255,0.55); -fx-font-family:'Courier New';" +
+                        "-fx-font-size:10px;");
+
+        arclightcity.item.Artifact art = merc.getEquippedArtifact();
+        if (art == null) {
+            // Tampilkan semua artifact player yang belum dipakai → bisa dipilih
+            Label hint = new Label("  Klik artefak di bawah untuk dipasang:");
+            hint.setStyle("-fx-text-fill:rgba(255,255,255,0.30); -fx-font-family:'Courier New';" +
+                          "-fx-font-size:9px;");
+
+            arclightcity.item.Inventory inv = engine.getInventory();
+            VBox available = new VBox(4);
+            // Tampilkan artifact yang sudah diequip player sebagai pilihan
+            if (inv != null) {
+                if (inv.getArtifactSlot1() != null) {
+                    Button use = artifactPickBtn(inv.getArtifactSlot1(), merc, engine, router);
+                    available.getChildren().add(use);
+                }
+                if (inv.getArtifactSlot2() != null) {
+                    Button use = artifactPickBtn(inv.getArtifactSlot2(), merc, engine, router);
+                    available.getChildren().add(use);
+                }
+            }
+            if (available.getChildren().isEmpty()) {
+                Label noArt = new Label("  (Belum punya artefak — buka Altar Artefak di Hub)");
+                noArt.setStyle("-fx-text-fill:rgba(255,255,255,0.20); -fx-font-family:'Courier New';" +
+                               "-fx-font-size:9px;");
+                available.getChildren().add(noArt);
+            }
+            row.getChildren().addAll(header, hint, available);
+        } else {
+            Label name = new Label(art.getArtifactType().displayName);
+            name.setStyle("-fx-text-fill:" + art.getBorderColor() + ";" +
+                          "-fx-font-family:'Courier New'; -fx-font-size:12px; -fx-font-weight:bold;");
+            if (art.hasGlowEffect())
+                name.setEffect(new javafx.scene.effect.Glow(0.35));
+
+            String cdStr = art.isReady() ? "SIAP" : "CD: " + art.getCooldown() + " giliran";
+            Label cdLbl = new Label("[" + art.getRarity().displayName + "] · " + cdStr);
+            cdLbl.setStyle("-fx-text-fill:rgba(255,255,255,0.40); -fx-font-family:'Courier New';" +
+                           "-fx-font-size:9px;");
+
+            Button remove = new Button("LEPAS");
+            remove.setStyle("-fx-background-color:transparent; -fx-border-color:#883333;" +
+                            "-fx-border-width:1; -fx-text-fill:#883333; -fx-cursor:hand;" +
+                            "-fx-font-family:'Courier New'; -fx-font-size:9px; -fx-padding:3 10;");
+            remove.setOnAction(e -> {
+                merc.unequipArtifact();
+                router.showMercenary();
+            });
+            row.getChildren().addAll(header, name, cdLbl, remove);
+        }
+        return row;
+    }
+
+    private static javafx.scene.control.Button artifactPickBtn(
+            arclightcity.item.Artifact art,
+            arclightcity.entity.mercenary.Mercenary merc,
+            arclightcity.engine.GameEngine engine,
+            arclightcity.ui.controller.SceneRouter router) {
+
+        javafx.scene.control.Button btn = new javafx.scene.control.Button(
+            art.getArtifactType().displayName + " [" + art.getRarity().displayName + "]");
+        btn.setStyle("-fx-background-color:transparent; -fx-border-color:" + art.getBorderColor() + ";" +
+                     "-fx-border-width:1; -fx-text-fill:" + art.getBorderColor() + ";" +
+                     "-fx-font-family:'Courier New'; -fx-font-size:10px; -fx-cursor:hand;" +
+                     "-fx-padding:4 12; -fx-max-width:300;");
+        btn.setOnAction(e -> {
+            merc.equipArtifact(art);
+            router.showMercenary();
+        });
+        return btn;
     }
 
 

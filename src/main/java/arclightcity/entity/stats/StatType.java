@@ -58,4 +58,19 @@ public enum StatType {
         this.displayName = displayName;
         this.description = description;
     }
+
+    /**
+     * True jika stat ini disimpan sebagai desimal (0.0–2.0) dan harus
+     * ditampilkan sebagai persentase (dikali 100, ditambah %).
+     * CRIT_DAMAGE bisa > 1.0 tapi tetap percent stat.
+     */
+    public boolean isPercent() {
+        return switch (this) {
+            case CRIT_CHANCE, CRIT_DAMAGE, LIFESTEAL, THORN, ARMOR_PIERCE,
+                 BLEED_ON_HIT, BURN_ON_HIT, POISON_ON_HIT,
+                 DAMAGE_MULT, SHIELD_MULT, SKILL_POWER, COOLDOWN_REDUCE,
+                 EVASION, ACCURACY -> true;
+            default -> false;
+        };
+    }
 }

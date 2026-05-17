@@ -30,6 +30,10 @@ public class Inventory {
     private Equipment equippedAccessory1 = null;
     private Equipment equippedAccessory2 = null;
 
+    // ── Artifact Slots (tidak di-upgrade, hanya dari gacha) ───
+    private Artifact artifactSlot1 = null;
+    private Artifact artifactSlot2 = null;
+
     // ── Bag ──────────────────────────────────────────────────
     private final List<Item> bag = new ArrayList<>();
     private       int        maxBagSize = 30;
@@ -322,15 +326,31 @@ public class Inventory {
     // ════════════════════════════════════════════════════════
 
     public boolean useConsumable(String itemId, Entity target) {
+        return useConsumable(itemId, target, 1);
+    }
+
+    /**
+     * Gunakan consumable dengan floor scaling.
+     * @param floorDepth lantai saat ini (untuk skala heal/buff)
+     */
+    public boolean useConsumable(String itemId, Entity target, int floorDepth) {
         Item item = findById(itemId);
         if (!(item instanceof Consumable cons)) return false;
 
         boolean used = cons.useOne();
         if (!used) return false;
 
+        // Scale heal: minimal 20% max HP atau nilai flat, pilih yang lebih besar
+        // Semakin dalam lantai, heal flat jadi relatif kecil — ini mencegahnya
         switch (cons.getConsumableType()) {
-            case HEALTH_PACK -> target.receiveHeal(cons.getEffectValue());
-            case MP_PACK     -> target.restoreMp(cons.getEffectValue());
+            case HEALTH_PACK -> {
+                double flatHeal  = cons.getEffectValue() * (1 + floorDepth * 0.08);
+                double pctHeal   = target.getStats().get(
+                    arclightcity.entity.stats.StatType.MAX_HP) * 0.22;
+                target.receiveHeal(Math.max(flatHeal, pctHeal));
+            }
+            case MP_PACK -> target.restoreMp(
+                    cons.getEffectValue() * (1 + floorDepth * 0.06));
             case ANTIDOTE    -> {
                 target.removeEffect(StatusEffectType.BURN);
                 target.removeEffect(StatusEffectType.BLEED);
@@ -419,4 +439,43 @@ public class Inventory {
     public void forceEquipRing2(Equipment eq)      { equippedRing2      = eq; }
     public void forceEquipAccessory1(Equipment eq) { equippedAccessory1 = eq; }
     public void forceEquipAccessory2(Equipment eq) { equippedAccessory2 = eq; }
+    // ── Artifact slot methods ─────────────────────────────────
+
+    public Artifact getArtifactSlot1() { return artifactSlot1; }
+    public Artifact getArtifactSlot2() { return artifactSlot2; }
+
+    /** Equip artifact ke slot spesifik (1 atau 2) */
+    public boolean equipArtifactToSlot(int slot, Artifact a) {
+        if (a == null) return false;
+        if (slot == 1) { artifactSlot1 = a; return true; }
+        if (slot == 2) { artifactSlot2 = a; return true; }
+        return false;
+    }
+
+    public boolean equipArtifact(Artifact a) {
+        if (artifactSlot1 == null) { artifactSlot1 = a; return true; }
+        if (artifactSlot2 == null) { artifactSlot2 = a; return true; }
+        return false; // keduanya penuh
+    }
+
+    public void unequipArtifact(int slot) {
+        if (slot == 1) artifactSlot1 = null;
+        else if (slot == 2) artifactSlot2 = null;
+    }
+
+    /** Tick CD semua artifact yang diequip player — dipanggil tiap awal giliran */
+    public void tickArtifactCooldowns() {
+        if (artifactSlot1 != null) artifactSlot1.tickCooldown();
+        if (artifactSlot2 != null) artifactSlot2.tickCooldown();
+    }
+
+    /** Kembalikan list artifact yang ready (CD = 0) */
+    public java.util.List<Artifact> getReadyArtifacts() {
+        java.util.List<Artifact> ready = new java.util.ArrayList<>();
+        if (artifactSlot1 != null && artifactSlot1.isReady()) ready.add(artifactSlot1);
+        if (artifactSlot2 != null && artifactSlot2.isReady()) ready.add(artifactSlot2);
+        return ready;
+    }
+
+
 }

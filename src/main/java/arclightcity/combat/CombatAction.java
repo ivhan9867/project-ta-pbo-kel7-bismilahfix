@@ -11,7 +11,7 @@ public class CombatAction {
     public enum ActionType {
         BASIC_ATTACK,
         USE_SKILL,
-        USE_ITEM,
+        USE_ITEM, USE_ARTIFACT,
         DEFEND,
         PASS
     }
@@ -33,6 +33,10 @@ public class CombatAction {
 
     public static CombatAction useItem(String itemId, List<String> targetIds) {
         return new CombatAction(ActionType.USE_ITEM, null, itemId, targetIds);
+    }
+
+    public static CombatAction useArtifact(int slotNumber) {
+        return new CombatAction(ActionType.USE_ARTIFACT, null, String.valueOf(slotNumber), List.of());
     }
 
     public static CombatAction defend() {
@@ -65,9 +69,10 @@ public class CombatAction {
         return switch (actionType) {
             case BASIC_ATTACK -> "Basic Attack → " + targetIds;
             case USE_SKILL    -> "Skill [" + skillId + "] → " + targetIds;
-            case USE_ITEM     -> "Item [" + itemId + "]";
-            case DEFEND       -> "Defend";
-            case PASS         -> "Pass (cannot act)";
+            case USE_ITEM      -> "Item [" + itemId + "]";
+            case USE_ARTIFACT  -> "Artifact [slot " + itemId + "]";
+            case DEFEND        -> "Defend";
+            case PASS          -> "Pass (cannot act)";
         };
     }
 }

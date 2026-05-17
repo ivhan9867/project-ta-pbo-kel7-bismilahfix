@@ -14,6 +14,13 @@ public class AssetManager {
     private static final Map<String, Image> cache = new HashMap<>();
     private static final String BASE = "/assets/";
 
+    // ── Artifact icons ────────────────────────────────────────
+    public static Image artifactIcon(arclightcity.item.ArtifactType type) {
+        if (type == null) return null;
+        String key = "icons/artifact/icon_artifact_" + type.name().toLowerCase() + ".png";
+        return load(key);
+    }
+
     // ── Backgrounds ──────────────────────────────────────────
     public static Image bgMainMenu()     { return load("backgrounds/main_menu.png"); }
     public static Image bgHub()          { return load("backgrounds/hub.png"); }
