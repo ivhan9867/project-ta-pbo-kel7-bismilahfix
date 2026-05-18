@@ -154,6 +154,7 @@ arclightcity\ui\util\AssetManager.class
 arclightcity\ui\view\MercenaryView.class
 arclightcity\ui\view\DungeonGridMap$1.class
 arclightcity\entity\stats\StatSheet.class
+arclightcity\ui\view\GachaView$1.class
 arclightcity\item\CalibrationSystem$CalibrationResult.class
 arclightcity\item\ArtifactType.class
 arclightcity\save\SaveManager$SaveResult.class

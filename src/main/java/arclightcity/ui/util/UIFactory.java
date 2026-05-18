@@ -597,7 +597,7 @@ public class UIFactory {
         javafx.stage.Stage popup = new javafx.stage.Stage();
         popup.initOwner(owner);
         popup.initModality(javafx.stage.Modality.APPLICATION_MODAL);
-        popup.initStyle(javafx.stage.StageStyle.UNDECORATED);
+        popup.initStyle(javafx.stage.StageStyle.UTILITY); // UTILITY lebih reliable dari UNDECORATED
 
         // Tambah tombol tutup di atas content
         javafx.scene.control.Button closeBtn = new javafx.scene.control.Button("✕  TUTUP");
@@ -612,7 +612,14 @@ public class UIFactory {
         scene.setFill(javafx.scene.paint.Color.web("#0A0608"));
         popup.setScene(scene);
         popup.sizeToScene();
-        popup.centerOnScreen();
+        // Center di atas parent window
+        javafx.stage.Stage owner2 = owner;
+        if (owner2 != null) {
+            popup.setX(owner2.getX() + (owner2.getWidth() - popup.getWidth()) / 2);
+            popup.setY(owner2.getY() + (owner2.getHeight() - popup.getHeight()) / 2);
+        } else {
+            popup.centerOnScreen();
+        }
 
         // ESC to close
         scene.setOnKeyPressed(e -> {

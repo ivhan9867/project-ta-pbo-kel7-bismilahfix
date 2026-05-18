@@ -110,15 +110,14 @@ public class DungeonGridMap extends StackPane {
         visitedTiles.clear();
         visibleTiles.clear();
         if (floor == null) return;
+        // KRITIS: hanya cleared rooms yang masuk visitedTiles (permanent solid)
+        // r.isVisited() menyebabkan "pulau terpisah" karena room lama yang
+        // visited-tapi-belum-cleared ikut terungkap walau player sudah jauh
         for (Room r : floor.getRooms()) {
-            if (r.isVisited()) {
+            if (r.isCleared()) {
                 visitedTiles.add(r.getRoomIndex());
-                revealAround(r.getRoomIndex());
             }
         }
-        // getCurrentRoomIndex() mungkin belum benar saat initFog dipanggil pertama kali
-        // (player belum diposisikan). syncPlayer() akan memanggil revealFromCurrentRoom()
-        // setelah player benar-benar diposisikan.
     }
 
     /** Reveal dari posisi player saat ini — dipanggil setelah floor + player siap */
@@ -155,12 +154,22 @@ public class DungeonGridMap extends StackPane {
     private void syncPlayer() {
         if (floor == null) return;
         int newIdx = floor.getCurrentRoomIndex();
-        // Hanya reveal tile current jika belum pernah terlihat
-        // Ini mencegah reveal prematur room 0 saat setFloor() dipanggil
-        if (newIdx >= 0 && !visibleTiles.contains(newIdx)) {
+
+        // Rebuild visibleTiles setiap move — mencegah pulau terpisah
+        visibleTiles.clear();
+
+        // 1. Current room selalu visible
+        if (newIdx >= 0) {
             visibleTiles.add(newIdx);
             revealAround(newIdx);
         }
+
+        // 2. Neighbors dari SEMUA cleared rooms — membuat jalur terkoneksi
+        //    dari start sampai posisi sekarang (bukan pulau terpisah)
+        for (int cIdx : visitedTiles) {
+            revealAround(cIdx);
+        }
+
         playerTileIdx  = newIdx;
         playerVisualX  = tileX(playerTileIdx % COLS);
         playerVisualY  = tileY(playerTileIdx / COLS);
@@ -715,11 +724,11 @@ public class DungeonGridMap extends StackPane {
                 ? engine.getDungeonManager().getCurrentFloor() : null;
         if (floor == null) { draw(); return; }
         rows = (floor.getTotalRooms() + COLS - 1) / COLS;
+        // Sama dengan initFog: hanya cleared rooms yang masuk visitedTiles
+        visitedTiles.clear();
         for (Room r : floor.getRooms()) {
-            if (r.isVisited()) {
+            if (r.isCleared()) {
                 visitedTiles.add(r.getRoomIndex());
-                visibleTiles.remove(r.getRoomIndex());
-                revealAround(r.getRoomIndex());
             }
         }
         syncPlayer();

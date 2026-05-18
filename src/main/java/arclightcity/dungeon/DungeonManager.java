@@ -457,10 +457,11 @@ public class DungeonManager {
     }
 
 
-    /** True jika room saat ini adalah boss room (floor milestone) */
+    /** True jika room SAAT INI adalah BOSS room (cek tipe room, bukan hanya floor) */
     public boolean isCurrentRoomBoss() {
-        int f = getCurrentFloorNumber();
-        return (f == 10 || f == 20 || f == 30 || f == 40 || f == 50 || f >= 51);
+        if (currentFloor == null) return false;
+        arclightcity.dungeon.Room room = currentFloor.getRoom(currentFloor.getCurrentRoomIndex());
+        return room != null && room.getType() == arclightcity.dungeon.Room.RoomType.BOSS;
     }
 
 

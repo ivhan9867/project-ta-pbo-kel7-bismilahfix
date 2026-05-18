@@ -1988,14 +1988,16 @@ public static class GameOverViewImpl {
 
             arclightcity.item.Inventory inv = engine.getInventory();
             VBox available = new VBox(4);
-            // Tampilkan artifact yang sudah diequip player sebagai pilihan
+            // Tampilkan artifact dari BAG yang belum diequip merc lain
             if (inv != null) {
-                if (inv.getArtifactSlot1() != null) {
-                    Button use = artifactPickBtn(inv.getArtifactSlot1(), merc, engine, router);
-                    available.getChildren().add(use);
-                }
-                if (inv.getArtifactSlot2() != null) {
-                    Button use = artifactPickBtn(inv.getArtifactSlot2(), merc, engine, router);
+                for (arclightcity.item.Item item : inv.getAllBagItems()) {
+                    if (!(item instanceof arclightcity.item.Artifact a)) continue;
+                    // Filter: hanya role yang sesuai atau UNIVERSAL
+                    arclightcity.item.ArtifactRole role = a.getArtifactType().role;
+                    boolean roleOk = (role == arclightcity.item.ArtifactRole.UNIVERSAL)
+                        || role.name().equalsIgnoreCase(merc.getRole().name());
+                    if (!roleOk) continue;
+                    Button use = artifactPickBtn(a, merc, engine, router);
                     available.getChildren().add(use);
                 }
             }

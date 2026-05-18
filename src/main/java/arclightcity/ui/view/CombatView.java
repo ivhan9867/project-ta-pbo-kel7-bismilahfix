@@ -474,6 +474,19 @@ public class CombatView {
             HBox efx = new HBox(3);
             ally.getActiveEffects().stream().limit(5).forEach(ef -> efx.getChildren().add(UIFactory.effectBadge(ef)));
             if (!efx.getChildren().isEmpty()) slot.getChildren().add(efx);
+
+            // Artifact icons — tampilkan artifact yang aktif
+            java.util.List<arclightcity.item.Artifact> arts = new java.util.ArrayList<>();
+            if (ally instanceof arclightcity.entity.player.Player p) {
+                arclightcity.item.Inventory pInv = engine.getInventory();
+                if (pInv != null) {
+                    if (pInv.getArtifactSlot1() != null) arts.add(pInv.getArtifactSlot1());
+                    if (pInv.getArtifactSlot2() != null) arts.add(pInv.getArtifactSlot2());
+                }
+            } else if (ally instanceof arclightcity.entity.mercenary.Mercenary m) {
+                if (m.getEquippedArtifact() != null) arts.add(m.getEquippedArtifact());
+            }
+            if (!arts.isEmpty()) slot.getChildren().add(buildArtifactIconRow(arts));
         }
 
         slot.setOnMouseClicked(ev -> { ev.consume(); onAllyClick(ally); });
@@ -1097,6 +1110,47 @@ public class CombatView {
     public void stopAll() {
         if (combatLoop != null) { combatLoop.stop(); combatLoop = null; }
         if (floatLoop  != null) { floatLoop.stop();  floatLoop  = null; }
+    }
+
+
+    /** Build row icon artefak untuk entity (player / merc) di bagian battle UI */
+    private HBox buildArtifactIconRow(java.util.List<arclightcity.item.Artifact> arts) {
+        HBox row = new HBox(6);
+        row.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        for (arclightcity.item.Artifact art : arts) {
+            if (art == null) continue;
+            javafx.scene.layout.StackPane iconBox = new javafx.scene.layout.StackPane();
+            iconBox.setPrefSize(36, 36); iconBox.setMinSize(36, 36); iconBox.setMaxSize(36, 36);
+            iconBox.setStyle("-fx-background-color:#0C0514; -fx-border-color:" + art.getBorderColor() + ";" +
+                "-fx-border-width:1; -fx-border-radius:3; -fx-background-radius:3;");
+
+            // Icon
+            javafx.scene.image.Image icon = arclightcity.ui.util.AssetManager.artifactIcon(art.getArtifactType());
+            if (icon != null) {
+                javafx.scene.image.ImageView iv = new javafx.scene.image.ImageView(icon);
+                iv.setFitWidth(26); iv.setFitHeight(26); iv.setPreserveRatio(true);
+                iconBox.getChildren().add(iv);
+            }
+            // CD overlay
+            if (!art.isReady()) {
+                javafx.scene.control.Label cdLbl = new javafx.scene.control.Label(String.valueOf(art.getCooldown()));
+                cdLbl.setStyle("-fx-text-fill:rgba(255,255,255,0.80); -fx-font-family:'Courier New';" +
+                    "-fx-font-size:11px; -fx-font-weight:bold; -fx-background-color:rgba(0,0,0,0.55);" +
+                    "-fx-padding:1 3;");
+                iconBox.getChildren().add(cdLbl);
+                iconBox.setOpacity(0.55);
+            } else {
+                if (art.hasGlowEffect())
+                    iconBox.setEffect(new javafx.scene.effect.Glow(0.35));
+            }
+
+            // Tooltip
+            javafx.scene.control.Tooltip tp = new javafx.scene.control.Tooltip(
+                art.getArtifactType().displayName + (art.isReady() ? " — SIAP" : " — CD: " + art.getCooldown()));
+            javafx.scene.control.Tooltip.install(iconBox, tp);
+            row.getChildren().add(iconBox);
+        }
+        return row;
     }
 
 
