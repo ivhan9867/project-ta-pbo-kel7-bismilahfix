@@ -1023,6 +1023,11 @@ public static class MercenaryViewImpl {
             router.showMercenary();
         });
         card.getChildren().addAll(header, subtitle, statsRow, vitals, upgradeRow, toggleBtn);
+
+        // ── Artifact slot guildmate ─────────────────────────
+        VBox artSlot = buildMercArtifactSlot(merc, engine, router);
+        card.getChildren().add(artSlot);
+
         return card;
     }
 

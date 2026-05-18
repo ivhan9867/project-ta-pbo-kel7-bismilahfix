@@ -95,7 +95,7 @@ public class DungeonGridMap extends StackPane {
         setStyle("-fx-background-color: #050810;");
 
         initFog();
-        syncPlayer();
+        // syncPlayer dipanggil nanti setelah player diposisikan
         startAnimations();
         draw();
 
@@ -155,8 +155,9 @@ public class DungeonGridMap extends StackPane {
     private void syncPlayer() {
         if (floor == null) return;
         int newIdx = floor.getCurrentRoomIndex();
-        // Reveal area sekitar posisi baru player (hanya pertama kali atau saat pindah)
-        if (!visibleTiles.contains(newIdx)) {
+        // Hanya reveal tile current jika belum pernah terlihat
+        // Ini mencegah reveal prematur room 0 saat setFloor() dipanggil
+        if (newIdx >= 0 && !visibleTiles.contains(newIdx)) {
             visibleTiles.add(newIdx);
             revealAround(newIdx);
         }

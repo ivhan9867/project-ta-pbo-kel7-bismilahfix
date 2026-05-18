@@ -313,6 +313,20 @@ public abstract class Entity {
     public double       getCurrentMp()    { return currentMp; }
     public double       getCurrentShield(){ return currentShield; }
     public boolean      isAlive()         { return alive; }
+
+    /** Set HP langsung + reset alive flag otomatis */
+    public void setHpDirect(double hp) {
+        double maxHp = getStats().get(arclightcity.entity.stats.StatType.MAX_HP);
+        this.currentHp = Math.max(0, Math.min(hp, maxHp));
+        this.alive = this.currentHp > 0;
+    }
+
+    /** Revive entity — paksa alive=true + set HP ke persentase max */
+    public void revive(double hpPct) {
+        this.alive = true;
+        double maxHp = getStats().get(arclightcity.entity.stats.StatType.MAX_HP);
+        this.currentHp = Math.max(1, maxHp * Math.min(hpPct, 1.0));
+    }
     public StatSheet    getStats()        { return stats; }
     public List<StatusEffect> getActiveEffects() { return Collections.unmodifiableList(activeEffects); }
 

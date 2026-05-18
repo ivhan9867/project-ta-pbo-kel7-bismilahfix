@@ -598,15 +598,25 @@ public class UIFactory {
         popup.initOwner(owner);
         popup.initModality(javafx.stage.Modality.APPLICATION_MODAL);
         popup.initStyle(javafx.stage.StageStyle.UNDECORATED);
-        popup.setScene(new javafx.scene.Scene(content));
-        popup.getScene().setFill(javafx.scene.paint.Color.TRANSPARENT);
+
+        // Tambah tombol tutup di atas content
+        javafx.scene.control.Button closeBtn = new javafx.scene.control.Button("✕  TUTUP");
+        closeBtn.setStyle("-fx-background-color:transparent; -fx-border-color:#883333;" +
+            "-fx-border-width:1; -fx-text-fill:#AA4444; -fx-font-family:'Courier New';" +
+            "-fx-font-size:10px; -fx-cursor:hand; -fx-padding:4 12;");
+        closeBtn.setOnAction(e -> popup.close());
+        closeBtn.setMaxWidth(Double.MAX_VALUE);
+        content.getChildren().add(0, closeBtn); // di atas
+
+        javafx.scene.Scene scene = new javafx.scene.Scene(content);
+        scene.setFill(javafx.scene.paint.Color.web("#0A0608"));
+        popup.setScene(scene);
         popup.sizeToScene();
         popup.centerOnScreen();
 
-        // Klik di luar popup → tutup
-        content.setOnMouseClicked(e -> { /* handled by children */ });
-        popup.focusedProperty().addListener((obs, was, now) -> {
-            if (!now) popup.close();
+        // ESC to close
+        scene.setOnKeyPressed(e -> {
+            if (e.getCode() == javafx.scene.input.KeyCode.ESCAPE) popup.close();
         });
         popup.show();
     }

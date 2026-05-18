@@ -736,7 +736,22 @@ public class CombatView {
 
             Label nm = new Label("\u25ba "+c.getName()+" \u00d7"+c.getStackCount());
             nm.setStyle("-fx-text-fill:#EDE0C8;-fx-font-family:'Courier New';-fx-font-size:11px;");
-            Label eff = new Label("+"+(int)c.getEffectValue()+" HP");
+            // Tampilkan efek yang sesuai per tipe consumable
+            String effStr;
+            if (c.getEffectValue() > 0) {
+                effStr = switch (c.getConsumableType()) {
+                    case HEALTH_PACK -> "+" + (int)c.getEffectValue() + " HP";
+                    case MP_PACK     -> "+" + (int)c.getEffectValue() + " MP";
+                    default -> "+" + (int)c.getEffectValue();
+                };
+            } else {
+                effStr = switch (c.getConsumableType()) {
+                    case ANTIDOTE  -> "Cleanse Debuff";
+                    case BUFF_ITEM -> "+Buff";
+                    default -> "Efek Khusus";
+                };
+            }
+            Label eff = new Label(effStr);
             eff.setStyle("-fx-text-fill:#44AA66;-fx-font-family:'Courier New';-fx-font-size:9px;");
             entry.getChildren().addAll(nm,eff);
             entry.setOnMouseClicked(ev -> {

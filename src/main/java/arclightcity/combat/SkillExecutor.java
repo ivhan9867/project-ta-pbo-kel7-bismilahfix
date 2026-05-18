@@ -819,4 +819,60 @@ public class SkillExecutor {
     }
 
 
+    /**
+     * Trigger on-hit effects dari equipment setelah basic attack connect.
+     * BLEED/BURN/POISON_ON_HIT jika value >= 1.0 → PASTI trigger + DoT bonus.
+     * Jika 0.0-1.0 → chance-based.
+     */
+    private static void applyOnHitEffects(arclightcity.entity.base.Entity attacker,
+                                           arclightcity.entity.base.Entity target,
+                                           arclightcity.combat.CombatManager cm) {
+        arclightcity.entity.stats.StatSheet stats = attacker.getStats();
+        java.util.Random rng = new java.util.Random();
+
+        // ── BLEED ON HIT ─────────────────────────────────────
+        double bleed = stats.get(arclightcity.entity.stats.StatType.BLEED_ON_HIT);
+        if (bleed > 0) {
+            // >= 1.0 → PASTI trigger, excess jadi bonus DoT
+            double chance  = Math.min(bleed, 1.0);
+            double dotBonus = Math.max(0, bleed - 1.0); // excess di atas 100%
+            if (rng.nextDouble() < chance) {
+                double dotDmg = 8.0 + dotBonus * 15.0; // bonus damage dari excess
+                target.applyEffect(new arclightcity.entity.status.StatusEffect(
+                    arclightcity.entity.status.StatusEffectType.BLEED, 3,
+                    dotDmg, attacker.getId()));
+            }
+        }
+
+        // ── BURN ON HIT ──────────────────────────────────────
+        double burn = stats.get(arclightcity.entity.stats.StatType.BURN_ON_HIT);
+        if (burn > 0) {
+            double chance  = Math.min(burn, 1.0);
+            double dotBonus = Math.max(0, burn - 1.0);
+            if (rng.nextDouble() < chance) {
+                double dotDmg = 6.0 + dotBonus * 12.0;
+                target.applyEffect(new arclightcity.entity.status.StatusEffect(
+                    arclightcity.entity.status.StatusEffectType.BURN, 3,
+                    dotDmg, attacker.getId()));
+            }
+        }
+
+        // ── POISON / VIRUS ON HIT ─────────────────────────────
+        double poison = stats.get(arclightcity.entity.stats.StatType.POISON_ON_HIT);
+        if (poison > 0) {
+            double chance  = Math.min(poison, 1.0);
+            double dotBonus = Math.max(0, poison - 1.0);
+            if (rng.nextDouble() < chance) {
+                double dotDmg = 5.0 + dotBonus * 10.0;
+                target.applyEffect(new arclightcity.entity.status.StatusEffect(
+                    arclightcity.entity.status.StatusEffectType.VIRUS, 3,
+                    dotDmg, attacker.getId()));
+            }
+        }
+
+        // ── LIFESTEAL ─────────────────────────────────────────
+        // (Sudah di-handle di DamageCalculator, skip di sini)
+    }
+
+
 }

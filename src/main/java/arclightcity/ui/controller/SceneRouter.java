@@ -1,4 +1,5 @@
 package arclightcity.ui.controller;
+import arclightcity.ui.util.AudioManager;
 
 import arclightcity.combat.CombatResult;
 import arclightcity.dungeon.DungeonEvent;
@@ -99,6 +100,7 @@ public class SceneRouter {
     // ── Navigation ────────────────────────────────────────────
 
     public void showMainMenu() {
+        AudioManager.get().playBgm(AudioManager.BGM_MAIN_MENU);
         mainMenuView = new MainMenuView(engine, this);
         // Main menu full-width: sembunyikan chat panel
         showFullWidth(mainMenuView.build());
@@ -298,10 +300,12 @@ public class SceneRouter {
     }
 
     public void showGacha() {
+        AudioManager.get().playBgm(AudioManager.BGM_SHOP);
         showFullWidth(new arclightcity.ui.view.GachaView(engine, this).build());
     }
 
     public void showHub() {
+        AudioManager.get().playBgm(AudioManager.BGM_HUB);
         hubView = new HubView(engine, this);
         showWithChat(hubView.build());
         emitChatDelayed(MercenaryDialogue.Trigger.HUB_IDLE, 700);
@@ -340,6 +344,8 @@ public class SceneRouter {
 
     public void showCombat() {
         if (combatView != null) combatView.stopAll();
+        // Combat BGM berdasarkan tipe musuh
+        AudioManager.get().playBgm(AudioManager.BGM_COMBAT);
         combatView = new CombatView(engine, this);
         showWithChat(combatView.build());
         engine.syncArtifactsToCombat(); // sync artifact ke combatManager

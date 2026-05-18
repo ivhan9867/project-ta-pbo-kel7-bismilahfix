@@ -84,12 +84,23 @@ public class DungeonManager {
             emit(DungeonStateEvent.dungeonStarted(player.getName()));
             advanceToNextFloor();
         } else {
-            // Lanjut dari floor yang sudah dicapai — JANGAN increment lagi
+            // Lanjut dari floor yang sudah dicapai — JANGAN regenerate!
             currentFloorNumber = savedFloor;
-            currentFloor = ProceduralGenerator.generateFloor(currentFloorNumber);
-            emit(DungeonStateEvent.dungeonStarted(player.getName()));
-            emit(DungeonStateEvent.floorEntered(currentFloorNumber, currentFloor.getTheme()));
-            enterRoom(0);
+
+            // Hanya generate floor baru jika belum ada atau nomor berbeda
+            if (currentFloor == null || currentFloor.getFloorNumber() != currentFloorNumber) {
+                currentFloor = ProceduralGenerator.generateFloor(currentFloorNumber);
+                emit(DungeonStateEvent.dungeonStarted(player.getName()));
+                emit(DungeonStateEvent.floorEntered(currentFloorNumber, currentFloor.getTheme()));
+                enterRoom(pickEdgeStartTile()); // start dari edge acak
+            } else {
+                // Return ke floor yang SAMA — preserve visited state + posisi
+                emit(DungeonStateEvent.dungeonStarted(player.getName()));
+                emit(DungeonStateEvent.floorEntered(currentFloorNumber, currentFloor.getTheme()));
+                // Re-enter posisi terakhir, bukan room 0!
+                int resumeRoom = currentFloor.getCurrentRoomIndex();
+                emit(DungeonStateEvent.roomEntered(currentFloor.getRoom(resumeRoom)));
+            }
         }
     }
 

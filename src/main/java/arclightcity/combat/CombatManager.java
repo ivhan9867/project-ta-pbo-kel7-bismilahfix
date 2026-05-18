@@ -12,6 +12,7 @@ import arclightcity.entity.enemy.Boss;
 import arclightcity.entity.enemy.Enemy;
 import arclightcity.entity.mercenary.Mercenary;
 import arclightcity.entity.player.Player;
+import arclightcity.ui.util.AudioManager;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -33,6 +34,11 @@ public class CombatManager {
 
     // ── Combatants ───────────────────────────────────────────
     private Player              player;
+    // Artifact fields — diisi via setArtifacts() saat combat dimulai
+    private final java.util.List<arclightcity.item.Artifact> playerArtifacts =
+        new java.util.ArrayList<>();
+    private final java.util.Map<String, arclightcity.item.Artifact> mercArtifacts =
+        new java.util.LinkedHashMap<>();
     private List<Mercenary>     activeMercs   = new ArrayList<>();
     private List<Enemy>         enemies       = new ArrayList<>();
     private List<Entity>        allAllies     = new ArrayList<>(); // player + mercs
@@ -372,26 +378,30 @@ public class CombatManager {
             double burnChance  = actorStats.get(arclightcity.entity.stats.StatType.BURN_ON_HIT);
             double poisonChance= actorStats.get(arclightcity.entity.stats.StatType.POISON_ON_HIT);
             java.util.Random rngHit = new java.util.Random();
-            if (bleedChance > 0 && rngHit.nextDouble() < bleedChance && target.isAlive()) {
+            // BLEED: >100% = selalu trigger + bonus DoT dari excess
+            if (bleedChance > 0 && rngHit.nextDouble() < Math.min(bleedChance, 1.0) && target.isAlive()) {
+                double bleedDot = 7.0 + Math.max(0, bleedChance - 1.0) * 20.0; // excess → DoT bonus
                 target.applyEffect(new arclightcity.entity.status.StatusEffect(
-                    arclightcity.entity.status.StatusEffectType.BLEED, 3, 7.0, actor.getId()));
+                    arclightcity.entity.status.StatusEffectType.BLEED, 3, bleedDot, actor.getId()));
                 events.add(new CombatEvent.Builder(CombatEvent.EventType.EFFECT_APPLIED)
                     .actor(actor.getId(),actor.getName())
-                    .message(target.getName() + " terkena BLEED!").build());
+                    .message(target.getName() + " terkena BLEED! (DoT: " + (int)bleedDot + ")").build());
             }
-            if (burnChance > 0 && rngHit.nextDouble() < burnChance && target.isAlive()) {
+            if (burnChance > 0 && rngHit.nextDouble() < Math.min(burnChance, 1.0) && target.isAlive()) {
+                double burnDot = 8.0 + Math.max(0, burnChance - 1.0) * 18.0;
                 target.applyEffect(new arclightcity.entity.status.StatusEffect(
-                    arclightcity.entity.status.StatusEffectType.BURN, 3, 8.0, actor.getId()));
+                    arclightcity.entity.status.StatusEffectType.BURN, 3, burnDot, actor.getId()));
                 events.add(new CombatEvent.Builder(CombatEvent.EventType.EFFECT_APPLIED)
                     .actor(actor.getId(),actor.getName())
-                    .message(target.getName() + " terkena BURN!").build());
+                    .message(target.getName() + " terkena BURN! (DoT: " + (int)burnDot + ")").build());
             }
-            if (poisonChance > 0 && rngHit.nextDouble() < poisonChance && target.isAlive()) {
+            if (poisonChance > 0 && rngHit.nextDouble() < Math.min(poisonChance, 1.0) && target.isAlive()) {
+                double virDot = 6.0 + Math.max(0, poisonChance - 1.0) * 15.0;
                 target.applyEffect(new arclightcity.entity.status.StatusEffect(
-                    arclightcity.entity.status.StatusEffectType.VIRUS, 3, 6.0, actor.getId()));
+                    arclightcity.entity.status.StatusEffectType.VIRUS, 3, virDot, actor.getId()));
                 events.add(new CombatEvent.Builder(CombatEvent.EventType.EFFECT_APPLIED)
                     .actor(actor.getId(),actor.getName())
-                    .message(target.getName() + " terkena VIRUS!").build());
+                    .message(target.getName() + " terkena VIRUS! (DoT: " + (int)virDot + ")").build());
             }
 
             // THORN — target mengembalikan damage ke attacker
@@ -410,6 +420,20 @@ public class CombatManager {
                 }
             }
 
+            // SFX berdasarkan damage type + crit/miss
+            try {
+                if (calc.missed) {
+                    arclightcity.ui.util.AudioManager.get().sfxMiss();
+                } else {
+                    switch (dmgType) {
+                        case PHYSICAL -> arclightcity.ui.util.AudioManager.get().sfxHitPhysical();
+                        case CYBER    -> arclightcity.ui.util.AudioManager.get().sfxHitCyber();
+                        case ENERGY   -> arclightcity.ui.util.AudioManager.get().sfxHitEnergy();
+                        default       -> arclightcity.ui.util.AudioManager.get().sfxHitPhysical();
+                    }
+                    if (calc.isCritical) arclightcity.ui.util.AudioManager.get().sfxCritical();
+                }
+            } catch (Exception sfxIgnored) {}
             // Death check
             if (!target.isAlive()) {
                 events.add(CombatEvent.death(target.getId(), target.getName()));

@@ -216,6 +216,8 @@ public class GameEngine {
     // ════════════════════════════════════════════════════════
 
     public void startDungeonRun() {
+        // Pastikan equipment stat teraplikasi sebelum dungeon dimulai
+        if (player != null && inventory != null) player.recalcEquipStats(inventory);
         if (player == null) return;
         // Reset dungeon state tanpa buat DungeonManager baru
         // agar listener yang sudah dipasang tidak berduplikat
@@ -297,9 +299,9 @@ public class GameEngine {
         player.restoreMp(maxMp * 0.30);
         // Revive semua guildmate yang mati
         for (var m : getOwnedMercs()) {
+            // Revive paksa semua merc — revive() set alive=true + restore HP
             if (!m.isAlive() || m.getCurrentHp() <= 0) {
-                double mhp = m.getStats().get(arclightcity.entity.stats.StatType.MAX_HP);
-                m.setHpDirect(mhp * 0.30); // setHpDirect di Mercenary juga harus reset alive
+                m.revive(0.30); // 30% max HP, alive=true dijamin
             }
         }
         transitionTo(GameState.HUB);

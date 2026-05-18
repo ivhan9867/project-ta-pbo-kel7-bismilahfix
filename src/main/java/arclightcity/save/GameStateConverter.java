@@ -205,6 +205,13 @@ public class GameStateConverter {
         restoreMercenaries(engine, save);
 
         System.out.println("[Converter] Restore complete: " + save.getSummary());
+    
+        // Recalc equipment stats setelah restore — critical untuk damage calculation
+        try {
+            if (engine.getPlayer() != null && engine.getInventory() != null) {
+                engine.getPlayer().recalcEquipStats(engine.getInventory());
+            }
+        } catch (Exception ignored) {}
     }
 
     // ── Inventory restore ─────────────────────────────────────
