@@ -484,4 +484,19 @@ public class GameEngine {
     }
 
 
+    /** Kembalikan BGM key yang tepat berdasarkan konteks combat saat ini */
+    public String getCombatBgm() {
+        int floor = getFloorNumber();
+        // Cek tipe room saat ini
+        boolean isBossRoom = dungeonManager != null && dungeonManager.isCurrentRoomBoss();
+        if (isBossRoom) {
+            if (floor >= 51) return arclightcity.ui.util.AudioManager.BGM_THERESA;
+            if (floor == 50) return arclightcity.ui.util.AudioManager.BGM_BOSS_SEMAR;
+            return arclightcity.ui.util.AudioManager.BGM_BOSS;
+        }
+        // Cek elite enemy (via dungeon event room type)
+        return arclightcity.ui.util.AudioManager.BGM_COMBAT;
+    }
+
+
 }

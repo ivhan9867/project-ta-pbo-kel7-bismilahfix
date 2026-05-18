@@ -422,7 +422,7 @@ public class CombatManager {
 
             // SFX berdasarkan damage type + crit/miss
             try {
-                if (calc.missed) {
+                if (calc.isMissed) {
                     arclightcity.ui.util.AudioManager.get().sfxMiss();
                 } else {
                     switch (dmgType) {

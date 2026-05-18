@@ -82,6 +82,11 @@ public class Floor {
     public int        getFloorNumber()       { return floorNumber; }
     public List<Room> getRooms()             { return rooms; }
     public int        getCurrentRoomIndex()  { return currentRoomIndex; }
+
+    /** Set posisi langsung tanpa cek konektivitas — untuk inisialisasi awal */
+    public void setCurrentRoom(int idx) {
+        if (idx >= 0 && idx < rooms.size()) currentRoomIndex = idx;
+    }
     public boolean    isCompleted()          { return completed; }
     public FloorTheme getTheme()             { return theme; }
 

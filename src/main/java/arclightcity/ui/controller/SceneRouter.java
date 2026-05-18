@@ -121,6 +121,7 @@ public class SceneRouter {
     }
 
     public void showCity() {
+        AudioManager.get().playBgm(AudioManager.BGM_SHOP);
         var view = new arclightcity.ui.view.CityView(engine, this);
         showWithChat(view.build());
     }
@@ -344,8 +345,8 @@ public class SceneRouter {
 
     public void showCombat() {
         if (combatView != null) combatView.stopAll();
-        // Combat BGM berdasarkan tipe musuh
-        AudioManager.get().playBgm(AudioManager.BGM_COMBAT);
+        // Combat BGM: boss/regular/theresa otomatis
+        AudioManager.get().playBgm(engine.getCombatBgm());
         combatView = new CombatView(engine, this);
         showWithChat(combatView.build());
         engine.syncArtifactsToCombat(); // sync artifact ke combatManager
@@ -433,11 +434,15 @@ public class SceneRouter {
     }
 
     public void showVictory(CombatResult result) {
+        AudioManager.get().sfxVictory();
+        AudioManager.get().playBgm(AudioManager.BGM_HUB);
         victoryView = new VictoryView(engine, this, result);
         showWithChat(victoryView.build());
     }
 
     public void showGameOver() {
+        AudioManager.get().sfxGameOver();
+        AudioManager.get().stopBgm();
         gameOverView = new GameOverView(engine, this);
         showWithChat(gameOverView.build());
     }
@@ -525,6 +530,12 @@ public class SceneRouter {
     public void playCutscene(String scriptId, Runnable onComplete) {
         if (cutscenePlaying) { if (onComplete != null) onComplete.run(); return; }
         if (!DialogScript.has(scriptId)) { if (onComplete != null) onComplete.run(); return; }
+        // BGM sesuai jenis cutscene
+        if (scriptId.equals("OPENING") || scriptId.equals("FIRST_DUNGEON")) {
+            AudioManager.get().playBgm(AudioManager.BGM_CUTSCENE_OP);
+        } else if (scriptId.equals("ENDING")) {
+            AudioManager.get().playBgm(AudioManager.BGM_CUTSCENE_END);
+        }
         cutscenePlaying = true;
         var beats = DialogScript.get(scriptId);
         CutsceneView cv = new CutsceneView(beats, () -> {

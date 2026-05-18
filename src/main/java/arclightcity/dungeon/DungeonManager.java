@@ -90,9 +90,11 @@ public class DungeonManager {
             // Hanya generate floor baru jika belum ada atau nomor berbeda
             if (currentFloor == null || currentFloor.getFloorNumber() != currentFloorNumber) {
                 currentFloor = ProceduralGenerator.generateFloor(currentFloorNumber);
+                int st = pickEdgeStartTile();
+                currentFloor.setCurrentRoom(st); // ← pre-set sebelum emit
                 emit(DungeonStateEvent.dungeonStarted(player.getName()));
                 emit(DungeonStateEvent.floorEntered(currentFloorNumber, currentFloor.getTheme()));
-                enterRoom(pickEdgeStartTile()); // start dari edge acak
+                enterRoom(st);
             } else {
                 // Return ke floor yang SAMA — preserve visited state + posisi
                 emit(DungeonStateEvent.dungeonStarted(player.getName()));
@@ -112,10 +114,16 @@ public class DungeonManager {
         currentFloor = ProceduralGenerator.generateFloor(currentFloorNumber);
         player.setDungeonDepth(currentFloorNumber);
 
+        // KRITIS: set posisi player SEBELUM emit floorEntered
+        // agar DungeonGridMap.syncPlayer() mendapat posisi yang benar saat setFloor() dipanggil
+        int startTile = pickEdgeStartTile();
+        currentFloor.setCurrentRoom(startTile); // pre-set position
+
+        // Emit floor event (DungeonMapView akan build dengan posisi sudah benar)
         emit(DungeonStateEvent.floorEntered(currentFloorNumber, currentFloor.getTheme()));
 
-        // Mulai dari edge tile acak (atas/bawah/kiri/kanan)
-        enterRoom(pickEdgeStartTile());
+        // Baru masuk room (mark visited, trigger events)
+        enterRoom(startTile);
     }
 
     /**
@@ -144,6 +152,7 @@ public class DungeonManager {
         Room room = currentFloor.getRoom(roomIndex);
         if (room == null) return;
 
+        currentFloor.setCurrentRoom(roomIndex); // ← pastikan posisi ter-update
         room.setVisited(true);
         emit(DungeonStateEvent.roomEntered(room));
 

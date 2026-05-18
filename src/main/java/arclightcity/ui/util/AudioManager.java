@@ -83,6 +83,7 @@ public class AudioManager {
     public void playSfx(String filename) {
         if (muted) return;
         URL url = getClass().getResource("/assets/audio/sfx/" + filename);
+        if (url == null) url = getClass().getClassLoader().getResource("assets/audio/sfx/" + filename);
         if (url == null) return;
         try {
             AudioClip clip = new AudioClip(url.toString());
@@ -102,25 +103,25 @@ public class AudioManager {
     public void sfxGameOver()    { playSfx("bgm_gameover.wav");     }
 
     // ── BGM key helpers ───────────────────────────────────────
-    public static String BGM_MAIN_MENU    = "bgm_main_menu.ogg";
-    public static String BGM_HUB          = "bgm_hub.ogg";
-    public static String BGM_SHOP         = "bgm_shop.ogg";
-    public static String BGM_COMBAT       = "bgm_combat_normal.ogg";
-    public static String BGM_COMBAT_ELITE = "bgm_combat_elite.ogg";
-    public static String BGM_BOSS         = "bgm_boss_regular.ogg";
-    public static String BGM_BOSS_SEMAR   = "bgm_boss_semar.ogg";
-    public static String BGM_THERESA      = "bgm_theresa.ogg";
-    public static String BGM_CUTSCENE_OP  = "bgm_cutscene_opening.ogg";
-    public static String BGM_CUTSCENE_END = "bgm_cutscene_ending.ogg";
+    public static String BGM_MAIN_MENU    = "bgm_main_menu.mp3";
+    public static String BGM_HUB          = "bgm_hub.mp3";
+    public static String BGM_SHOP         = "bgm_shop.mp3";
+    public static String BGM_COMBAT       = "bgm_combat_normal.mp3";
+    public static String BGM_COMBAT_ELITE = "bgm_combat_elite.mp3";
+    public static String BGM_BOSS         = "bgm_boss_regular.mp3";
+    public static String BGM_BOSS_SEMAR   = "bgm_boss_semar.mp3";
+    public static String BGM_THERESA      = "bgm_theresa.mp3";
+    public static String BGM_CUTSCENE_OP  = "bgm_cutscene_opening.mp3";
+    public static String BGM_CUTSCENE_END = "bgm_cutscene_ending.mp3";
 
     /** Pilih BGM dungeon berdasarkan floor number */
     public static String bgmForFloor(int floor) {
         return switch ((floor - 1) / 10) {
-            case 0  -> "bgm_dungeon_pasar.ogg";
-            case 1  -> "bgm_dungeon_candi.ogg";
-            case 2  -> "bgm_dungeon_hutan.ogg";
-            case 3  -> "bgm_dungeon_goa.ogg";
-            default -> "bgm_dungeon_kahyangan.ogg";
+            case 0  -> "bgm_dungeon_pasar.mp3";
+            case 1  -> "bgm_dungeon_candi.mp3";
+            case 2  -> "bgm_dungeon_hutan.mp3";
+            case 3  -> "bgm_dungeon_goa.mp3";
+            default -> "bgm_dungeon_kahyangan.mp3";
         };
     }
 
@@ -128,6 +129,7 @@ public class AudioManager {
     private MediaPlayer loadBgm(String filename) {
         if (filename == null) return null;
         URL url = getClass().getResource("/assets/audio/bgm/" + filename);
+        if (url == null) url = getClass().getClassLoader().getResource("assets/audio/bgm/" + filename);
         if (url == null) { System.err.println("[Audio] Missing: " + filename); return null; }
         try {
             return new MediaPlayer(new Media(url.toString()));

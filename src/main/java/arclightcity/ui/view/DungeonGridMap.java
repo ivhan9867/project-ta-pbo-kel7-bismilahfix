@@ -95,7 +95,7 @@ public class DungeonGridMap extends StackPane {
         setStyle("-fx-background-color: #050810;");
 
         initFog();
-        // syncPlayer dipanggil nanti setelah player diposisikan
+        syncPlayer(); // safe: posisi sudah di-set via setCurrentRoom() sebelum emit
         startAnimations();
         draw();
 
