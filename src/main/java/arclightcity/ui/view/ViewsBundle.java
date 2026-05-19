@@ -102,10 +102,13 @@ public static class InventoryViewImpl {
                        "-fx-font-size: 10px; -fx-letter-spacing: 2; -fx-padding: 8 16 6 16;");
         container.getChildren().add(title);
 
-        // Layout 3 kolom: kiri | tengah (body) | kanan
+        // Layout 5 kolom: [Art1] | kiri | tengah | kanan | [Art2]
         HBox layout = new HBox(6);
         layout.setPadding(new Insets(4, 16, 10, 16));
         layout.setAlignment(Pos.CENTER);
+
+        // ── Artifact Slot 1 (KIRI) ────────────────────────────
+        javafx.scene.layout.StackPane artLeft = buildArtifactEquipSlot(1, inv.getArtifactSlot1(), inv);
 
         // ── Kiri: Weapon + Armor ──────────────────────────────
         VBox left = new VBox(6);
@@ -128,7 +131,10 @@ public static class InventoryViewImpl {
         right.getChildren().add(buildEquipSlot("💍", "CINCIN 1", inv.getEquippedRing1(), inv));
         right.getChildren().add(buildEquipSlot("💍", "CINCIN 2", inv.getEquippedRing2(), inv));
 
-        layout.getChildren().addAll(left, center, right);
+        // ── Artifact Slot 2 (KANAN) ───────────────────────────
+        javafx.scene.layout.StackPane artRight = buildArtifactEquipSlot(2, inv.getArtifactSlot2(), inv);
+
+        layout.getChildren().addAll(artLeft, left, center, right, artRight);
         container.getChildren().add(layout);
 
         // ── Baris 2: Aksesori 1 + 2 (lebar penuh) ────────────
@@ -149,7 +155,168 @@ public static class InventoryViewImpl {
         accRow.getChildren().addAll(accLeft, accRight);
         container.getChildren().add(accRow);
 
+
+
         return container;
+    }
+
+    /** Slot artefak 130×130 untuk panel equipment (PERBENDAHARAAN) */
+    private javafx.scene.layout.StackPane buildArtifactEquipSlot(
+            int slotNum, arclightcity.item.Artifact art, Inventory inv) {
+        javafx.scene.layout.StackPane slot = new javafx.scene.layout.StackPane();
+        slot.setPrefSize(130, 130); slot.setMinSize(130, 130); slot.setMaxSize(130, 130);
+        slot.setCursor(javafx.scene.Cursor.HAND);
+
+        String borderColor = art != null ? art.getBorderColor() : "#3A1A5A";
+        slot.setStyle("-fx-background-color:#0A0514; -fx-border-color:" + borderColor +
+            "; -fx-border-width:1.5; -fx-border-radius:4; -fx-background-radius:4;");
+
+        if (art == null) {
+            // Empty state
+            Label plus = new Label("+");
+            plus.setStyle("-fx-text-fill:rgba(170,100,255,0.30); -fx-font-size:32px;");
+            Label lbl = new Label("ARTEFAK " + slotNum);
+            lbl.setStyle("-fx-text-fill:rgba(170,100,255,0.35); -fx-font-family:'Courier New'; -fx-font-size:8px;");
+            javafx.scene.layout.VBox emp = new javafx.scene.layout.VBox(2, plus, lbl);
+            emp.setAlignment(javafx.geometry.Pos.CENTER);
+            slot.getChildren().add(emp);
+            slot.setOnMouseClicked(e -> showArtifactPickForSlot(slotNum, inv));
+        } else {
+            // Filled state — tampilkan icon
+            if (art.hasGlowEffect())
+                slot.setEffect(new javafx.scene.effect.Glow(0.25));
+            javafx.scene.image.Image icon = arclightcity.ui.util.AssetManager.artifactIcon(art.getArtifactType());
+            if (icon != null) {
+                javafx.scene.image.ImageView iv = new javafx.scene.image.ImageView(icon);
+                iv.setFitWidth(80); iv.setFitHeight(80); iv.setPreserveRatio(true);
+                slot.getChildren().add(iv);
+            }
+            // CD indicator
+            String cdTxt = art.isReady() ? "SIAP" : "CD " + art.getCooldown();
+            Label cdLbl = new Label(cdTxt);
+            cdLbl.setStyle("-fx-text-fill:" + (art.isReady() ? "#44FF44" : "#AAAAAA") +
+                "; -fx-font-family:'Courier New'; -fx-font-size:8px; -fx-padding:2;");
+            javafx.scene.layout.StackPane.setAlignment(cdLbl, javafx.geometry.Pos.BOTTOM_CENTER);
+            slot.getChildren().add(cdLbl);
+
+            // Click → info popup
+            slot.setOnMouseClicked(e -> showArtifactSlotInfo(art, slotNum, inv));
+        }
+        return slot;
+    }
+
+    /** Popup pilih artefak dari bag untuk di-equip ke slot player */
+    private void showArtifactPickForSlot(int slotNum, Inventory inv) {
+        javafx.stage.Stage popup = new javafx.stage.Stage();
+        popup.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+        popup.initOwner(router.getStage());
+        popup.setTitle("Pilih Artefak — Slot " + slotNum);
+
+        VBox root = new VBox(8);
+        root.setStyle("-fx-background-color:#0A0514; -fx-border-color:#5A1A8A;" +
+            "-fx-border-width:2; -fx-padding:16;");
+        root.setPrefWidth(310);
+
+        Label hdr = new Label("⬡  PILIH ARTEFAK — SLOT " + slotNum);
+        hdr.setStyle("-fx-text-fill:#AA66FF; -fx-font-family:'Courier New'; -fx-font-size:12px; -fx-font-weight:bold;");
+        root.getChildren().add(hdr);
+
+        boolean found = false;
+        for (arclightcity.item.Item item : inv.getAllBagItems()) {
+            if (!(item instanceof arclightcity.item.Artifact art)) continue;
+            found = true;
+
+            HBox row = new HBox(10);
+            row.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+            row.setPadding(new javafx.geometry.Insets(6, 10, 6, 10));
+            row.setStyle("-fx-background-color:rgba(255,255,255,0.03); -fx-cursor:hand;");
+
+            javafx.scene.image.Image ic = arclightcity.ui.util.AssetManager.artifactIcon(art.getArtifactType());
+            if (ic != null) {
+                javafx.scene.image.ImageView mini = new javafx.scene.image.ImageView(ic);
+                mini.setFitWidth(30); mini.setFitHeight(30); mini.setPreserveRatio(true);
+                row.getChildren().add(mini);
+            }
+            VBox info2 = new VBox(2);
+            Label nm = new Label(art.getArtifactType().displayName);
+            nm.setStyle("-fx-text-fill:" + art.getBorderColor() + "; -fx-font-family:'Courier New'; -fx-font-size:11px;");
+            Label rm = new Label("[" + art.getRarity().displayName + "] · " + art.getArtifactType().role.name());
+            rm.setStyle("-fx-text-fill:rgba(255,255,255,0.35); -fx-font-family:'Courier New'; -fx-font-size:9px;");
+            info2.getChildren().addAll(nm, rm);
+            row.getChildren().add(info2);
+
+            row.setOnMouseClicked(e2 -> {
+                inv.equipArtifactToSlot(slotNum, art);
+                popup.close();
+                router.showInventory();
+            });
+            row.setOnMouseEntered(e -> row.setStyle("-fx-background-color:rgba(170,100,255,0.10); -fx-cursor:hand;"));
+            row.setOnMouseExited(e -> row.setStyle("-fx-background-color:rgba(255,255,255,0.03); -fx-cursor:hand;"));
+            root.getChildren().add(row);
+        }
+        if (!found) {
+            Label none = new Label("Belum punya artefak. Buka Altar Artefak.");
+            none.setStyle("-fx-text-fill:rgba(255,255,255,0.30); -fx-font-family:'Courier New'; -fx-font-size:10px;");
+            root.getChildren().add(none);
+        }
+        Button cancel = new Button("TUTUP");
+        cancel.setStyle("-fx-background-color:transparent;-fx-border-color:#444;-fx-border-width:1;" +
+            "-fx-text-fill:#888;-fx-font-family:'Courier New';-fx-font-size:10px;-fx-cursor:hand;");
+        cancel.setOnAction(e -> popup.close());
+        root.getChildren().add(cancel);
+
+        popup.setScene(new javafx.scene.Scene(root));
+        popup.sizeToScene(); popup.show();
+    }
+
+    /** Info popup artefak yang sudah terpasang di slot player */
+    private void showArtifactSlotInfo(arclightcity.item.Artifact art, int slotNum, Inventory inv) {
+        javafx.stage.Stage popup = new javafx.stage.Stage();
+        popup.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+        popup.initOwner(router.getStage());
+        popup.setTitle(art.getArtifactType().displayName);
+
+        VBox root = new VBox(10);
+        root.setStyle("-fx-background-color:#0C0514; -fx-border-color:" + art.getBorderColor() +
+            "; -fx-border-width:2; -fx-padding:20;");
+        root.setPrefWidth(300);
+
+        javafx.scene.image.Image icon = arclightcity.ui.util.AssetManager.artifactIcon(art.getArtifactType());
+        if (icon != null) {
+            javafx.scene.image.ImageView iv = new javafx.scene.image.ImageView(icon);
+            iv.setFitWidth(72); iv.setFitHeight(72); iv.setPreserveRatio(true);
+            javafx.scene.layout.StackPane iBox = new javafx.scene.layout.StackPane(iv);
+            iBox.setAlignment(javafx.geometry.Pos.CENTER);
+            root.getChildren().add(iBox);
+        }
+        Label name = new Label(art.getArtifactType().displayName);
+        name.setStyle("-fx-text-fill:" + art.getBorderColor() + ";-fx-font-family:'Courier New';" +
+            "-fx-font-size:13px;-fx-font-weight:bold;");
+        Label desc = new Label(art.getDisplaySummary());
+        desc.setWrapText(true); desc.setMaxWidth(270);
+        desc.setStyle("-fx-text-fill:rgba(240,230,255,0.75);-fx-font-family:'Courier New';-fx-font-size:11px;");
+        Label cdLbl = new Label("CD: " + art.getScaledCooldown() + " giliran · " +
+                                (art.isReady() ? "SIAP" : "CD " + art.getCooldown()));
+        cdLbl.setStyle("-fx-text-fill:rgba(255,255,255,0.30);-fx-font-family:'Courier New';-fx-font-size:9px;");
+
+        HBox btnRow = new HBox(8); btnRow.setAlignment(javafx.geometry.Pos.CENTER);
+        Button lepas = new Button("LEPAS ARTEFAK");
+        lepas.setStyle("-fx-background-color:transparent;-fx-border-color:#883333;-fx-border-width:1;" +
+            "-fx-text-fill:#AA4444;-fx-font-family:'Courier New';-fx-font-size:10px;-fx-cursor:hand;");
+        lepas.setOnAction(e -> {
+            inv.unequipArtifact(slotNum);
+            popup.close();
+            router.showInventory();
+        });
+        Button close = new Button("TUTUP");
+        close.setStyle("-fx-background-color:transparent;-fx-border-color:#444;-fx-border-width:1;" +
+            "-fx-text-fill:#888;-fx-font-family:'Courier New';-fx-font-size:10px;-fx-cursor:hand;");
+        close.setOnAction(e -> popup.close());
+        btnRow.getChildren().addAll(lepas, close);
+
+        root.getChildren().addAll(name, desc, cdLbl, btnRow);
+        popup.setScene(new javafx.scene.Scene(root));
+        popup.sizeToScene(); popup.show();
     }
 
     /** Slot lebar untuk baris aksesori */
@@ -552,8 +719,8 @@ public static class InventoryViewImpl {
         HBox tabs = new HBox(0);
         tabs.setStyle("-fx-background-color: #150E08; -fx-border-color: #3A2810; -fx-border-width: 0 0 1 0;");
 
-        String[] filters = {"ALL","WEAPON","ARMOR","HELM","SEPATU","CINCIN","ACCESSORY","CONSUMABLE","MATERIAL"};
-        String[] labels  = {"SEMUA","SENJATA","BAJU","HELM","SEPATU","CINCIN","AKSESORI","KONSUMABLE","MATERIAL"};
+        String[] filters = {"ALL","ARTIFACT","WEAPON","ARMOR","HELM","SEPATU","CINCIN","ACCESSORY","CONSUMABLE","MATERIAL"};
+        String[] labels  = {"SEMUA","ARTEFAK","SENJATA","BAJU","HELM","SEPATU","CINCIN","AKSESORI","KONSUMABLE","MATERIAL"};
         for (int fi = 0; fi < filters.length; fi++) {
             final String filter = filters[fi];
             final String label  = labels[fi];
@@ -582,6 +749,7 @@ public static class InventoryViewImpl {
         var items = inv.getAllItems().stream()
                 .filter(item -> {
                     if (activeFilter.equals("ALL")) return true;
+                    if (activeFilter.equals("ARTIFACT")) return item instanceof arclightcity.item.Artifact;
                     // Aksesori (class Accessory) — bukan Armor
                     if (item instanceof arclightcity.item.Accessory) {
                         return activeFilter.equals("ACCESSORY");
@@ -635,6 +803,8 @@ public static class InventoryViewImpl {
         row.setOnMouseClicked(e -> {
             if (item instanceof Equipment eq) {
                 showItemDetailPopup(eq, inv);
+            } else if (item instanceof arclightcity.item.Artifact art) {
+                showArtifactBagPopup(art, inv, router);
             }
         });
 
@@ -2050,6 +2220,86 @@ public static class GameOverViewImpl {
             router.showMercenary();
         });
         return btn;
+    }
+
+
+    /** Popup info artefak dari bag — tampilkan icon + buff + tombol equip ke slot player */
+    private static void showArtifactBagPopup(arclightcity.item.Artifact art,
+                                              arclightcity.item.Inventory inv,
+                                              SceneRouter router) {
+        javafx.stage.Stage popup = new javafx.stage.Stage();
+        popup.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+        popup.setTitle(art.getArtifactType().displayName);
+
+        VBox root = new VBox(12);
+        root.setStyle("-fx-background-color:#0C0514; -fx-border-color:" + art.getBorderColor() +
+            "; -fx-border-width:2; -fx-padding:20;");
+        root.setPrefWidth(320);
+
+        // Icon besar
+        javafx.scene.image.Image icon = arclightcity.ui.util.AssetManager.artifactIcon(art.getArtifactType());
+        if (icon != null) {
+            javafx.scene.image.ImageView iv = new javafx.scene.image.ImageView(icon);
+            iv.setFitWidth(80); iv.setFitHeight(80); iv.setPreserveRatio(true);
+            javafx.scene.layout.StackPane icBox = new javafx.scene.layout.StackPane(iv);
+            icBox.setAlignment(javafx.geometry.Pos.CENTER);
+            if (art.hasGlowEffect())
+                icBox.setEffect(new javafx.scene.effect.DropShadow(20,
+                    javafx.scene.paint.Color.web(art.getBorderColor()+"99")));
+            root.getChildren().add(icBox);
+        }
+
+        Label name = new Label(art.getArtifactType().displayName);
+        name.setStyle("-fx-text-fill:" + art.getBorderColor() + ";-fx-font-family:'Courier New';" +
+            "-fx-font-size:14px;-fx-font-weight:bold;");
+        Label rar = new Label("[" + art.getRarity().displayName + "] · Role: " + art.getArtifactType().role.name());
+        rar.setStyle("-fx-text-fill:rgba(255,255,255,0.40);-fx-font-family:'Courier New';-fx-font-size:10px;");
+        Label desc = new Label(art.getDisplaySummary());
+        desc.setWrapText(true); desc.setMaxWidth(280);
+        desc.setStyle("-fx-text-fill:rgba(240,230,255,0.75);-fx-font-family:'Courier New';-fx-font-size:11px;");
+        Label cd = new Label("CD: " + art.getScaledCooldown() + " giliran · " +
+                             (art.isReady() ? "SIAP" : "CD " + art.getCooldown()));
+        cd.setStyle("-fx-text-fill:rgba(255,255,255,0.30);-fx-font-family:'Courier New';-fx-font-size:9px;");
+
+        root.getChildren().addAll(name, rar, desc, cd);
+
+        // Tombol equip ke slot player
+        javafx.scene.layout.HBox btnRow = new javafx.scene.layout.HBox(8);
+        btnRow.setAlignment(javafx.geometry.Pos.CENTER);
+
+        Button slot1 = new Button("→ SLOT 1");
+        slot1.setStyle("-fx-background-color:transparent;-fx-border-color:#7722CC;-fx-border-width:1;" +
+            "-fx-text-fill:#AA55EE;-fx-font-family:'Courier New';-fx-font-size:10px;" +
+            "-fx-padding:6 12;-fx-cursor:hand;");
+        slot1.setOnAction(e -> {
+            inv.equipArtifactToSlot(1, art);
+            popup.close();
+            router.showInventory();
+        });
+
+        Button slot2 = new Button("→ SLOT 2");
+        slot2.setStyle("-fx-background-color:transparent;-fx-border-color:#7722CC;-fx-border-width:1;" +
+            "-fx-text-fill:#AA55EE;-fx-font-family:'Courier New';-fx-font-size:10px;" +
+            "-fx-padding:6 12;-fx-cursor:hand;");
+        slot2.setOnAction(e -> {
+            inv.equipArtifactToSlot(2, art);
+            popup.close();
+            router.showInventory();
+        });
+
+        Button close = new Button("TUTUP");
+        close.setStyle("-fx-background-color:transparent;-fx-border-color:#555555;-fx-border-width:1;" +
+            "-fx-text-fill:#888888;-fx-font-family:'Courier New';-fx-font-size:10px;" +
+            "-fx-padding:6 12;-fx-cursor:hand;");
+        close.setOnAction(e -> popup.close());
+
+        btnRow.getChildren().addAll(slot1, slot2, close);
+        root.getChildren().add(btnRow);
+
+        popup.setScene(new javafx.scene.Scene(root));
+        popup.initOwner(router.getStage());
+        popup.sizeToScene();
+        popup.show();
     }
 
 

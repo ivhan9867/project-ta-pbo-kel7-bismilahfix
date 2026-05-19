@@ -153,17 +153,172 @@ public class GachaView {
 
     // ── Pull logic ── Full-screen slide reveal ──────────────────
     private void doPull(boolean isTen) {
-        GachaSystem.PullResult result = isTen ? engine.pullTen() : engine.pullSingle();
-        if (!result.success) {
-            showFailAlert(result.failReason); return;
-        }
-        goldLabel.setText("⚙  " + engine.getPlayer().getGold() + " Gold");
-        ticketLabel.setText("⬡  " + engine.getGachaTickets() + " Tiket");
-        updatePityLabel();
+        // Tampilkan animasi loading sebelum reveal
+        showPullAnimation(isTen);
+    }
 
-        List<Artifact> sorted = new ArrayList<>(result.artifacts);
-        sorted.sort((a,b) -> Integer.compare(b.getRarity().ordinal(), a.getRarity().ordinal()));
-        showSlideReveal(sorted);
+    /**
+     * Animasi gacha full: 3 fase
+     *  Fase 1 (0-0.8s): Portal muncul + pulse building up
+     *  Fase 2 (0.8-2.2s): Portal berputar cepat + flash white
+     *  Fase 3 (2.2-2.6s): Fade out + reveal hasil
+     */
+    private void showPullAnimation(boolean isTen) {
+        javafx.scene.Scene scene = router.getStage().getScene();
+        StackPane overlay = new StackPane();
+        overlay.setStyle("-fx-background-color:rgba(4,1,10,0.0);");
+        overlay.setPrefSize(arclightcity.ui.ArclightApp.SCREEN_WIDTH,
+                            arclightcity.ui.ArclightApp.SCREEN_HEIGHT);
+        overlay.setFocusTraversable(true);
+
+        // Flash layer (putih saat peak)
+        javafx.scene.shape.Rectangle flash = new javafx.scene.shape.Rectangle(
+            arclightcity.ui.ArclightApp.SCREEN_WIDTH, arclightcity.ui.ArclightApp.SCREEN_HEIGHT,
+            Color.web("#CC88FF"));
+        flash.setOpacity(0);
+        flash.setMouseTransparent(true);
+
+        // Portal container — bisa di-animate scale
+        StackPane portalWrap = buildAnimPortalFull();
+        portalWrap.setOpacity(0);
+
+        // Label teks
+        Label calling = new Label(isTen ? "⬡  MEMANGGIL 10 ARTEFAK..." : "⬡  MEMANGGIL ARTEFAK...");
+        calling.setStyle("-fx-text-fill:#CC88FF; -fx-font-family:'Courier New';" +
+            "-fx-font-size:15px; -fx-font-weight:bold;");
+        calling.setOpacity(0);
+
+        Label subtext = new Label(isTen ? "「 10× GACHA 」" : "「 1× GACHA 」");
+        subtext.setStyle("-fx-text-fill:rgba(200,150,255,0.50); -fx-font-family:'Courier New';" +
+            "-fx-font-size:11px;");
+        subtext.setOpacity(0);
+
+        javafx.scene.layout.VBox content = new javafx.scene.layout.VBox(16,
+            portalWrap, calling, subtext);
+        content.setAlignment(javafx.geometry.Pos.CENTER);
+
+        overlay.getChildren().addAll(flash, content);
+
+        if (scene.getRoot() instanceof StackPane sp) sp.getChildren().add(overlay);
+        else { StackPane nr = new StackPane(scene.getRoot(), overlay); scene.setRoot(nr); }
+
+        // ─ Fase 1: background gelap + portal muncul (0 – 800ms) ─
+        FadeTransition bgFade = new FadeTransition(Duration.millis(400), overlay);
+        bgFade.setToValue(1);
+        bgFade.setOnFinished(e -> {
+            overlay.setStyle("-fx-background-color:rgba(4,1,10,0.96);");
+        });
+        bgFade.play();
+
+        FadeTransition portalFade = new FadeTransition(Duration.millis(600), portalWrap);
+        portalFade.setToValue(1);
+        ScaleTransition portalScale = new ScaleTransition(Duration.millis(600), portalWrap);
+        portalScale.setFromX(0.5); portalScale.setToX(1.0);
+        portalScale.setFromY(0.5); portalScale.setToY(1.0);
+        new ParallelTransition(portalFade, portalScale).play();
+
+        PauseTransition textDelay = new PauseTransition(Duration.millis(400));
+        textDelay.setOnFinished(e -> {
+            FadeTransition ft = new FadeTransition(Duration.millis(400), calling);
+            ft.setToValue(1); ft.play();
+            FadeTransition fs = new FadeTransition(Duration.millis(400), subtext);
+            fs.setToValue(1); fs.play();
+            // Blink teks
+            FadeTransition blink = new FadeTransition(Duration.millis(450), calling);
+            blink.setFromValue(0.5); blink.setToValue(1.0);
+            blink.setCycleCount(Animation.INDEFINITE); blink.setAutoReverse(true); blink.play();
+        });
+        textDelay.play();
+
+        // ─ Fase 2: portal makin besar + flash (800 – 2200ms) ─
+        PauseTransition phase2 = new PauseTransition(Duration.millis(900));
+        phase2.setOnFinished(e -> {
+            // Perbesar portal dramatically
+            ScaleTransition sc2 = new ScaleTransition(Duration.millis(800), portalWrap);
+            sc2.setToX(1.6); sc2.setToY(1.6); sc2.play();
+
+            // Flash purple di 1.6s
+            PauseTransition flashDelay = new PauseTransition(Duration.millis(800));
+            flashDelay.setOnFinished(ev -> {
+                FadeTransition ft1 = new FadeTransition(Duration.millis(150), flash);
+                ft1.setToValue(0.45);
+                ft1.setOnFinished(ev2 -> {
+                    FadeTransition ft2 = new FadeTransition(Duration.millis(350), flash);
+                    ft2.setToValue(0); ft2.play();
+                });
+                ft1.play();
+            });
+            flashDelay.play();
+        });
+        phase2.play();
+
+        // ─ Fase 3: fade out dan reveal (2200ms) ─
+        PauseTransition phase3 = new PauseTransition(Duration.millis(2200));
+        phase3.setOnFinished(e -> {
+            FadeTransition fo = new FadeTransition(Duration.millis(350), overlay);
+            fo.setToValue(0);
+            fo.setOnFinished(ev -> {
+                if (scene.getRoot() instanceof StackPane sp && sp.getChildren().contains(overlay))
+                    sp.getChildren().remove(overlay);
+                // Lakukan pull
+                GachaSystem.PullResult result = isTen ? engine.pullTen() : engine.pullSingle();
+                if (!result.success) { showFailAlert(result.failReason); return; }
+                goldLabel.setText("⚙  " + engine.getPlayer().getGold() + " Gold");
+                ticketLabel.setText("⬡  " + engine.getGachaTickets() + " Tiket");
+                updatePityLabel();
+                List<Artifact> sorted = new ArrayList<>(result.artifacts);
+                sorted.sort((a,b) -> Integer.compare(b.getRarity().ordinal(), a.getRarity().ordinal()));
+                showSlideReveal(sorted);
+            });
+            fo.play();
+        });
+        phase3.play();
+    }
+
+    private StackPane buildAnimPortalFull() {
+        StackPane stack = new StackPane();
+        stack.setPrefSize(200,200); stack.setMaxSize(200,200);
+
+        // Rings — 4 cincin yang berputar berlawanan arah
+        javafx.scene.shape.Circle bg = new javafx.scene.shape.Circle(96, Color.web("#120820"));
+        bg.setEffect(new DropShadow(60, Color.web("#AA33FF88")));
+
+        javafx.scene.shape.Circle r4 = new javafx.scene.shape.Circle(95, Color.TRANSPARENT);
+        r4.setStroke(Color.web("#5A1A8A",0.20)); r4.setStrokeWidth(1);
+        javafx.scene.shape.Circle r3 = new javafx.scene.shape.Circle(80, Color.TRANSPARENT);
+        r3.setStroke(Color.web("#8833CC",0.40)); r3.setStrokeWidth(1.5);
+        javafx.scene.shape.Circle r2 = new javafx.scene.shape.Circle(62, Color.TRANSPARENT);
+        r2.setStroke(Color.web("#CC66FF",0.70)); r2.setStrokeWidth(2);
+        javafx.scene.shape.Circle r1 = new javafx.scene.shape.Circle(45, Color.web("#0A0518"));
+        r1.setStroke(Color.web("#EE99FF",0.90)); r1.setStrokeWidth(2.5);
+        r1.setEffect(new Glow(0.5));
+
+        // Center icon
+        Label icon = new Label("⬡");
+        icon.setStyle("-fx-text-fill:#EE99FF;-fx-font-size:48px;");
+        icon.setEffect(new Glow(0.8));
+
+        stack.getChildren().addAll(bg, r4, r3, r2, r1, icon);
+
+        // Rotations berbeda kecepatan
+        rot(r4, 1400, true);
+        rot(r3, 900, false);
+        rot(r2, 500, true);
+        rot(r1, 300, false);
+
+        // Pulse icon
+        ScaleTransition sc = new ScaleTransition(Duration.millis(250), icon);
+        sc.setFromX(0.85); sc.setToX(1.15); sc.setFromY(0.85); sc.setToY(1.15);
+        sc.setCycleCount(Animation.INDEFINITE); sc.setAutoReverse(true); sc.play();
+
+        return stack;
+    }
+
+    private void rot(javafx.scene.Node node, int ms, boolean cw) {
+        RotateTransition rt = new RotateTransition(Duration.millis(ms), node);
+        rt.setByAngle(cw ? 360 : -360);
+        rt.setCycleCount(Animation.INDEFINITE);
+        rt.play();
     }
 
     /**

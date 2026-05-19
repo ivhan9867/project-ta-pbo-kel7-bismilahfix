@@ -431,6 +431,12 @@ public class GameEngine {
         if (result.success) {
             if (result.goldSpent    > 0 && player != null) player.spendGold(result.goldSpent);
             if (result.ticketsSpent > 0) gachaTickets -= result.ticketsSpent;
+            // KRITIS: tambahkan artifact ke inventory bag!
+            if (inventory != null) {
+                for (Artifact art : result.artifacts) inventory.addItem(art);
+            }
+            // Auto-save setelah gacha — cegah save-scumming
+            autoSave();
         }
         return result;
     }
@@ -441,6 +447,12 @@ public class GameEngine {
         if (result.success) {
             if (result.goldSpent    > 0 && player != null) player.spendGold(result.goldSpent);
             if (result.ticketsSpent > 0) gachaTickets -= result.ticketsSpent;
+            // KRITIS: tambahkan artifact ke inventory bag!
+            if (inventory != null) {
+                for (Artifact art : result.artifacts) inventory.addItem(art);
+            }
+            // Auto-save setelah gacha — cegah save-scumming
+            autoSave();
         }
         return result;
     }

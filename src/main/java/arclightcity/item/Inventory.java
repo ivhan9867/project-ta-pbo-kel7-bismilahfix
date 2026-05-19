@@ -36,7 +36,9 @@ public class Inventory {
 
     // ── Bag ──────────────────────────────────────────────────
     private final List<Item> bag = new ArrayList<>();
-    private       int        maxBagSize = 30;
+    private       int        maxBagSize = 60; // dinaikkan dari 30
+    /** Artifact pocket — terpisah dari bag, tidak makan slot tas, unlimited */
+    private final java.util.List<Artifact> artifactPocket = new java.util.ArrayList<>();
 
     // ── Material shorthand (quick access) ───────────────────
     private int scrapMetal   = 0;
@@ -91,11 +93,12 @@ public class Inventory {
     public EquipResult unequip(String slot) {
         Equipment current = getEquippedInSlot(slot);
         if (current == null) return EquipResult.fail("No equipment in slot: " + slot);
-        if (bag.size() >= maxBagSize) return EquipResult.fail("Bag is full!");
-
+        // KRITIS: jangan cek bag full saat unequip!
+        // Item SUDAH di slot, harus bisa dilepas kapanpun.
+        // maxBagSize hanya untuk addItem() dari luar.
         removeStatBonuses(current);
         setEquippedInSlot(slot, null);
-        bag.add(current);
+        bag.add(current); // selalu berhasil — item kembali dari slot
 
         return EquipResult.success(slot, null, current);
     }
@@ -161,7 +164,17 @@ public class Inventory {
     // BAG MANAGEMENT
     // ════════════════════════════════════════════════════════
 
+    /** Dapatkan semua artifact di pocket (tidak makan slot tas) */
+    public java.util.List<Artifact> getArtifactPocket() {
+        return java.util.Collections.unmodifiableList(artifactPocket);
+    }
+
     public boolean addItem(Item item) {
+        // Artifact disimpan di pocket terpisah — tidak makan slot tas
+        if (item instanceof Artifact art) {
+            artifactPocket.add(art);
+            return true;
+        }
         if (item instanceof Material mat) {
             addMaterial(mat);
             return true;
@@ -427,7 +440,10 @@ public class Inventory {
     // ── Save/Load direct equip (bypass validation) ────────────
     /** Semua item di bag untuk save system */
     public java.util.List<Item> getAllBagItems() {
-        return java.util.Collections.unmodifiableList(bag);
+        // Gabungkan bag + artifact pocket agar muncul di tab ARTEFAK
+        java.util.List<Item> all = new java.util.ArrayList<>(bag);
+        all.addAll(artifactPocket);
+        return java.util.Collections.unmodifiableList(all);
     }
 
     /** Dipakai saat restore dari save — langsung set slot tanpa cek kondisi */

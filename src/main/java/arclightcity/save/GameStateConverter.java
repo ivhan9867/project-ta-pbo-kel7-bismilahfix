@@ -104,8 +104,15 @@ public class GameStateConverter {
                 nd.subType = "CRYSTAL"; nd.rarity = "RARE"; nd.quantity = inv.getNeonCrystals();
                 save.inventoryItems.add(nd);
             }
+            // Save artifact pocket (terpisah dari bag items)
+            for (arclightcity.item.Artifact art : inv.getArtifactPocket()) {
+                save.savedArtifactPocket.add(new String[]{
+                    art.getArtifactType().name(), art.getRarity().name()
+                });
+            }
             System.out.println("[SAVE] Saved " + save.inventoryItems.size() +
-                " items total (" + bagCount + " in bag + material counters)");
+                " items total (" + bagCount + " in bag + material counters) + " +
+                save.savedArtifactPocket.size() + " artifacts in pocket");
         } else {
             System.err.println("[SAVE] ERROR: inventory is null!");
         }
@@ -206,6 +213,18 @@ public class GameStateConverter {
 
         System.out.println("[Converter] Restore complete: " + save.getSummary());
     
+        // Restore artifact pocket
+        if (save.savedArtifactPocket != null && engine.getInventory() != null) {
+            for (String[] data : save.savedArtifactPocket) {
+                try {
+                    arclightcity.item.ArtifactType type = arclightcity.item.ArtifactType.valueOf(data[0]);
+                    arclightcity.item.Item.Rarity   rar  = arclightcity.item.Item.Rarity.valueOf(data[1]);
+                    arclightcity.item.Artifact art = new arclightcity.item.Artifact(type, rar);
+                    engine.getInventory().addItem(art); // masuk pocket otomatis
+                } catch (Exception ignored) {}
+            }
+        }
+
         // Recalc equipment stats setelah restore — critical untuk damage calculation
         try {
             if (engine.getPlayer() != null && engine.getInventory() != null) {
