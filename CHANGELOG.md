@@ -5,19 +5,19 @@ Format: [versi] (tanggal)
 🔴 Critical Fix 🐛 Bug Fix ✨ Feature ⚡ Improvement 🎨 Visual 🔧 Refactor
 [v1.0.0] — 2026-05-19 · FULL RELEASE 🎉
 
-###✨ Feature
+✨ Feature
 Artifact Pocket — storage terpisah dari tas utama, tidak makan slot bag, unlimited kapasitas. Inventory.addItem(Artifact) selalu masuk pocket, tidak pernah ke bag
 Artifact slot repositioning — Slot ARTEFAK 1 dan ARTEFAK 2 dipindah ke KIRI dan KANAN grid equipment (sesuai desain awal), bukan di bawah accessories
 Auto-save setelah gacha — setiap pull berhasil trigger autoSave(), mencegah reload & gacha ulang (save-scumming)
 Artifact pocket tersave — GameSaveState.savedArtifactPocket menyimpan [typeName, rarityName][], di-restore via ArtifactType.valueOf()
 
-###🐛 Bug Fix
+🐛 Bug Fix
 Inventory.unequip(slot) tidak lagi cek bag full — item dari slot harus bisa dilepas kapanpun
 maxBagSize dinaikkan dari 30 → 60
 getArtifactPocket() getter ditambahkan ke Inventory
 getLevel() dihapus dari save code (Artifact tidak punya field level)
 
-###🎨 Visual
+🎨 Visual
 Gacha animasi 3 fase (±2.6 detik total):
 Fase 1 (0–0.8s): portal scale-in + background gelap
 Fase 2 (0.8–2.2s): portal membesar 1.6× + 4 cincin berputar berlawanan + flash purple
@@ -25,11 +25,11 @@ Fase 3 (2.2–2.6s): fade out → slide reveal
 4-ring portal dengan kecepatan rotasi berbeda (300/500/900/1400ms)
 [v0.9.9] — 2026-05-19
 
-###✨ Feature
+✨ Feature
 Gacha animasi loading — portal berputar cepat + teks "MEMANGGIL..." selama 1.2 detik sebelum reveal hasil
 buildAnimPortal() — portal terpisah untuk animasi loading
 
-###🐛 Bug Fix
+🐛 Bug Fix
 Artifact slot repositioning awal (sebelum fix final v1.0.0)
 showArtifactBagPopup diubah ke private static dengan parameter SceneRouter router
 [v0.9.8] — 2026-05-19# 📋 CHANGELOG — Mythic Item Obtained
