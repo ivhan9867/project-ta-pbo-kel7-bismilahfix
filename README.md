@@ -1,20 +1,21 @@
 <div align="center">
 
-# ⚔️ MYTHIC ITEM OBTAINED
+# ⬡ MYTHIC ITEM OBTAINED
 
-**— Isekai RPG Dungeon Crawler · Tema Nusantara —**
+**— Roguelite RPG Turn-Based · Tema Nusantara —**
 
 [![Java](https://img.shields.io/badge/Java-25-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)](https://openjdk.org/)
 [![JavaFX](https://img.shields.io/badge/JavaFX-25-1E90FF?style=for-the-badge&logo=java&logoColor=white)](https://openjfx.io/)
-[![Maven](https://img.shields.io/badge/Maven-Build-C71A36?style=for-the-badge&logo=apachemaven&logoColor=white)](https://maven.apache.org/)
-[![Status](https://img.shields.io/badge/Status-In%20Development-FFB830?style=for-the-badge)]()
-[![Version](https://img.shields.io/badge/Version-v0.8.1a-8A2BE2?style=for-the-badge)]()
+[![Maven](https://img.shields.io/badge/Maven-3.8+-C71A36?style=for-the-badge&logo=apachemaven&logoColor=white)](https://maven.apache.org/)
+[![Status](https://img.shields.io/badge/Status-Full%20Release-44AA44?style=for-the-badge)](/)
+[![Version](https://img.shields.io/badge/Version-v1.0.0-8A2BE2?style=for-the-badge)](/)
 
 ---
 
-> *"Asuna, seorang gamer dari dunia modern, tersesat ke dimensi Nusantara yang kacau.*
-> *Dungeon penuh makhluk mistis, artefak kuno, dan kutukan leluhur menantinya.*
-> *Satu-satunya jalan pulang — kumpulkan **Mythic Item** dan taklukkan Kahyangan Rusak."*
+> *"Asuna, mahasiswi IT dari Jakarta, tersedot ke Nusantara — dimensi paralel*
+> *di mana mitologi Jawa, Bali, Sunda, dan Kalimantan menjadi kenyataan fisik.*
+> *Bersama 7 Guildmate legendaris, ia harus membebaskan Lima Penjaga Agung*
+> *dan menghadapi Theresa — entitas beku dari dimensi yang tak pernah hangat."*
 
 ---
 
@@ -22,279 +23,182 @@
 
 ## 🎮 Tentang Game
 
-**Mythic Item Obtained** adalah game **RPG Dungeon Crawler berbasis giliran (turn-based)** yang dibangun sepenuhnya dengan **Java + JavaFX** tanpa engine eksternal. Terinspirasi dari estetika dark-fantasy dan mitologi Indonesia, game ini menggabungkan sistem combat yang dalam, item procedural, dan enam jenis dungeon dengan tema Nusantara.
+**Mythic Item Obtained** adalah game **Roguelite RPG Turn-Based** yang dibangun sepenuhnya dari nol menggunakan **Java 25 + JavaFX 25** tanpa game engine eksternal. Seluruh UI, sistem combat, dungeon, dialog, dan gacha diimplementasi secara programatik (tanpa FXML).
 
-> 🏆 **Proyek Akhir — Pemrograman Berorientasi Objek (OOP)**
-> Universitas · Kelompok 7 · Semester 2
+> 🏆 **Tugas Akhir — Pemrograman Berorientasi Objek (PBO)**
+> Kelompok 7 · Semester 2 · 2026
+
+---
+
+## ✨ Fitur Utama
+
+### ⚔️ Sistem Combat
+- Turn-based dengan **Speed Bar** visual — urutan giliran otomatis berdasarkan stat SPEED
+- 4 aksi per giliran: **Serang / Jurus / Item / Bertahan** + opsi Kabur
+- **40+ skill** berbeda dengan efek: damage, heal, buff/debuff, CC (stun, freeze, dll.)
+- **Floating damage text** + SFX per tipe serangan (Physical/Cyber/Energy)
+- **On-hit effects**: BLEED/BURN/POISON dengan chance; nilai >100% = selalu trigger + bonus DoT
+- **Artifact auto-trigger**: saat CD habis, efek aktif otomatis tanpa memakan giliran
+- Speed control: 1× / 2× / SKIP
+- **9 tipe status effect**: BLEED, BURN, STUN, FREEZE, WEAKEN, SHIELD, REGEN, VIRUS, CORRODE
+
+### 🗺️ Dungeon Explorer
+- Grid **12 kolom × N baris** dengan fog of war adaptif
+- Fog of war: hanya **cleared rooms** yang permanent visible; current + neighbors dinamis
+- **5 tema zona** per 10 lantai: Pasar Malam Gaib → Candi Terlarang → Hutan Angker → Goa Naga → Kahyangan Rusak
+- **8 tipe room**: Enemy, Loot, Rest, Event, Shop, Trap, Boss, Empty
+- Boss unik tiap 10 lantai dengan mechanic multi-phase
+- Cutscene/dialog otomatis trigger saat memasuki **Boss Room** (bukan floor number)
+
+### 👥 Sistem Guildmate
+- **7 guildmate** dengan role berbeda: Tank, DPS, Healer, Assassin, Breaker, Controller, Support
+- Sistem **Loyalty** — makin sering dipakai, makin kuat (compound scaling per role)
+- AI combat cerdas: auto-pilih target dan skill berdasarkan situasi
+- Dialog dinamis 50+ baris unik per guildmate sesuai konteks dungeon
+- **1 slot artifact** per guildmate (role-filtered)
+
+### ⬡ Sistem Artefak Gacha
+- **20 jenis artefak** dari 7 role (UNIVERSAL, TANK, HEALER, DPS, SUPPORT, ASSASSIN, BREAKER)
+- Gacha economy: 1× = 800 Gold / 1 Tiket · 10× = 7200 Gold / 9 Tiket
+- **Pity system**: pull ke-80 dijamin LEGENDARY+
+- Rates: MYTHIC 1% · LEGENDARY 4% · EPIC 12% · RARE 18% · UNCOMMON 25% · COMMON 40%
+- **Artifact pocket** — storage terpisah dari tas utama, tidak makan slot, unlimited
+- **Animasi gacha 3 fase** (±2.6 detik): portal muncul → spin 4 cincin + flash → slide reveal
+- Slide reveal satu kartu per kartu (rarest first), klik/SPASI untuk skip
+- **Auto-save setelah gacha** — mencegah reload dan gacha ulang
+
+### 🎭 Sistem Lore & Dialog
+- **Visual novel style**: portrait kiri, dialog bawah, pilihan kanan
+- **21 script dialog** + 3 video cutscene (opening, mid, ending)
+- 6 mood portrait Asuna, 2 mood per guildmate, 2 fase per boss
+- Pilihan dialog interaktif dengan konsekuensi
+
+### 💾 Sistem Inventory & Equipment
+- **60-slot tas** + artifact pocket terpisah (unlimited)
+- **2 artifact slot** player di KIRI dan KANAN grid equipment
+- 8 slot equipment: Senjata, Baju, Helm, Sepatu, Cincin×2, Aksesori×2
+- Tab filter: SEMUA · ARTEFAK · SENJATA · BAJU · HELM · SEPATU · CINCIN · AKSESORI · KONSUMABLE · MATERIAL
+- Upgrade + Kalibrasi equipment di Workshop Kota
+- Batch sell item di toko
+
+### 🎵 Audio
+- **15 BGM MP3**: menu, hub, 5 tema dungeon, combat, elite, 3 boss, 2 cutscene, shop
+- **8 SFX WAV**: hit (physical/cyber/energy), critical, heal, miss, victory, gameover
+- Fade in/out smooth antar BGM · BGM 55% volume · SFX 60% volume
+- Boss BGM otomatis berdasarkan tipe boss (Semar, Theresa masing-masing punya BGM sendiri)
+
+### 💿 Save System
+- **3 slot save manual** + **1 auto-save**
+- Auto-save: setelah setiap room cleared, setelah gacha, setelah battle
+- Menyimpan: posisi lantai, inventory (termasuk artifact pocket), equipment, skill, gold, progress cerita
+
+---
+
+## 📊 Statistik Teknis
+
+| Metrik | Nilai |
+|--------|-------|
+| Total file Java | 105 file |
+| Total baris kode | ~26.500 baris |
+| Abstract class | 5 (Entity, Enemy, Boss, Mercenary, Item) |
+| Design patterns | 6 (Observer, Factory, Facade, MVC, Singleton, State Machine) |
+| Total asset | 264 file |
+| BGM tracks | 15 MP3 |
+| SFX clips | 8 WAV |
+| Artifact types | 20 jenis |
+| Enemy types | 20+ jenis + 6 boss |
+| Dialog scripts | 21 script |
+| Ukuran build | ~367 MB |
 
 ---
 
 ## 🚀 Cara Menjalankan
 
 ### Prasyarat
-| Komponen | Versi | Catatan |
-|----------|-------|---------|
-| ☕ JDK | 25+ | OpenJDK atau Oracle JDK |
-| 🎨 JavaFX | 25 | Otomatis via Maven |
+
+| Komponen | Versi Minimum | Catatan |
+|----------|--------------|---------|
+| ☕ JDK | 21+ | Direkomendasikan JDK 25 |
+| 🎨 JavaFX | Otomatis | Di-bundle via Maven |
 | 📦 Maven | 3.8+ | Untuk build & run |
 
+### Langkah
+
 ```bash
-# Clone repositori
+# 1. Clone repository
 git clone https://github.com/ivhan9867/PROJECT-TA-PBO-KEL7-BismilahFIX
 
-# Masuk ke direktori
+# 2. Masuk ke direktori proyek
 cd MythicItemObtained
 
-# Jalankan game
+# 3. Jalankan
 mvn javafx:run
 ```
 
-> 💡 **Tips PC Spek Rendah:** JVM args sudah dikonfigurasi di `pom.xml` (`-Xmx256m`, `-XX:+UseSerialGC`) untuk menghemat RAM.
+> **Catatan Windows**: Game menggunakan audio format MP3 dan WAV yang didukung JavaFX secara native di Windows. Tidak perlu instalasi codec tambahan.
 
 ---
 
-## ✨ Fitur Utama
+## 🏗️ Arsitektur OOP
 
-<table>
-<tr>
-<td width="50%">
+```
+┌──────────────── PRESENTATION LAYER ────────────────────────┐
+│  MainMenu │ Hub │ CombatView │ DungeonMap │ GachaView      │
+│  Profile  │ MercenaryView │ CutsceneView │ SaveLoadView    │
+└──────────────────────┬─────────────────────────────────────┘
+                       │  SceneRouter (22 navigasi)
+┌──────────────────────▼─────────────────────────────────────┐
+│               GameEngine  (Facade)                         │
+└──┬───────────┬──────────┬──────────┬───────────────────────┘
+   │           │          │          │
+ Combat    Dungeon    Inventory    Save · Gacha · Audio
+ Manager   Manager   /Loot Mgr   Manager · System · Mgr
+   │           │          │
+┌──▼───────────▼──────────▼────────────────────────────────┐
+│  Entity → Player / Mercenary(7) / Enemy(20+) / Boss(6)  │
+│  Item   → Equipment / Artifact(20) / Consumable          │
+└──────────────────────────────────────────────────────────┘
+```
 
-### ⚔️ Combat System
-- Turn-based dengan **speed bar** visual
-- 4 aksi: **Serang / Jurus / Item / Bertahan**
-- **Floating damage numbers** dekat entity
-- Status effects: Bleed, Burn, Poison, Freeze, Stun, Taunt, Regen…
-- Speed control: `1×` `2×` `SKIP`
-- Flee mechanic dengan tombol KABUR
+### Konsep OOP yang Diimplementasikan
 
-</td>
-<td width="50%">
-
-### 🎒 Item & Equipment
-- **5 rarity tier:** Common → Legendary (+ Mythic)
-- **8 slot equipment:** Senjata, Baju, Helm, Sepatu, 2× Cincin, 2× Aksesori
-- **Upgrade system** berbasis tier lantai drop (cap: Tier×10)
-- **Kalibrasi** dengan Cal Kit — reroll bonus stat
-- **Batch sell** di penadah dengan filter rarity/tipe
-
-</td>
-</tr>
-<tr>
-<td>
-
-### 🗺️ Dungeon Procedural
-- Grid **12×N tile** yang penuh area horizontal
-- Player start dari **tepi acak** tiap lantai
-- 5 tema unik per 10 lantai
-- Event room: pertempuran, loot, toko, istirahat
-
-</td>
-<td>
-
-### 💾 Save System
-- **Auto-save** per lantai
-- **Manual save** kapan saja
-- Lokasi: `%APPDATA%\MythicItemObtained\`
-- Retry setelah gugur: restore HP, progress tetap
-
-</td>
-</tr>
-</table>
+| Konsep | Implementasi Utama |
+|--------|-------------------|
+| **Encapsulation** | `StatSheet` — 3 layer stat private, akses via `get(StatType)` |
+| **Inheritance** | Hierarki `Entity → Player/Mercenary/Enemy/Boss`, `Item → Equipment/Artifact/...` |
+| **Polymorphism** | `List<Entity>` dalam TurnQueue, `DamageCalculator.calculate(Entity, Entity)` |
+| **Abstraction** | `GameEngine` Facade, 5 abstract class |
+| **Observer** | `CombatManager` emit event ke `CombatView` via `Consumer<CombatEvent>` |
+| **Factory** | `EntityFactory`, `LootManager`, `GachaSystem.generateArtifact()` |
+| **State Machine** | `DungeonManager`: IDLE → EXPLORING → IN_COMBAT → FLOOR_COMPLETE |
 
 ---
 
 ## 🗺️ Peta Dungeon
 
-| Lantai | Zona | Suasana |
-|--------|------|---------|
-| 🟡 1–10 | **Pasar Malam Gaib** | Pasar mistis bawah tanah — bau kemenyan dan daging bakar |
-| 🟠 11–20 | **Candi Terlarang** | Candi kuno tersegel, penuh jebakan dan kutukan leluhur |
-| 🟢 21–30 | **Hutan Angker** | Hutan belantara Kalimantan, dijaga roh-roh purba yang gelisah |
-| 🔴 31–40 | **Goa Naga** | Gua bawah gunung berapi tempat naga purba bersemayam |
-| 🟣 41+ | **Kahyangan Rusak** | Langit para dewa yang runtuh — berbahaya tapi penuh artefak sakti |
+| Lantai | Zona | Boss |
+|--------|------|------|
+| 1–10 | Pasar Malam Gaib | Batara Kala |
+| 11–20 | Candi Terlarang | Nyi Roro Kidul |
+| 21–30 | Hutan Angker | Rangda Agung |
+| 31–40 | Goa Naga | Garuda Mahaguru |
+| 41–50 | Kahyangan Rusak | Semar Pamungkas |
+| 51+ | Void Dimension | Theresa (6 fase) |
 
 ---
 
-## 👥 Guildmate
+## 👥 Tim Pengembang
 
-Rekrut hingga **3 guildmate** sekaligus dari 7 karakter berbeda, masing-masing dengan AI, role, dan skill unik.
+**Kelompok 7 — Tugas Akhir PBO 2026**
 
-| Karakter | Role | Skill Khas | Buff | CC |
-|----------|------|------------|------|----|
-| 🛡️ **Gatot Kaca** | Tank | Iron Shield | FORTIFY (DEF+) | TAUNT |
-| 🏹 **Srikandi** | DPS | Phantom Shot | FOCUS (CRIT+) | EXPOSE |
-| 💚 **Nyai Roro** | Healer | Triage Heal | REGEN + BARRIER | SLOW |
-| 💥 **Bima** | Breaker | Overload Shot | EMPOWERED (ATK+) | STUN |
-| 🗡️ **Rangga** | Assassin | Execute | STEALTH | BLEED |
-| ⚡ **Ki Ageng** | Controller | EMP Burst | SYNC (SPD+) | FREEZE |
-| 🌸 **Dewi Sri** | Support | Neon Bloom | REGEN + BARRIER | WEAKEN |
-
-> **AI Logic:** Buff tim → CC jika perlu → Serang. Healer prioritaskan ally kritis.
-
----
-
-## 👹 Bestiary
-
-<details>
-<summary><b>🔓 Klik untuk lihat semua musuh (30+ jenis)</b></summary>
-
-### Pasar Malam Gaib (1–10)
-| Musuh | Tipe | Ancaman |
-|-------|------|---------|
-| Tuyul Pencuri | Cepat | Steal gold |
-| Wewe Gombel | CC | Confuse |
-| Pocong Listrik | Magic | AOE stun |
-| Banaspati | DoT | Burn lingkungan |
-| Babi Ngepet | Tank | Resistansi tinggi |
-
-### Candi Terlarang (11–20)
-| Musuh | Tipe | Ancaman |
-|-------|------|---------|
-| Rangda Merah | Elite | Multi-hit |
-| Barong Rusak | Elite | Counterstrike |
-| Leyak Api | Mage | Burn + Poison |
-| Garuda Korup | Flyer | High evasion |
-| Detya Wesi | Armored | Thorn reflect |
-
-### Boss (Per 10 Lantai)
-| Lantai | Boss | Kemampuan |
-|--------|------|-----------|
-| 10 | Genderuwo Mekanik | AOE Slam + Shield |
-| 20 | Raksasa Kala | Time Warp |
-| 30 | **Rangda Agung** | Multi-phase |
-
-</details>
-
----
-
-## 🎯 Status Effects
-
-| Ikon | Kategori | Efek |
-|------|----------|------|
-| 🟢 | **Buff** | FORTIFY, REGEN, EMPOWERED, FOCUS, SYNC, BARRIER |
-| 🔴 | **Debuff** | WEAKEN, SHRED, EXPOSE, CURSE |
-| 🟠 | **DoT** | BLEED, BURN, POISON / VIRUS |
-| 🔵 | **CC** | FREEZE, STUN, SLOW, TAUNT, SILENCE |
-
----
-
-## 💎 Sistem Item
-
-### Rarity Tier
-```
-⚪ COMMON   →   🟢 UNCOMMON   →   🔵 RARE   →   🟣 EPIC   →   🟡 LEGENDARY   →   🔴 MYTHIC
-```
-
-### On-Hit Effects (dari Equipment)
-| Efek | Stat | Keterangan |
-|------|------|------------|
-| 🩸 Bleed on Hit | `BLEED_ON_HIT` | % chance pendarahan tiap serang |
-| 🔥 Burn on Hit | `BURN_ON_HIT` | % chance bakar musuh |
-| ☠️ Poison on Hit | `POISON_ON_HIT` | % chance racun |
-| 💉 Lifesteal | `LIFESTEAL` | % damage kembali jadi HP |
-| 🛡️ Thorn | `THORN` | % damage dikembalikan ke penyerang |
-
-### Material Crafting
-| Material | Sumber | Kegunaan |
-|----------|--------|---------|
-| ⚙️ Scrap Metal | Jual Common/Uncommon | Upgrade level rendah |
-| 💡 Cyber Chip | Jual Uncommon/Rare | Upgrade level menengah |
-| 💎 Neon Crystal | Jual Rare/Epic | Upgrade level tinggi |
-| 🔮 Cal Kit | Jual Epic/Legendary | Kalibrasi stat bonus |
-
----
-
-## 🏗️ Arsitektur
-
-```
-src/main/java/arclightcity/
-│
-├── 🎮 engine/
-│   └── GameEngine.java          ← Pusat state & lifecycle game
-│
-├── 👤 entity/
-│   ├── player/Player.java       ← Karakter utama, stat, skill
-│   ├── mercenary/               ← 7 guildmate dengan AI unik
-│   ├── enemy/                   ← 30+ jenis musuh + boss
-│   └── stats/StatSheet.java     ← Multi-layer stat (base/equip/buff)
-│
-├── ⚔️ combat/
-│   ├── CombatManager.java       ← Orchestrator giliran
-│   ├── DamageCalculator.java    ← Formula damage + crit + resistansi
-│   ├── SkillExecutor.java       ← Eksekusi skill & efek
-│   └── TurnQueue.java           ← Antrian giliran berbasis SPEED
-│
-├── 🗺️ dungeon/
-│   ├── DungeonManager.java      ← State machine dungeon
-│   ├── ProceduralGenerator.java ← Generator lantai 12×N
-│   ├── Floor.java               ← Model lantai & tema
-│   └── Room.java                ← Tile dungeon (combat/loot/event/shop)
-│
-├── 🎒 item/
-│   ├── Item.java / Equipment.java / Weapon.java / Armor.java
-│   ├── Inventory.java           ← 8 slot equip + bag 100 slot
-│   ├── LootManager.java         ← Procedural item generation
-│   ├── UpgradeSystem.java       ← Upgrade berbasis tier lantai
-│   └── CalibrationSystem.java   ← Reroll bonus stat
-│
-├── 💾 save/
-│   ├── SaveManager.java         ← I/O ke disk
-│   ├── GameSaveState.java       ← Serializable snapshot
-│   └── GameStateConverter.java  ← Engine ↔ SaveState
-│
-└── 🖥️ ui/
-    ├── ArclightApp.java         ← Entry point (1280×720px)
-    ├── controller/SceneRouter   ← Navigasi antar layar
-    ├── util/UIFactory           ← Design system & komponen
-    ├── util/AssetManager        ← 173+ asset (sprite/portrait/bg)
-    └── view/                    ← CombatView, DungeonMapView, dll.
-```
-
----
-
-## 🎨 UI & Asset
-
-| Kategori | Resolusi | Lokasi |
-|----------|----------|--------|
-| Background | 940×620px | `resources/assets/backgrounds/` |
-| Sprite Enemy | 180×180px | `resources/assets/sprites/enemy/` |
-| Sprite Guildmate | 180×180px | `resources/assets/sprites/guildmate/` |
-| Portrait | Flexible | `resources/assets/portraits/` |
-| Icon | 64×64px | `resources/assets/icons/` |
-
----
-
-## 📚 Konsep OOP yang Diterapkan
-
-| Konsep | Implementasi |
-|--------|-------------|
-| **Encapsulation** | Private fields + getter/setter di semua entity (`Player`, `Enemy`, `Item`) |
-| **Inheritance** | `Entity → Player / Mercenary / Enemy` · `Item → Equipment → Weapon / Armor` |
-| **Polymorphism** | `List<Item>` menampung `Equipment` + `Material` · Override `takeDamage()` tiap subclass |
-| **Abstraction** | Abstract class `Entity`, `Item` · `GameEngine` sebagai fasad sistem |
-| **Observer Pattern** | `CombatManager` listener system — UI tidak perlu tahu internal combat |
-| **MVC** | `GameEngine` (Model) · `*View` (View) · `SceneRouter` (Controller) |
-
----
-
-## 👨‍💻 Tim Pengembang
-
-**Proyek Akhir — Pemrograman Berorientasi Objek**
-Kelompok 7 — Semester 2
-
-| Anggota | Kontribusi Utama |
-|---------|-----------------|
-| *(nama anggota 1)* | Game Engine, Combat System |
-| *(nama anggota 2)* | UI/UX, View Layer |
-| *(nama anggota 3)* | Dungeon System, Procedural Generation |
-| *(nama anggota 4)* | Item System, Save/Load |
-
-🔗 **Repository:** [github.com/ivhan9867/PROJECT-TA-PBO-KEL7-BismilahFIX](https://github.com/ivhan9867/PROJECT-TA-PBO-KEL7-BismilahFIX)
+Repository: [ivhan9867/PROJECT-TA-PBO-KEL7-BismilahFIX](https://github.com/ivhan9867/PROJECT-TA-PBO-KEL7-BismilahFIX)
 
 ---
 
 <div align="center">
 
-*Built with ❤️ using Java 25 + JavaFX 25 · No external game engine · Pure OOP*
+*⬡ Mythic Item Obtained · v1.0.0 · Full Release*
+
+*Built with Java 25 + JavaFX 25 · No external game engine*
 
 </div>
