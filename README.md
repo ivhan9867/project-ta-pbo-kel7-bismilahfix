@@ -38,7 +38,7 @@
 
 > *"Asuna, mahasiswi IT dari Jakarta, tersedot ke Nusantara — dimensi paralel di mana mitologi Jawa, Bali, Sunda, dan Kalimantan menjadi kenyataan fisik. Bersama 7 Guildmate legendaris, ia harus membebaskan Lima Penjaga Agung dan menghadapi Theresa — entitas beku dari dimensi yang tak pernah hangat."*
 
-**Mythic Item Obtained** adalah game **Roguelite RPG Turn-Based** yang dibangun **dari nol** menggunakan Java 25 + JavaFX 25, **tanpa game engine eksternal**. Seluruh sistem — combat, dungeon, dialog, gacha, save/load — diimplementasi secara programatik murni sebagai Tugas Akhir Pemrograman Berorientasi Objek.
+**Mythic Item Obtained** adalah game **Roguelite RPG Turn-Based** yang dibangun **dari nol** menggunakan Java 25 + JavaFX 25, **tanpa game engine eksternal**. Seluruh sistem combat, dungeon, dialog, gacha, save/load diimplementasi secara programatik murni sebagai Tugas Akhir Pemrograman Berorientasi Objek.
 
 ```
 Genre    : Roguelite RPG Turn-Based
