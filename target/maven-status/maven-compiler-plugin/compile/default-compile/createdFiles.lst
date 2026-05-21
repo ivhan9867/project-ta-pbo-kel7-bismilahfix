@@ -1,6 +1,7 @@
 arclightcity\entity\mercenary\LyraBloom.class
 arclightcity\dungeon\DungeonEvent.class
 arclightcity\dungeon\DungeonManager$1.class
+arclightcity\ui\view\LoreArchiveView.class
 arclightcity\dungeon\Room.class
 arclightcity\ui\view\DungeonGridMap.class
 arclightcity\dungeon\DungeonEvent$EventResult$ResultType.class
@@ -132,6 +133,7 @@ arclightcity\ui\view\MercenaryDialogue$Trigger.class
 arclightcity\ui\view\MercenaryDialogue.class
 arclightcity\entity\enemy\LeyakApi.class
 arclightcity\item\LootManager$1.class
+arclightcity\ui\view\LoreArchiveView$Act.class
 arclightcity\ui\view\ViewsBundle.class
 arclightcity\ui\view\SkillTreeView.class
 arclightcity\combat\CombatAction.class

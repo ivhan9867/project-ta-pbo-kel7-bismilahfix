@@ -76,7 +76,8 @@ public class CityView {
             case "SENJATA"  -> arclightcity.ui.util.AssetManager.bgCitySenjata();
             case "JAMU"     -> arclightcity.ui.util.AssetManager.bgCityJamu();
             case "BENGKEL"  -> arclightcity.ui.util.AssetManager.bgCityBengkel();
-            case "PENADAH"  -> arclightcity.ui.util.AssetManager.bgCityPenadah();
+            case "PENADAH"     -> arclightcity.ui.util.AssetManager.bgCityPenadah();
+            case "ALTAR_JUAL"  -> arclightcity.ui.util.AssetManager.bgCityPenadah(); // reuse
             default         -> arclightcity.ui.util.AssetManager.bgHub();
         };
         if (cityBg != null) {
@@ -94,7 +95,8 @@ public class CityView {
             case "SENJATA"  -> buildWeaponShop();
             case "JAMU"     -> buildConsumableShop();
             case "BENGKEL"  -> buildWorkshop();
-            case "PENADAH"  -> buildPawnshop();
+            case "PENADAH"    -> buildPawnshop();
+            case "ALTAR_JUAL" -> buildArtifactMarket();
             default         -> buildCityMenu();
         };
 
@@ -145,7 +147,8 @@ public class CityView {
             case "SENJATA"  -> "🏪  TOKO SENJATA PAK EMPU";
             case "JAMU"     -> "⚗️  KEDAI JAMU MBAH JAMU";
             case "BENGKEL"  -> "🔨  BENGKEL EMPU";
-            case "PENADAH"  -> "💰  PENADAH BARANG";
+            case "PENADAH"    -> "💰  PENADAH BARANG";
+            case "ALTAR_JUAL" -> "⬡  PASAR ARTEFAK";
             default         -> "🏙️  KOTA NUSANTARA";
         };
 
@@ -183,6 +186,8 @@ public class CityView {
              "Upgrade (+9/+10) dan kalibrasi premium senjatamu", "#7755BB"},
             {"PENADAH",  "💰", "PENADAH BARANG",
              "Jual item yang tidak terpakai dengan harga layak", "#CC3300"},
+            {"ALTAR_JUAL",  "⬡", "PASAR ARTEFAK",
+             "Jual artefak ke kolektor — harga sesuai kelangkaan", "#7722CC"},
         };
 
         for (String[] area : areas) {
@@ -806,4 +811,146 @@ public class CityView {
             .findFirst()
             .ifPresent(i -> engine.getInventory().removeItem(i.getId()));
     }
+    /** Pasar Artefak — jual artifact dari pocket dengan harga sesuai rarity */
+    private VBox buildArtifactMarket() {
+        VBox page = new VBox(12);
+        page.setPadding(new Insets(16));
+        page.setStyle("-fx-background-color:rgba(8,2,16,0.80);");
+
+        Label hdr = new Label("⬡  PASAR ARTEFAK NUSANTARA");
+        hdr.setStyle("-fx-text-fill:#CC88FF; -fx-font-family:'Courier New';" +
+            "-fx-font-size:14px; -fx-font-weight:bold;");
+        Label sub = new Label("Jual artefak ke kolektor. Harga sesuai kelangkaan — artefak langka bernilai lebih tinggi.");
+        sub.setStyle("-fx-text-fill:rgba(200,150,255,0.50); -fx-font-family:'Courier New'; -fx-font-size:10px;");
+        sub.setWrapText(true);
+
+        // Tabel harga referensi
+        VBox priceRef = new VBox(4);
+        priceRef.setPadding(new Insets(8, 12, 8, 12));
+        priceRef.setStyle("-fx-background-color:rgba(80,20,120,0.25); -fx-border-color:#3A1A5A;" +
+            "-fx-border-width:1; -fx-border-radius:4;");
+        Label priceHdr = new Label("📋  HARGA BELI KOLEKTOR");
+        priceHdr.setStyle("-fx-text-fill:#AA66FF; -fx-font-family:'Courier New'; -fx-font-size:10px; -fx-font-weight:bold;");
+        priceRef.getChildren().add(priceHdr);
+        String[][] priceTable = {
+            {"COMMON",    "#888888", "80 – 180 Gold"},
+            {"UNCOMMON",  "#55AA55", "200 – 350 Gold"},
+            {"RARE",      "#4488FF", "400 – 700 Gold"},
+            {"EPIC",      "#AA44FF", "800 – 1.400 Gold"},
+            {"LEGENDARY", "#FFAA00", "2.000 – 4.000 Gold"},
+            {"MYTHIC",    "#FF5533", "6.000 – 10.000 Gold"},
+        };
+        for (String[] row : priceTable) {
+            Label l = new Label("  " + row[0] + " → " + row[2]);
+            l.setStyle("-fx-text-fill:" + row[1] + "; -fx-font-family:'Courier New'; -fx-font-size:9px;");
+            priceRef.getChildren().add(l);
+        }
+        page.getChildren().addAll(hdr, sub, priceRef);
+
+        // List artifact dari pocket
+        arclightcity.item.Inventory inv = engine.getInventory();
+        java.util.List<arclightcity.item.Artifact> pocket = new java.util.ArrayList<>(inv.getArtifactPocket());
+
+        if (pocket.isEmpty()) {
+            Label none = new Label("Tidak ada artefak yang bisa dijual.\nLakukan gacha di Altar Artefak untuk mendapatkan artefak.");
+            none.setStyle("-fx-text-fill:rgba(255,255,255,0.30); -fx-font-family:'Courier New'; -fx-font-size:11px;");
+            none.setWrapText(true);
+            page.getChildren().add(none);
+        } else {
+            // JUAL SEMUA button (di atas)
+            if (pocket.size() > 1) {
+                Button sellAll = new Button("💰  JUAL SEMUA ARTEFAK");
+                sellAll.setStyle("-fx-background-color:#4A1A0A; -fx-border-color:#884422; -fx-border-width:1;" +
+                    "-fx-text-fill:#CC6644; -fx-font-family:'Courier New'; -fx-font-size:11px;" +
+                    "-fx-padding:8 16; -fx-cursor:hand;");
+                int totalGold = pocket.stream().mapToInt(this::artifactSellPrice).sum();
+                sellAll.setText("💰  JUAL SEMUA (" + pocket.size() + " artefak) — ⚙ " + totalGold + " Gold");
+                sellAll.setOnAction(e -> {
+                    engine.getPlayer().addGold(totalGold);
+                    for (arclightcity.item.Artifact art : pocket)
+                        inv.getArtifactPocket2().remove(art);
+                    router.showCityArea("ALTAR_JUAL");
+                });
+                page.getChildren().add(sellAll);
+            }
+
+            // List individual
+            for (arclightcity.item.Artifact art : pocket) {
+                page.getChildren().add(buildArtifactSellRow(art, inv));
+            }
+        }
+
+        ScrollPane scroll = new ScrollPane(page);
+        scroll.setFitToWidth(true);
+        scroll.setStyle("-fx-background:transparent; -fx-background-color:transparent;");
+        VBox wrap = new VBox(scroll);
+        VBox.setVgrow(scroll, javafx.scene.layout.Priority.ALWAYS);
+        return wrap;
+    }
+
+    /** Harga jual artefak berdasarkan rarity */
+    private int artifactSellPrice(arclightcity.item.Artifact art) {
+        int seed = Math.abs(art.getId().hashCode());
+        return switch (art.getRarity()) {
+            case COMMON    ->   80 + (seed % 100);   // 80-180
+            case UNCOMMON  ->  200 + (seed % 150);   // 200-350
+            case RARE      ->  400 + (seed % 300);   // 400-700
+            case EPIC      ->  800 + (seed % 600);   // 800-1400
+            case LEGENDARY -> 2000 + (seed % 2000);  // 2000-4000
+            case MYTHIC    -> 6000 + (seed % 4000);  // 6000-10000
+        };
+    }
+
+    /** Baris jual satu artefak */
+    private HBox buildArtifactSellRow(arclightcity.item.Artifact art,
+                                       arclightcity.item.Inventory inv) {
+        HBox row = new HBox(12);
+        row.setAlignment(Pos.CENTER_LEFT);
+        row.setPadding(new Insets(8, 12, 8, 12));
+        row.setStyle("-fx-background-color:rgba(60,20,80,0.25); -fx-border-color:#3A1A5A;" +
+            "-fx-border-width:0 0 1 0;");
+
+        // Icon
+        javafx.scene.image.Image icon = arclightcity.ui.util.AssetManager.artifactIcon(art.getArtifactType());
+        if (icon != null) {
+            javafx.scene.image.ImageView iv = new javafx.scene.image.ImageView(icon);
+            iv.setFitWidth(40); iv.setFitHeight(40); iv.setPreserveRatio(true);
+            row.getChildren().add(iv);
+        }
+
+        // Info
+        VBox info = new VBox(2);
+        HBox.setHgrow(info, javafx.scene.layout.Priority.ALWAYS);
+        Label name = new Label(art.getArtifactType().displayName);
+        name.setStyle("-fx-text-fill:" + art.getBorderColor() + "; -fx-font-family:'Courier New';" +
+            "-fx-font-size:12px; -fx-font-weight:bold;");
+        Label rar = new Label("[" + art.getRarity().displayName + "] · " + art.getArtifactType().role.name());
+        rar.setStyle("-fx-text-fill:rgba(255,255,255,0.35); -fx-font-family:'Courier New'; -fx-font-size:9px;");
+        Label desc = new Label(art.getDisplaySummary());
+        desc.setStyle("-fx-text-fill:rgba(220,200,255,0.55); -fx-font-family:'Courier New'; -fx-font-size:9px;");
+        desc.setWrapText(true); desc.setMaxWidth(380);
+        info.getChildren().addAll(name, rar, desc);
+
+        // Harga + Tombol JUAL
+        int price = artifactSellPrice(art);
+        Label priceLabel = new Label("⚙ " + price);
+        priceLabel.setStyle("-fx-text-fill:#FFB830; -fx-font-family:'Courier New';" +
+            "-fx-font-size:12px; -fx-font-weight:bold; -fx-min-width:80px;");
+
+        Button sellBtn = new Button("JUAL");
+        sellBtn.setStyle("-fx-background-color:#3A0A0A; -fx-border-color:#884422;" +
+            "-fx-border-width:1; -fx-text-fill:#CC6644; -fx-font-family:'Courier New';" +
+            "-fx-font-size:10px; -fx-padding:6 12; -fx-cursor:hand;");
+        sellBtn.setOnAction(e -> {
+            inv.removeArtifactFromPocket(art);
+            engine.getPlayer().addGold(price);
+            router.addSystemChat("✓ " + art.getArtifactType().displayName + " dijual — ⚙ +" + price + " Gold");
+            router.showCityArea("ALTAR_JUAL");
+        });
+
+        row.getChildren().addAll(info, priceLabel, sellBtn);
+        return row;
+    }
+
+
 }

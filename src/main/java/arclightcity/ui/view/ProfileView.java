@@ -630,44 +630,142 @@ public class ProfileView {
     // ── ID Card ───────────────────────────────────────────────
 
     private VBox buildIdCard(Player player) {
-        VBox card = new VBox(6);
+        // ── Outer card wrapper ──────────────────────────────────
+        VBox card = new VBox(0);
+        card.setStyle("-fx-background-color:#0C0806; -fx-border-color:#3A2810;" +
+                      "-fx-border-width:0 0 1 0;");
         card.setPadding(new Insets(14, 16, 14, 16));
-        card.setStyle("-fx-background-color: #150E08;" +
-                      "-fx-border-color: #3A2810; -fx-border-width: 0 0 1 0;");
 
-        // Name + avatar
-        HBox nameRow = new HBox(12);
-        nameRow.setAlignment(Pos.CENTER_LEFT);
+        // ── TOP ROW: Portrait + Identity ───────────────────────
+        HBox topRow = new HBox(14);
+        topRow.setAlignment(Pos.CENTER_LEFT);
 
-        Label avatar = new Label("◈");
-        avatar.setStyle("-fx-text-fill: #C8860A; -fx-font-size: 28px;");
+        // Portrait box (referensi: foto profil di kartu ID)
+        javafx.scene.layout.StackPane portraitBox = new javafx.scene.layout.StackPane();
+        portraitBox.setPrefSize(80, 96); portraitBox.setMinSize(80, 96);
+        portraitBox.setStyle("-fx-background-color:#1A1008;" +
+            "-fx-border-color:#C8860A; -fx-border-width:1.5;" +
+            "-fx-border-radius:3; -fx-background-radius:3;");
+        // Avatar icon besar
+        Label avatarIcon = new Label("◈");
+        avatarIcon.setStyle("-fx-text-fill:#C8860A; -fx-font-size:36px;");
+        portraitBox.getChildren().add(avatarIcon);
 
-        VBox nameInfo = new VBox(2);
-        Label name = new Label(player.getName().toUpperCase());
-        name.setStyle("-fx-text-fill: #C8860A; -fx-font-family: 'Courier New';" +
-                      "-fx-font-size: 18px; -fx-font-weight: bold;");
-        Label bgLabel = new Label(player.getBackground().name + "  •  LV." + player.getLevel());
-        bgLabel.setStyle("-fx-text-fill: #6A5840; -fx-font-family: 'Courier New';" +
-                         "-fx-font-size: 11px;");
-        nameInfo.getChildren().addAll(name, bgLabel);
-        nameRow.getChildren().addAll(avatar, nameInfo);
-        card.getChildren().add(nameRow);
+        // Load portrait image jika ada
+        javafx.scene.image.Image portrait = arclightcity.ui.util.AssetManager.portraitAsuna();
+        if (portrait != null) {
+            javafx.scene.image.ImageView iv = new javafx.scene.image.ImageView(portrait);
+            iv.setFitWidth(80); iv.setFitHeight(96); iv.setPreserveRatio(false);
+            portraitBox.getChildren().setAll(iv);
+        }
 
-        // EXP bar
+        // Identity info (kanan portrait)
+        VBox idInfo = new VBox(4);
+        idInfo.setAlignment(Pos.CENTER_LEFT);
+        HBox.setHgrow(idInfo, javafx.scene.layout.Priority.ALWAYS);
+
+        // Tag kecil
+        Label tag = new Label("◈  KARTU IDENTITAS PEJUANG");
+        tag.setStyle("-fx-text-fill:rgba(200,134,10,0.45); -fx-font-family:'Courier New';" +
+                     "-fx-font-size:9px; -fx-font-weight:bold;");
+
+        // Nama besar
+        Label nameLabel = new Label(player.getName().toUpperCase());
+        nameLabel.setStyle("-fx-text-fill:#E8C060; -fx-font-family:'Courier New';" +
+                           "-fx-font-size:16px; -fx-font-weight:bold;");
+        nameLabel.setEffect(new javafx.scene.effect.Glow(0.15));
+
+        // Background
+        Label bgLabel = new Label(player.getBackground().name.toUpperCase());
+        bgLabel.setStyle("-fx-text-fill:#A87830; -fx-font-family:'Courier New'; -fx-font-size:10px;");
+
+        // Divider
+        javafx.scene.control.Separator div = new javafx.scene.control.Separator();
+        div.setStyle("-fx-background-color:#3A2810;");
+        div.setMaxWidth(200);
+
+        // Level + EXP dalam satu baris
         double expPct = player.getExpToNextLevel() > 0
-                ? player.getCurrentExp() / player.getExpToNextLevel() : 0;
-        ProgressBar expBar = new ProgressBar(expPct);
-        expBar.setPrefWidth(Double.MAX_VALUE);
-        expBar.setPrefHeight(6);
-        expBar.setStyle("-fx-accent: #FFB830; -fx-background-color: #FFB83022;" +
-                        "-fx-min-height: 6px; -fx-max-height: 6px;");
-        Label expLabel = new Label("EXP  " + fmt(player.getCurrentExp()) +
-                                   " / " + fmt(player.getExpToNextLevel()));
-        expLabel.setStyle("-fx-text-fill: #6A5840; -fx-font-family: 'Courier New';" +
-                          "-fx-font-size: 10px;");
+                ? (double) player.getCurrentExp() / player.getExpToNextLevel() : 1.0;
+        Label lvLabel = new Label("LV." + player.getLevel());
+        lvLabel.setStyle("-fx-text-fill:#FFB830; -fx-font-family:'Courier New';" +
+                         "-fx-font-size:14px; -fx-font-weight:bold;");
 
-        card.getChildren().addAll(expBar, expLabel);
+        javafx.scene.control.ProgressBar expBar = new javafx.scene.control.ProgressBar(expPct);
+        expBar.setPrefWidth(180); expBar.setPrefHeight(5);
+        expBar.setStyle("-fx-accent:#C8860A; -fx-background-color:#C8860A22; -fx-min-height:5px;");
+        Label expLabel = new Label(fmt(player.getCurrentExp()) + " / " + fmt(player.getExpToNextLevel()) + " EXP");
+        expLabel.setStyle("-fx-text-fill:rgba(200,134,10,0.40); -fx-font-family:'Courier New'; -fx-font-size:8px;");
+
+        HBox levelRow = new HBox(8, lvLabel, new VBox(2, expBar, expLabel));
+        levelRow.setAlignment(Pos.CENTER_LEFT);
+
+        // Dungeon depth + gold
+        Label deptLabel = new Label("⬛  LANTAI " + player.getDungeonDepth() +
+                                    "   ⚙  " + fmt(player.getGold()) + " Gold");
+        deptLabel.setStyle("-fx-text-fill:rgba(200,134,10,0.55); -fx-font-family:'Courier New';" +
+                           "-fx-font-size:10px;");
+
+        idInfo.getChildren().addAll(tag, nameLabel, bgLabel, div, levelRow, deptLabel);
+        topRow.getChildren().addAll(portraitBox, idInfo);
+        card.getChildren().add(topRow);
+
+        // ── STAT GRID — 2 kolom ─────────────────────────────────
+        card.getChildren().add(buildStatGrid(player));
         return card;
+    }
+
+    /** Grid 2 kolom untuk stat utama — compact dan enak dibaca */
+    private javafx.scene.layout.GridPane buildStatGrid(Player player) {
+        javafx.scene.layout.GridPane grid = new javafx.scene.layout.GridPane();
+        grid.setHgap(0); grid.setVgap(0);
+        grid.setPadding(new Insets(10, 0, 4, 0));
+
+        String[][] stats = {
+            {"HP",          fmtStat(player, StatType.MAX_HP)},
+            {"DEF Fisik",   fmtStat(player, StatType.PHYSICAL_DEF)},
+            {"Tameng",      fmtStat(player, StatType.MAX_SHIELD)},
+            {"DEF Santet",  fmtStat(player, StatType.CYBER_DEF)},
+            {"Energi (MP)", fmtStat(player, StatType.MAX_MP)},
+            {"DEF Energi",  fmtStat(player, StatType.ENERGY_DEF)},
+            {"ATK Fisik",   fmtStat(player, StatType.PHYSICAL_ATK)},
+            {"Kritis %",    fmtPct(player, StatType.CRIT_CHANCE)},
+            {"ATK Santet",  fmtStat(player, StatType.CYBER_ATK)},
+            {"Kritis DMG",  fmtPct(player, StatType.CRIT_DAMAGE)},
+            {"ATK Energi",  fmtStat(player, StatType.ENERGY_ATK)},
+            {"Kecepatan",   fmtStat(player, StatType.SPEED)},
+            {"Skill Power", fmtPct(player, StatType.SKILL_POWER)},
+            {"Menghindar",  fmtPct(player, StatType.EVASION)},
+            {"Curi Darah",  fmtPct(player, StatType.LIFESTEAL)},
+            {"Akurasi",     fmtPct(player, StatType.ACCURACY)},
+        };
+
+        for (int i = 0; i < stats.length; i++) {
+            int col = (i % 2) * 2;
+            int row = i / 2;
+            boolean alt = (row % 2 == 0);
+            String bg = alt ? "#14100A" : "#100C08";
+
+            javafx.scene.layout.HBox cell = new javafx.scene.layout.HBox();
+            cell.setPrefWidth(Double.MAX_VALUE);
+            cell.setPadding(new Insets(5, 12, 5, 12));
+            cell.setStyle("-fx-background-color:" + bg + ";");
+            cell.setAlignment(Pos.CENTER_LEFT);
+
+            Label keyL = new Label(stats[i][0]);
+            keyL.setStyle("-fx-text-fill:rgba(168,120,48,0.70); -fx-font-family:'Courier New'; -fx-font-size:10px;");
+            keyL.setMinWidth(90);
+            Label valL = new Label(stats[i][1]);
+            valL.setStyle("-fx-text-fill:#E8D090; -fx-font-family:'Courier New'; -fx-font-size:11px; -fx-font-weight:bold;");
+            cell.getChildren().addAll(keyL, valL);
+
+            javafx.scene.layout.ColumnConstraints cc = new javafx.scene.layout.ColumnConstraints();
+            cc.setPercentWidth(50);
+            if (grid.getColumnConstraints().size() <= col)
+                grid.getColumnConstraints().add(cc);
+            grid.add(cell, col, row);
+        }
+        return grid;
     }
 
     // ── Helpers ───────────────────────────────────────────────

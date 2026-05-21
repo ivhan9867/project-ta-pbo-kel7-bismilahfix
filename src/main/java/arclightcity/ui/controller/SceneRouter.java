@@ -33,6 +33,7 @@ public class SceneRouter {
 
     private final Stage       stage;
     private final GameEngine  engine;
+    private CombatView        activeCombatView = null;
     private final String      CSS_PATH = "/ui/style/arclight.css";
 
     public final MercChatPanel chatPanel;
@@ -100,6 +101,7 @@ public class SceneRouter {
     // ── Navigation ────────────────────────────────────────────
 
     public void showMainMenu() {
+        if (activeCombatView != null) { activeCombatView.cleanup(); activeCombatView = null; }
         AudioManager.get().playBgm(AudioManager.BGM_MAIN_MENU);
         mainMenuView = new MainMenuView(engine, this);
         // Main menu full-width: sembunyikan chat panel
@@ -300,12 +302,30 @@ public class SceneRouter {
         showMainMenu();
     }
 
+    public void showLoreArchive() {
+        var view = new LoreArchiveView(engine, this);
+        showWithChat(view.build());
+    }
+
+    // Putar video/cutscene berdasarkan script ID — fallback langsung onComplete jika tidak ada
+    public void showVideo(String videoId, Runnable onComplete) {
+        var beats = arclightcity.ui.lore.DialogScript.get(videoId);
+        if (beats != null && !beats.isEmpty()) {
+            var cv = new arclightcity.ui.lore.CutsceneView(beats, onComplete);
+            showWithChat(cv);
+        } else {
+            if (onComplete != null) onComplete.run();
+        }
+    }
+
     public void showGacha() {
         AudioManager.get().playBgm(AudioManager.BGM_SHOP);
         showFullWidth(new arclightcity.ui.view.GachaView(engine, this).build());
     }
 
     public void showHub() {
+        // Stop semua timeline di CombatView sebelum pindah scene
+        if (activeCombatView != null) { activeCombatView.cleanup(); activeCombatView = null; }
         AudioManager.get().playBgm(AudioManager.BGM_HUB);
         hubView = new HubView(engine, this);
         showWithChat(hubView.build());
@@ -351,19 +371,10 @@ public class SceneRouter {
         showWithChat(combatView.build());
         engine.syncArtifactsToCombat(); // sync artifact ke combatManager
 
-        // Trigger pre-boss cutscene jika applicable
-        String bossPreKey = resolveBossCutsceneKey(engine.getFloorNumber(), true);
-        if (bossPreKey != null && !engine.cutscenePlayed(bossPreKey)
-            && engine.isBossRoom()) {
-            engine.markCutscenePlayed(bossPreKey);
-            playCutscene(bossPreKey, () -> {
-                combatView.startCombatLoop();
-                emitChatDelayed(MercenaryDialogue.Trigger.COMBAT_START, 400);
-            });
-        } else {
-            combatView.startCombatLoop();
-            emitChatDelayed(MercenaryDialogue.Trigger.COMBAT_START, 1000);
-        }
+        // Cutscene sudah di-trigger saat MASUK boss room (enterBossRoom)
+        // Di sini langsung mulai combat
+        combatView.startCombatLoop();
+        emitChatDelayed(MercenaryDialogue.Trigger.COMBAT_START, 1000);
     }
 
     /** Trigger post-boss cutscene — dipanggil dari VictoryView setelah boss menang */
@@ -378,16 +389,16 @@ public class SceneRouter {
     }
 
     private String resolveBossCutsceneKey(int floor, boolean isPre) {
+        // Gunakan range agar boss di floor 11-19 tidak pernah trigger floor-10 cutscene
+        // Cutscene hanya trigger saat benar-benar melawan Boss instance (cek di caller)
         String s = isPre ? "_PRE" : "_POST";
-        return switch (floor) {
-            case 10 -> "BOSS1" + s;
-            case 20 -> "BOSS2" + s;
-            case 30 -> "BOSS3" + s;
-            case 40 -> "BOSS4" + s;
-            case 50 -> "BOSS5" + s;
-            default -> (floor >= 51) ? (isPre ? "FINAL_BOSS_PRE" : "ENDING")
-                     : (floor >= 1 && floor <= 9 && isPre) ? "RAKSAKALA_PRE" : null;
-        };
+        if (floor >= 51)         return isPre ? "FINAL_BOSS_PRE" : "ENDING";
+        if (floor >= 41 && floor <= 50) return "BOSS5" + s;
+        if (floor >= 31 && floor <= 40) return "BOSS4" + s;
+        if (floor >= 21 && floor <= 30) return "BOSS3" + s;
+        if (floor >= 11 && floor <= 20) return "BOSS2" + s;
+        if (floor >= 1  && floor <= 10) return "BOSS1" + s;
+        return null;
     }
 
     public void showInventory() {
@@ -552,6 +563,22 @@ public class SceneRouter {
 
     /** Mainkan cutscene tanpa callback. */
     public void playCutscene(String scriptId) { playCutscene(scriptId, null); }
+
+
+    /**
+     * Dipanggil saat player MASUK boss room (sebelum combat).
+     * Trigger pre-boss cutscene jika belum pernah dimainkan.
+     * Setelah cutscene selesai (atau skip), baru showCombat().
+     */
+    public void enterBossRoom(int floor) {
+        String preKey = resolveBossCutsceneKey(floor, true);
+        if (preKey != null && !engine.cutscenePlayed(preKey)) {
+            engine.markCutscenePlayed(preKey);
+            playCutscene(preKey, this::showCombat);
+        } else {
+            showCombat();
+        }
+    }
 
 
 }

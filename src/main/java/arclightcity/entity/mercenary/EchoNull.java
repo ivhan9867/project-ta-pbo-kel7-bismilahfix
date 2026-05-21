@@ -52,7 +52,7 @@ public class EchoNull extends Mercenary {
 
     @Override
     protected void initStats() {
-        stats.setBase(StatType.MAX_HP,       182);
+        stats.setBase(StatType.MAX_HP,       2200);
         stats.setBase(StatType.MAX_SHIELD,   25);
         stats.setBase(StatType.DAMAGE_MULT,  0.0);
         stats.setBase(StatType.MAX_MP,       150); // MP tertinggi

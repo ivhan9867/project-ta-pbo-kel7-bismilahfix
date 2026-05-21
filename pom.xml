@@ -72,11 +72,44 @@
                     </options>
                     <!-- Batasi heap agar tidak crash di PC spek rendah -->
                     <jvmArgs>
-                        <jvmArg>-Xms64m</jvmArg>
-                        <jvmArg>-Xmx256m</jvmArg>
-                        <jvmArg>-XX:+UseSerialGC</jvmArg>
-                        <jvmArg>-XX:MaxMetaspaceSize=128m</jvmArg>
+                        <jvmArg>-Xms128m</jvmArg>
+                        <jvmArg>-Xmx512m</jvmArg>
+                        <jvmArg>-XX:+UseG1GC</jvmArg>
+                        <jvmArg>-XX:G1HeapRegionSize=4m</jvmArg>
+                        <jvmArg>-XX:MaxMetaspaceSize=192m</jvmArg>
+                        <jvmArg>-Dprism.maxvram=256m</jvmArg>
+                        <jvmArg>-Dprism.dirtyopts=false</jvmArg>
+                        <jvmArg>-Djavafx.animation.fullspeed=false</jvmArg>
                     </jvmArgs>
+                </configuration>
+            </plugin>
+
+            <!-- Fat JAR: mvn package -Pfat-jar -->
+            
+
+            <!-- EXE installer: mvn jpackage:jpackage -->
+            <plugin>
+                <groupId>org.panteleyev</groupId>
+                <artifactId>jpackage-maven-plugin</artifactId>
+                <version>1.6.5</version>
+                <configuration>
+                    <name>MythicItemObtained</name>
+                    <appVersion>1.0.4</appVersion>
+                    <vendor>Kelompok 7 BismilahFIX</vendor>
+                    <destination>target/installer</destination>
+                    <input>target</input>
+                    <mainJar>${project.artifactId}-fat.jar</mainJar>
+                    <mainClass>arclightcity.ui.ArclightApp</mainClass>
+                    <type>EXE</type>
+                    <runtimeImage></runtimeImage>
+                    <winConsole>false</winConsole>
+                    <winShortcut>true</winShortcut>
+                    <winMenu>true</winMenu>
+                    <winMenuGroup>Games</winMenuGroup>
+                    <javaOptions>
+                        <javaOption>-Xmx512m</javaOption>
+                        <javaOption>-Dprism.maxvram=256m</javaOption>
+                    </javaOptions>
                 </configuration>
             </plugin>
 

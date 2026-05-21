@@ -110,6 +110,7 @@ public class GameStateConverter {
                     art.getArtifactType().name(), art.getRarity().name()
                 });
             }
+            save.playedCutscenes = new java.util.HashSet<>(engine.getPlayedCutscenes());
             System.out.println("[SAVE] Saved " + save.inventoryItems.size() +
                 " items total (" + bagCount + " in bag + material counters) + " +
                 save.savedArtifactPocket.size() + " artifacts in pocket");
@@ -213,6 +214,21 @@ public class GameStateConverter {
 
         System.out.println("[Converter] Restore complete: " + save.getSummary());
     
+        // Restore played cutscenes
+        if (save.playedCutscenes != null) {
+            engine.getPlayedCutscenes().addAll(save.playedCutscenes);
+        }
+        // Auto-mark cutscene boss yang sudah terlewat berdasarkan floor depth
+        int depth = save.player != null ? save.player.dungeonDepth : 0;
+        if (depth >= 10)  engine.markCutscenePlayed("BOSS1_PRE");
+        if (depth >= 20)  engine.markCutscenePlayed("BOSS2_PRE");
+        if (depth >= 30)  engine.markCutscenePlayed("BOSS3_PRE");
+        if (depth >= 40)  engine.markCutscenePlayed("BOSS4_PRE");
+        if (depth >= 50)  engine.markCutscenePlayed("BOSS5_PRE");
+        if (depth >= 51)  engine.markCutscenePlayed("BOSS_THERESA");
+        engine.markCutscenePlayed("OPENING");
+        engine.markCutscenePlayed("FIRST_DUNGEON");
+
         // Restore artifact pocket
         if (save.savedArtifactPocket != null && engine.getInventory() != null) {
             for (String[] data : save.savedArtifactPocket) {

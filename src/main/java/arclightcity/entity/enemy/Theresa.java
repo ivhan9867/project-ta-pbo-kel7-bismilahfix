@@ -138,6 +138,32 @@ public class Theresa extends Boss {
         return PHASE_DIALOGS[idx];
     }
 
+    /**
+     * Theresa tidak bisa mati sebelum fase 6.
+     * Setiap fase-boundary meng-floor HP-nya ke 1 (bukan 0).
+     * Phase 1: HP tidak boleh < 85% max
+     * Phase 2: HP tidak boleh < 65% max
+     * Phase 3: HP tidak boleh < 40% max
+     * Phase 4: HP tidak boleh < 20% max
+     * Phase 5: HP tidak boleh < 10% max
+     * Phase 6: bisa mati
+     */
+    @Override
+    public DamageResult receiveDamage(double rawDamage, arclightcity.entity.stats.DamageType type, boolean ignoreArmor) {
+        double maxHp = getStats().get(arclightcity.entity.stats.StatType.MAX_HP);
+        double[] phaseBounds = {0.85, 0.65, 0.40, 0.20, 0.10, 0.0};
+        int currentPh = getCurrentPhase();
+
+        DamageResult result = super.receiveDamage(rawDamage, type, ignoreArmor);
+
+        // Floor HP per phase — Theresa tidak bisa mati sebelum fase 6
+        if (currentPh <= 5 && isAlive()) {
+            double minHpForPhase = maxHp * phaseBounds[currentPh - 1] + 1;
+            if (getCurrentHp() < minHpForPhase) setHpDirect(minHpForPhase);
+        }
+        return result;
+    }
+
     public int getCurrentPhase() {
         double hpPct = getCurrentHp() / getStats().get(StatType.MAX_HP);
         if (hpPct > 0.85) return 1;

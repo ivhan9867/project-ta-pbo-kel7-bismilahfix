@@ -47,7 +47,7 @@ public class MagnusForge extends Mercenary {
 
     @Override
     protected void initStats() {
-        stats.setBase(StatType.MAX_HP,       280);
+        stats.setBase(StatType.MAX_HP,       3200);
         stats.setBase(StatType.MAX_SHIELD,   40);
         stats.setBase(StatType.DAMAGE_MULT,  0.10); // HP tinggi untuk DPS
         stats.setBase(StatType.MAX_MP,       60);

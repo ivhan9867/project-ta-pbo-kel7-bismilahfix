@@ -10,6 +10,9 @@ import java.util.Map;
  * Semua path relatif ke /assets/ di resources.
  */
 public class AssetManager {
+    /** Cache image supaya tidak reload dari disk setiap kali dipanggil */
+    private static final java.util.Map<String,javafx.scene.image.Image> imageCache =
+        new java.util.concurrent.ConcurrentHashMap<>();
 
     private static final Map<String, Image> cache = new HashMap<>();
     private static final String BASE = "/assets/";
@@ -150,6 +153,9 @@ public class AssetManager {
 
     // ── Internal loader ───────────────────────────────────────
     private static Image load(String path) {
+        // Cek cache dulu
+        Image cached = imageCache.get(path);
+        if (cached != null) return cached;
         return cache.computeIfAbsent(path, p -> {
             try {
                 var stream = AssetManager.class.getResourceAsStream(BASE + p);

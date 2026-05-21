@@ -203,6 +203,12 @@ public class CombatManager {
     /**
      * Dipanggil oleh UI saat player memilih aksi.
      */
+    /** Dipanggil saat giliran player dimulai — trigger artifact yang siap */
+    public void onPlayerTurnStart() {
+        if (!combatActive) return;
+        autoTriggerReadyArtifacts(true);
+    }
+
     public void submitPlayerAction(CombatAction action) {
         if (!waitingForPlayer || !combatActive) return;
 

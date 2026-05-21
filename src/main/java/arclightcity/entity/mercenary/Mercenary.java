@@ -64,7 +64,7 @@ public abstract class Mercenary extends Entity {
      * Tiap level loyalty memberi bonus kecil ke stat merc.
      */
     private void applyLoyaltyBonus() {
-        stats.addBase(StatType.MAX_HP,        8);
+        stats.addBase(StatType.MAX_HP,        200);
         stats.addBase(StatType.PHYSICAL_ATK,  2);
         stats.addBase(StatType.CYBER_ATK,     2);
         stats.addBase(StatType.SPEED,         0.5);

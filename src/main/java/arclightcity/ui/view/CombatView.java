@@ -958,60 +958,115 @@ public class CombatView {
     //  FLOATING DAMAGE
     // ════════════════════════════════════════════════
     private void spawnFloat(CombatEvent ev) {
-        if (floatCanvas==null) return;
-        String msg=ev.getMessage(); if(msg==null) return;
-        double H=floatCanvas.getHeight();
-        // Posisi X berdasarkan entity yang terkena/melakukan aksi
+        if (floatCanvas == null) return;
+        String msg = ev.getMessage();
+        if (msg == null) return;
+        double H = floatCanvas.getHeight();
         String targetId = ev.getTargetId() != null ? ev.getTargetId() : ev.getActorId();
-        double x;
-        if (targetId != null && entityFloatX.containsKey(targetId)) {
-            x = entityFloatX.get(targetId) + (Math.random()-0.5)*40;
-        } else {
-            // Fallback: sisi kiri untuk ally-related, kanan untuk enemy
-            x = 60 + Math.random() * 560;
+        double baseX = (targetId != null && entityFloatX.containsKey(targetId))
+            ? entityFloatX.get(targetId)
+            : 60 + Math.random() * 500;
+        double x = baseX + (Math.random() - 0.5) * 60;
+        double y = H * 0.50 + Math.random() * 35;
+
+        switch (ev.getType()) {
+            case CRITICAL_HIT -> {
+                double d = num(msg); if (d <= 0) return;
+                floats.add(new FT("⚡ CRIT!", "#FFD700", x, y - 26,
+                    System.currentTimeMillis(), 1600, 90));
+                floats.add(new FT("" + (int)d, "#FFD700", x, y,
+                    System.currentTimeMillis(), 1600, 110));
+            }
+            case DAMAGE_DEALT -> {
+                double d = num(msg); if (d <= 0) return;
+                String col = msg.contains("Fisik") || msg.contains("Physical") ? "#FF6633"
+                    : msg.contains("Cyber")  ? "#44BBFF"
+                    : msg.contains("Energi") || msg.contains("Energy") ? "#CC66FF"
+                    : msg.contains("True")   ? "#FFFFFF"
+                    : "#FF8855";
+                floats.add(new FT("-" + (int)d, col, x, y,
+                    System.currentTimeMillis(), 1000, 75));
+            }
+            case DAMAGE_EVADED  ->
+                floats.add(new FT("HINDAR!", "#88CCFF", x, y - 10,
+                    System.currentTimeMillis(), 900, 60));
+            case DAMAGE_BLOCKED -> {
+                double d = num(msg);
+                floats.add(new FT("BLOK -" + (int)d, "#6699CC", x, y,
+                    System.currentTimeMillis(), 900, 55));
+            }
+            case HEAL_RECEIVED -> {
+                double d = num(msg); if (d <= 0) return;
+                floats.add(new FT("+" + (int)d + " HP", "#44FF88", x, H * 0.25,
+                    System.currentTimeMillis(), 1100, 70));
+            }
+            case EFFECT_TICK -> {
+                double d = num(msg); if (d <= 0) return;
+                String dotCol = msg.toLowerCase().contains("bleed") ? "#CC2200"
+                    : msg.toLowerCase().contains("burn") ? "#FF6600"
+                    : (msg.toLowerCase().contains("corrode") || msg.toLowerCase().contains("virus")) ? "#88CC00"
+                    : "#AA4400";
+                floats.add(new FT("⬥ " + (int)d, dotCol, x, y + 15,
+                    System.currentTimeMillis(), 900, 55));
+            }
+            case SKILL_USED ->
+                floats.add(new FT("✦ " + last(msg), "#FFB830", x, H * 0.28,
+                    System.currentTimeMillis(), 1200, 50));
+            case ENTITY_DIED ->
+                floats.add(new FT("✕ GUGUR", "#FF3322", baseX, H * 0.40,
+                    System.currentTimeMillis(), 1500, 40));
+            case SKILL_FAILED ->
+                floats.add(new FT("MP −", "#884422", x, y,
+                    System.currentTimeMillis(), 700, 45));
+            case MERCENARY_LOYALTY_UP ->
+                floats.add(new FT("⬆ LOYAL UP!", "#FFD700", x, H * 0.15,
+                    System.currentTimeMillis(), 1400, 40));
+            default -> { return; }
         }
-        double y=H*0.45+Math.random()*50;
-        String txt=null, col=null;
-        switch(ev.getType()) {
-            case CRITICAL_HIT   ->{txt="\u26a1 "+(int)num(msg)+"!!"; col="#FFD700";}
-            case DAMAGE_DEALT   ->{double d=num(msg);if(d<=0)return;txt="-"+(int)d;
-                col=msg.contains("Fisik")?"#FF6644":msg.contains("Cyber")?"#44AAFF":"#FF8844";}
-            case DAMAGE_EVADED  ->{txt="HINDAR";  col="#88CCFF";}
-            case DAMAGE_BLOCKED ->{txt="\ud83d\udee1 "+(int)num(msg); col="#6699CC";}
-            case HEAL_RECEIVED  ->{txt="+"+(int)num(msg)+" HP"; col="#44FF88"; y*=0.6;}
-            case EFFECT_TICK    ->{txt="\u2620 "+(int)num(msg); col="#AA4400";}
-            case SKILL_USED     ->{txt="\u2726 "+last(msg); col="#FFB830"; y*=0.35;}
-            case ENTITY_DIED    ->{txt="\u2620 GUGUR"; col="#CC3300";}
-            case MERCENARY_LOYALTY_UP->{txt="\u2b06 LEVEL UP!"; col="#FFD700"; y*=0.2;}
-            case SKILL_FAILED   ->{txt="MP KURANG"; col="#884422";}
-            default->{return;}
-        }
-        if (txt==null) return;
-        floats.add(new FT(txt,col,x,y,System.currentTimeMillis()));
-        if (floatLoop==null||floatLoop.getStatus()!=Animation.Status.RUNNING) {
-            floatLoop=new Timeline(new KeyFrame(Duration.millis(30), e->drawFloats()));
+
+        if (floatLoop == null || floatLoop.getStatus() != Animation.Status.RUNNING) {
+            floatLoop = new Timeline(new KeyFrame(Duration.millis(20), e -> drawFloats()));
             floatLoop.setCycleCount(Animation.INDEFINITE); floatLoop.play();
         }
     }
 
     private void drawFloats() {
-        if(floatCanvas==null) return;
-        var gc=floatCanvas.getGraphicsContext2D();
-        gc.clearRect(0,0,floatCanvas.getWidth(),floatCanvas.getHeight());
-        long now=System.currentTimeMillis();
-        floats.removeIf(f->(now-f.t0())>f.dur());
-        for(var f:floats) {
-            double el=(now-f.t0())/(double)f.dur();
-            double alpha=el<0.3?1.0:Math.max(0,(1.0-el)*1.4);
+        if (floatCanvas == null) return;
+        var gc = floatCanvas.getGraphicsContext2D();
+        gc.clearRect(0, 0, floatCanvas.getWidth(), floatCanvas.getHeight());
+        long now = System.currentTimeMillis();
+        floats.removeIf(f -> (now - f.t0()) > f.dur());
+        for (var f : floats) {
+            double el    = (now - f.t0()) / (double) f.dur();
+            double alpha = el < 0.25 ? (el / 0.25) : Math.max(0, 1.0 - (el - 0.25) / 0.75);
+            double fy    = f.y() - el * f.rise();
+            boolean isCrit  = f.t().startsWith("⚡");
+            boolean isBigNum = f.t().matches("-?\\d{3,}.*");
+            int fontSize = isCrit ? 20 : isBigNum ? 24 : f.t().startsWith("-") ? 21 : 16;
+            var weight = (isCrit || f.t().startsWith("-")) ?
+                FontWeight.BOLD : FontWeight.NORMAL;
             try {
-                boolean big=!f.t().isEmpty()&&(f.t().charAt(0)==0x26A1||f.t().charAt(0)==0x2726);
-                gc.setFont(Font.font("Courier New",big?FontWeight.BOLD:FontWeight.NORMAL,big?24:17));
+                gc.setFont(Font.font("Courier New", weight, fontSize));
                 gc.setTextAlign(TextAlignment.CENTER);
-                gc.setFill(Color.web("#000",alpha*0.8)); gc.fillText(f.t(),f.x()+2,f.y()-el*f.rise()+2);
-                gc.setFill(Color.web(f.c(),alpha));     gc.fillText(f.t(),f.x(),f.y()-el*f.rise());
-            } catch(Exception ignored){}
+                gc.setFill(Color.web("#000000", alpha * 0.75));
+                gc.fillText(f.t(), f.x() + 1.5, fy + 1.5);
+                gc.setFill(Color.web(f.c(), alpha));
+                gc.fillText(f.t(), f.x(), fy);
+                if (isCrit && alpha > 0.3) {
+                    gc.setFont(Font.font("Courier New", weight, fontSize + 2));
+                    gc.setFill(Color.web(f.c(), alpha * 0.22));
+                    gc.fillText(f.t(), f.x(), fy);
+                }
+            } catch (Exception ignored) {}
         }
-        if(floats.isEmpty()&&floatLoop!=null){floatLoop.stop();floatLoop=null;}
+        if (floats.isEmpty() && floatLoop != null) { floatLoop.stop(); floatLoop = null; }
+    }
+
+    /** Dipanggil saat view ditutup — stop semua timeline untuk cegah memory leak */
+    public void cleanup() {
+        if (floatLoop  != null) { floatLoop.stop();  floatLoop  = null; }
+        if (combatLoop != null) { combatLoop.stop(); combatLoop = null; }
+        floats.clear();
     }
 
     // ════════════════════════════════════════════════
@@ -1147,6 +1202,9 @@ public class CombatView {
             // Tooltip
             javafx.scene.control.Tooltip tp = new javafx.scene.control.Tooltip(
                 art.getArtifactType().displayName + (art.isReady() ? " — SIAP" : " — CD: " + art.getCooldown()));
+            tp.setShowDelay(javafx.util.Duration.millis(200));
+            tp.setShowDuration(javafx.util.Duration.seconds(30));
+            tp.setHideDelay(javafx.util.Duration.millis(200));
             javafx.scene.control.Tooltip.install(iconBox, tp);
             row.getChildren().add(iconBox);
         }

@@ -52,7 +52,7 @@ public class DamageCalculator {
         // Focus menambah accuracy
         if (attacker.hasEffect(StatusEffectType.FOCUS)) accuracy = Math.min(1.0, accuracy + 0.20);
 
-        double hitChance = Math.max(0.05, accuracy - evasion); // min 5% hit chance
+        double hitChance = Math.max(0.15, accuracy - evasion); // min 15% hit chance (was 5%)
         if (RNG.nextDouble() > hitChance) {
             return DamageCalcResult.missed();
         }

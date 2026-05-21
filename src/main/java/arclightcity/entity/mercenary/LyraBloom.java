@@ -53,7 +53,7 @@ public class LyraBloom extends Mercenary {
 
     @Override
     protected void initStats() {
-        stats.setBase(StatType.MAX_HP,       224);
+        stats.setBase(StatType.MAX_HP,       2500);
         stats.setBase(StatType.MAX_SHIELD,   35);
         stats.setBase(StatType.DAMAGE_MULT,  0.08);
         stats.setBase(StatType.MAX_MP,       100);

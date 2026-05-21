@@ -76,6 +76,21 @@ public class ProceduralGenerator {
      * - Tile terakhir baris tengah-bawah = BOSS
      * - Sisanya: random weighted
      */
+    // Boss pool untuk endless mode (floor 52+) — tanpa Theresa
+    private static final String[] ENDLESS_BOSS_POOL = {
+        "NullKing", "NyiRoroKidul", "RangdaAgung", "GarudaMahaguru", "SemarPamungkas"
+    };
+
+    /**
+     * Untuk floor 52+, tiap kelipatan 10 ada boss dari pool random.
+     * Boss dipilih berdasarkan hash floor agar konsisten (tidak berubah saat reload).
+     */
+    public static String endlessBossForFloor(int floor) {
+        if (floor <= 51 || floor % 10 != 0) return null;
+        int idx = ((floor / 10) + floor) % ENDLESS_BOSS_POOL.length;
+        return ENDLESS_BOSS_POOL[Math.abs(idx) % ENDLESS_BOSS_POOL.length];
+    }
+
     private static List<Room.RoomType> buildTileTypeGrid(int floor, int rows) {
         int total    = rows * COLS;
         int bossIdx  = getBossIndex(rows, COLS);
@@ -84,8 +99,11 @@ public class ProceduralGenerator {
         List<Room.RoomType> types = new ArrayList<>(Collections.nCopies(total, null));
 
         // Fixed positions
-        types.set(0, Room.RoomType.EMPTY);          // start
-        types.set(bossIdx, Room.RoomType.BOSS);      // boss
+        types.set(0, Room.RoomType.EMPTY);           // start
+        // Floor 52+: boss tiap kelipatan 10 (endless), floor lain tanpa boss
+        boolean hasBoss = (floor <= 51) || (floor % 10 == 0);
+        if (hasBoss) types.set(bossIdx, Room.RoomType.BOSS); // boss
+        else         types.set(bossIdx, Room.RoomType.LOOT); // endless non-boss: loot instead
 
         // Hitung slot yang tersisa
         int remaining = total - 2;

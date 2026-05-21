@@ -44,7 +44,7 @@ public class KiraVoss extends Mercenary {
 
     @Override
     protected void initStats() {
-        stats.setBase(StatType.MAX_HP,       154);
+        stats.setBase(StatType.MAX_HP,       2200);
         stats.setBase(StatType.MAX_SHIELD,   20);
         stats.setBase(StatType.DAMAGE_MULT,  0.12);
         stats.setBase(StatType.MAX_MP,       70);

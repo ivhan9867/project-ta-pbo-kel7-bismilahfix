@@ -173,6 +173,9 @@ public class GameEngine {
                             arclightcity.dungeon.DungeonStateEvent.bossDefeated(bossName));
                     }
 
+                    // Drop gacha ticket dari boss (18% chance)
+                    arclightcity.item.LootManager.tryDropGachaTicket(this, true);
+
                     inventory.addItem(LootManager.generateMythicFragment());
                     // Cek apakah sudah punya 5 shard → craft Red Blossom Katana
                     long fragmentCount = inventory.getAllBagItems().stream()
@@ -297,14 +300,17 @@ public class GameEngine {
         }
         double maxMp = player.getStats().get(arclightcity.entity.stats.StatType.MAX_MP);
         player.restoreMp(maxMp * 0.30);
-        // Revive semua guildmate yang mati
+        // Revive SEMUA merc yang mati — getOwnedMercs + activeMercs (sama ref, tapi pastikan semua kena)
         for (var m : getOwnedMercs()) {
-            // Revive paksa semua merc — revive() set alive=true + restore HP
-            if (!m.isAlive() || m.getCurrentHp() <= 0) {
-                m.revive(0.30); // 30% max HP, alive=true dijamin
-            }
+            if (!m.isAlive() || m.getCurrentHp() <= 0) m.revive(0.30);
+        }
+        for (var m : activeMercs) {
+            if (!m.isAlive() || m.getCurrentHp() <= 0) m.revive(0.30);
         }
         transitionTo(GameState.HUB);
+        // KRITIS: auto-save setelah revive agar state hidup tersimpan
+        // Tanpa ini, next load masih baca state mati dari battle
+        javafx.application.Platform.runLater(this::autoSave);
     }
 
     // ════════════════════════════════════════════════════════
@@ -408,6 +414,7 @@ public class GameEngine {
     public boolean         isBossRoom()        { return dungeonManager != null && dungeonManager.isCurrentRoomBoss(); }
     public boolean         cutscenePlayed(String id)   { return playedCutscenes.contains(id); }
     public void            markCutscenePlayed(String id){ playedCutscenes.add(id); }
+    public java.util.Set<String> getPlayedCutscenes()        { return playedCutscenes; }
     private final java.util.Set<String> playedCutscenes = new java.util.HashSet<>();
     private final GachaSystem gachaSystem = new GachaSystem();
     private int gachaTickets = 0; // jumlah tiket gacha player

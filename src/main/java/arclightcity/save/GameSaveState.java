@@ -40,6 +40,8 @@ public class GameSaveState implements Serializable {
     public List<ItemData> inventoryItems = new ArrayList<>();
     /** Artifact pocket: tiap entry = [ArtifactType.name, Rarity.name, level] */
     public List<String[]> savedArtifactPocket = new ArrayList<>();
+    /** Set script cutscene yang sudah pernah ditampilkan */
+    public java.util.Set<String> playedCutscenes = new java.util.HashSet<>();
 
     // ── Mercenaries ─────────────────────────────────────────
     public List<MercData> ownedMercs  = new ArrayList<>();

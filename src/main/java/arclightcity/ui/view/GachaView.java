@@ -281,7 +281,7 @@ public class GachaView {
 
         // Rings — 4 cincin yang berputar berlawanan arah
         javafx.scene.shape.Circle bg = new javafx.scene.shape.Circle(96, Color.web("#120820"));
-        bg.setEffect(new DropShadow(60, Color.web("#AA33FF88")));
+        bg.setEffect(new DropShadow(18, Color.web("#AA33FF88")));
 
         javafx.scene.shape.Circle r4 = new javafx.scene.shape.Circle(95, Color.TRANSPARENT);
         r4.setStroke(Color.web("#5A1A8A",0.20)); r4.setStrokeWidth(1);
@@ -296,7 +296,7 @@ public class GachaView {
         // Center icon
         Label icon = new Label("⬡");
         icon.setStyle("-fx-text-fill:#EE99FF;-fx-font-size:48px;");
-        icon.setEffect(new Glow(0.8));
+        icon.setEffect(new Glow(0.30));
 
         stack.getChildren().addAll(bg, r4, r3, r2, r1, icon);
 

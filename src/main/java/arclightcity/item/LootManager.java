@@ -201,60 +201,105 @@ public class LootManager {
     private static Armor generateArmor(Item.Rarity rarity, Armor.ArmorType armorType) {
         Map<StatType, Double> stats = new EnumMap<>(StatType.class);
         double mult = rarity.statMultiplier;
+        int ord = rarity.ordinal();
 
-        // Stat berdasarkan tipe slot
         switch (armorType) {
             case HELMET -> {
-                stats.put(StatType.MAX_HP,       (15 + rarity.ordinal()*10) + RNG.nextDouble() * 30 * mult);
-                stats.put(StatType.PHYSICAL_DEF, 5  + RNG.nextDouble() * 10 * mult);
-                if (rarity.ordinal() >= Item.Rarity.RARE.ordinal())
-                    stats.put(StatType.CRIT_CHANCE, 0.02 + RNG.nextDouble() * 0.06);
+                // Selalu: HP + DEF
+                stats.put(StatType.MAX_HP,       (20 + ord*12) + RNG.nextDouble() * 35 * mult);
+                stats.put(StatType.PHYSICAL_DEF, 8  + RNG.nextDouble() * 12 * mult);
+                // Variasi random
+                int helmRoll = RNG.nextInt(4);
+                if (helmRoll == 0 && ord >= 1)
+                    stats.put(StatType.CYBER_DEF,     5 + RNG.nextDouble() * 10 * mult);
+                if (helmRoll == 1 && ord >= 2)
+                    stats.put(StatType.CRIT_CHANCE,   0.03 + RNG.nextDouble() * 0.07);
+                if (helmRoll == 2 && ord >= 2)
+                    stats.put(StatType.EVASION,       0.03 + RNG.nextDouble() * 0.06);
+                if (helmRoll == 3 && ord >= 3)
+                    stats.put(StatType.SKILL_POWER,   0.05 + RNG.nextDouble() * 0.10 * mult);
+                if (ord >= 3) // RARE+: bonus HP Regen atau Max HP extra
+                    stats.put(StatType.HP_REGEN, 2 + RNG.nextDouble() * 4 * mult);
+                if (ord >= 4) // EPIC+: HP multiplier
+                    stats.put(StatType.MAX_HP, stats.getOrDefault(StatType.MAX_HP, 0.0)
+                              + RNG.nextDouble() * 20 * mult);
+                if (ord >= 5) // LEGENDARY
+                    stats.put(StatType.DAMAGE_MULT, 0.05 + RNG.nextDouble() * 0.08 * mult);
             }
             case BOOTS -> {
-                stats.put(StatType.SPEED,    2  + RNG.nextDouble() * 4  * mult);
-                stats.put(StatType.EVASION,  0.03 + RNG.nextDouble() * 0.08);
-                if (rarity.ordinal() >= Item.Rarity.RARE.ordinal())
-                    stats.put(StatType.INITIATIVE, 2 + RNG.nextDouble() * 4 * mult);
+                // Selalu: Speed + Evasion
+                stats.put(StatType.SPEED,       3 + RNG.nextDouble() * 5 * mult);
+                stats.put(StatType.EVASION,     0.04 + RNG.nextDouble() * 0.08);
+                // Variasi random
+                int bootRoll = RNG.nextInt(4);
+                if (bootRoll == 0 && ord >= 1)
+                    stats.put(StatType.DAMAGE_MULT,   0.04 + RNG.nextDouble() * 0.08 * mult);
+                if (bootRoll == 1 && ord >= 1)
+                    stats.put(StatType.INITIATIVE,    2 + RNG.nextDouble() * 4 * mult);
+                if (bootRoll == 2 && ord >= 2)
+                    stats.put(StatType.ACCURACY,      0.05 + RNG.nextDouble() * 0.10);
+                if (bootRoll == 3 && ord >= 2)
+                    stats.put(StatType.MAX_HP,        100 + RNG.nextDouble() * 200 * mult);
+                if (ord >= 3)
+                    stats.put(StatType.COOLDOWN_REDUCE, 0.03 + RNG.nextDouble() * 0.06);
+                if (ord >= 5) // LEGENDARY
+                    stats.put(StatType.DAMAGE_MULT, stats.getOrDefault(StatType.DAMAGE_MULT,0.0)
+                              + 0.05 + RNG.nextDouble() * 0.08);
             }
             case RING -> {
-                // Ring bisa bermacam-macam focus
-                int ringRoll = RNG.nextInt(3);
-                if (ringRoll == 0) {
-                    // ATK-focused
-                    stats.put(StatType.CRIT_CHANCE,  0.05 + RNG.nextDouble() * 0.10);
-                    stats.put(StatType.CRIT_DAMAGE,  0.15 + RNG.nextDouble() * 0.20 * mult);
-                    if (rarity.ordinal() >= Item.Rarity.RARE.ordinal())
-                        stats.put(StatType.DAMAGE_MULT, 0.05 + RNG.nextDouble() * 0.10 * mult);
-                } else if (ringRoll == 1) {
-                    // HP/Shield-focused (baru!)
-                    stats.put(StatType.MAX_HP,     20 + RNG.nextDouble() * 35 * mult);
-                    stats.put(StatType.MAX_SHIELD, 10 + RNG.nextDouble() * 20 * mult);
-                    if (rarity.ordinal() >= Item.Rarity.RARE.ordinal())
-                        stats.put(StatType.SHIELD_REGEN, 2 + RNG.nextDouble() * 4 * mult);
-                } else {
-                    // Mixed: lifesteal + HP
-                    stats.put(StatType.MAX_HP,     15 + RNG.nextDouble() * 25 * mult);
-                    stats.put(StatType.LIFESTEAL,  0.03 + RNG.nextDouble() * 0.06);
-                    if (rarity.ordinal() >= Item.Rarity.EPIC.ordinal())
-                        stats.put(StatType.BLEED_ON_HIT, 0.10 + RNG.nextDouble() * 0.15);
+                // Ring: 5 build berbeda — lebih banyak variasi
+                int ringRoll = RNG.nextInt(5);
+                switch (ringRoll) {
+                    case 0 -> { // Crit-focused
+                        stats.put(StatType.CRIT_CHANCE,  0.06 + RNG.nextDouble() * 0.10);
+                        stats.put(StatType.CRIT_DAMAGE,  0.18 + RNG.nextDouble() * 0.22 * mult);
+                        if (ord >= 3) stats.put(StatType.DAMAGE_MULT, 0.05 + RNG.nextDouble() * 0.10 * mult);
+                    }
+                    case 1 -> { // HP/Shield-focused
+                        stats.put(StatType.MAX_HP,     250 + RNG.nextDouble() * 400 * mult);
+                        stats.put(StatType.MAX_SHIELD, 80 + RNG.nextDouble() * 150 * mult);
+                        if (ord >= 3) stats.put(StatType.SHIELD_REGEN, 3 + RNG.nextDouble() * 5 * mult);
+                    }
+                    case 2 -> { // Lifesteal + On-Hit
+                        stats.put(StatType.LIFESTEAL,  0.04 + RNG.nextDouble() * 0.08);
+                        stats.put(StatType.MAX_HP,     180 + RNG.nextDouble() * 280 * mult);
+                        if (ord >= 4) stats.put(StatType.BLEED_ON_HIT, 0.12 + RNG.nextDouble() * 0.18);
+                    }
+                    case 3 -> { // Damage-focused
+                        stats.put(StatType.DAMAGE_MULT,  0.07 + RNG.nextDouble() * 0.12 * mult);
+                        stats.put(StatType.SKILL_POWER,  0.06 + RNG.nextDouble() * 0.10 * mult);
+                        if (ord >= 3) stats.put(StatType.CRIT_CHANCE, 0.04 + RNG.nextDouble() * 0.07);
+                    }
+                    case 4 -> { // Utility/Support
+                        stats.put(StatType.COOLDOWN_REDUCE, 0.05 + RNG.nextDouble() * 0.10);
+                        stats.put(StatType.MAX_MP,          20 + RNG.nextDouble() * 30 * mult);
+                        if (ord >= 3) stats.put(StatType.ACCURACY, 0.05 + RNG.nextDouble() * 0.10);
+                        if (ord >= 4) stats.put(StatType.EVASION,  0.04 + RNG.nextDouble() * 0.08);
+                    }
                 }
+                if (ord >= 5) // LEGENDARY bonus
+                    stats.put(StatType.DAMAGE_MULT, stats.getOrDefault(StatType.DAMAGE_MULT, 0.0)
+                              + 0.06 + RNG.nextDouble() * 0.08);
             }
-            default -> { // MEDIUM, HEAVY, dll
-                stats.put(StatType.MAX_HP,       (20 + rarity.ordinal()*15) + RNG.nextDouble() * 40 * mult);
-                stats.put(StatType.MAX_SHIELD,   15 + RNG.nextDouble() * 25 * mult);
-                stats.put(StatType.PHYSICAL_DEF, 10 + RNG.nextDouble() * 15 * mult);
-                stats.put(StatType.CYBER_DEF,    6  + RNG.nextDouble() * 10 * mult);
-                stats.put(StatType.ENERGY_DEF,   6  + RNG.nextDouble() * 10 * mult);
-                if (rarity.ordinal() >= Item.Rarity.RARE.ordinal())
-                    stats.put(StatType.EVASION, 0.02 + RNG.nextDouble() * 0.08);
-                if (rarity.ordinal() >= Item.Rarity.EPIC.ordinal()) {
-                    // THORN: kembalikan damage ke penyerang saat kena hit
-                    stats.put(StatType.THORN, 0.08 + RNG.nextDouble() * 0.12); // 8-20% reflect
+            default -> { // MEDIUM/HEAVY armor — body
+                stats.put(StatType.MAX_HP,       (25 + ord*15) + RNG.nextDouble() * 45 * mult);
+                stats.put(StatType.MAX_SHIELD,   100 + RNG.nextDouble() * 200 * mult);
+                stats.put(StatType.PHYSICAL_DEF, 12 + RNG.nextDouble() * 18 * mult);
+                stats.put(StatType.CYBER_DEF,    8  + RNG.nextDouble() * 12 * mult);
+                stats.put(StatType.ENERGY_DEF,   8  + RNG.nextDouble() * 12 * mult);
+                if (ord >= 2)
+                    stats.put(StatType.EVASION, 0.02 + RNG.nextDouble() * 0.07);
+                if (ord >= 3)
+                    stats.put(StatType.SHIELD_REGEN, 2 + RNG.nextDouble() * 4 * mult);
+                if (ord >= 4) {
+                    stats.put(StatType.THORN, 0.08 + RNG.nextDouble() * 0.12);
+                    stats.put(StatType.HP_REGEN, 2 + RNG.nextDouble() * 4 * mult);
                 }
-                if (rarity == Item.Rarity.LEGENDARY) {
+                if (ord >= 5) {
                     stats.put(StatType.TENACITY, 0.10 + RNG.nextDouble() * 0.15);
-                    stats.put(StatType.HP_REGEN, 3 + RNG.nextDouble() * 5);
-                    stats.put(StatType.THORN, 0.15 + RNG.nextDouble() * 0.15); // 15-30% reflect
+                    stats.put(StatType.THORN, stats.getOrDefault(StatType.THORN, 0.0)
+                              + 0.08 + RNG.nextDouble() * 0.10);
+                    stats.put(StatType.DAMAGE_MULT, 0.04 + RNG.nextDouble() * 0.07 * mult);
                 }
             }
         }
@@ -358,7 +403,7 @@ public class LootManager {
         return switch (roll) {
             case 0 -> new Consumable("Jamu Kunyit",
                     "Ramuan tradisional pemulih tenaga — menyembuhkan luka fisik.", rarity,
-                    Consumable.ConsumableType.HEALTH_PACK, 50 + 20 * mult);
+                    Consumable.ConsumableType.HEALTH_PACK, 600 + 150 * mult);
             case 1 -> new Consumable("Tirta Mahkota",
                     "Air suci dari sumber tersembunyi — memulihkan kekuatan batin.", rarity,
                     Consumable.ConsumableType.MP_PACK, 30 + 15 * mult);

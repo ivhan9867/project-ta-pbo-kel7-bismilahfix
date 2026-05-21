@@ -60,7 +60,17 @@ public class DungeonMapView {
                 switch (event.type) {
                     case COMBAT_STARTED       -> {
                         router.emitChat(MercenaryDialogue.Trigger.COMBAT_START);
-                        router.showCombat();
+                        // Cek apakah musuh yang akan dilawan adalah Boss instance
+                        // Ini lebih reliable dari isBossRoom() yang bisa return true
+                        // untuk room dengan type BOSS walau isinya kroco
+                        boolean fightingBoss = engine.getActiveCombat() != null &&
+                            engine.getActiveCombat().getAllEnemies().stream()
+                                .anyMatch(e -> e instanceof arclightcity.entity.enemy.Boss);
+                        if (fightingBoss) {
+                            router.enterBossRoom(engine.getFloorNumber());
+                        } else {
+                            router.showCombat();
+                        }
                     }
                     case EVENT_ENCOUNTERED    -> router.showEvent(event.dungeonEvent);
                     case SHOP_OPENED          -> {
@@ -81,6 +91,18 @@ public class DungeonMapView {
                         );
                         router.addSystemChat("✦ " + event.message);
                         router.emitChat(MercenaryDialogue.Trigger.COMBAT_VICTORY);
+                        // Notifikasi Arsip Lore terbuka
+                        int floor = engine.getFloorNumber();
+                        String actName = floor <= 10 ? "Act 1" : floor <= 20 ? "Act 2"
+                            : floor <= 30 ? "Act 3A" : floor <= 40 ? "Act 3B"
+                            : floor <= 50 ? "Act 3C" : "Act Final";
+                        javafx.animation.PauseTransition notifDelay =
+                            new javafx.animation.PauseTransition(javafx.util.Duration.seconds(2));
+                        notifDelay.setOnFinished(ne ->
+                            router.showToast("📖  ARSIP LORE TERBUKA",
+                                actName + " kini bisa diakses di Arsip Lore",
+                                "#C8860A"));
+                        notifDelay.play();
                         refreshMapGrid();
                         refreshCurrentRoomInfo();
                         refreshNextRoomsPanel();

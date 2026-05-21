@@ -164,6 +164,12 @@ public class Inventory {
     // BAG MANAGEMENT
     // ════════════════════════════════════════════════════════
 
+    /** Dapatkan artifact pocket yang bisa dimodifikasi (untuk penjualan) */
+    public java.util.List<Artifact> getArtifactPocket2() { return artifactPocket; }
+
+    /** Hapus artifact dari pocket (setelah dijual atau diequip) */
+    public boolean removeArtifactFromPocket(Artifact art) { return artifactPocket.remove(art); }
+
     /** Dapatkan semua artifact di pocket (tidak makan slot tas) */
     public java.util.List<Artifact> getArtifactPocket() {
         return java.util.Collections.unmodifiableList(artifactPocket);
@@ -463,16 +469,28 @@ public class Inventory {
     /** Equip artifact ke slot spesifik (1 atau 2) */
     public boolean equipArtifactToSlot(int slot, Artifact a) {
         if (a == null) return false;
-        if (slot == 1) { artifactSlot1 = a; return true; }
-        if (slot == 2) { artifactSlot2 = a; return true; }
+        // Hapus dari pocket supaya tidak duplikat
+        artifactPocket.remove(a);
+        // Jika slot lain sudah pakai artifact ini, lepas dulu
+        if (slot == 1) {
+            if (a.equals(artifactSlot2)) artifactSlot2 = null;
+            artifactSlot1 = a; return true;
+        }
+        if (slot == 2) {
+            if (a.equals(artifactSlot1)) artifactSlot1 = null;
+            artifactSlot2 = a; return true;
+        }
         return false;
     }
 
     public boolean equipArtifact(Artifact a) {
+        if (a == null) return false;
+        artifactPocket.remove(a);
         if (artifactSlot1 == null) { artifactSlot1 = a; return true; }
         if (artifactSlot2 == null) { artifactSlot2 = a; return true; }
-        return false; // keduanya penuh
+        return false;
     }
+
 
     public void unequipArtifact(int slot) {
         if (slot == 1) artifactSlot1 = null;

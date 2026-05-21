@@ -48,7 +48,7 @@ public class Vector extends Mercenary {
 
     @Override
     protected void initStats() {
-        stats.setBase(StatType.MAX_HP,       140);
+        stats.setBase(StatType.MAX_HP,       1800);
         stats.setBase(StatType.MAX_SHIELD,   0);   // glass cannon
         stats.setBase(StatType.DAMAGE_MULT,  0.15); // sangat rendah
         stats.setBase(StatType.MAX_MP,       90);

@@ -186,7 +186,18 @@ public class EntityFactory {
         if (floor == 30) return spawn(EnemySpawnType.RANGDA_AGUNG,       floor); // Rangda Agung
         if (floor == 40) return spawn(EnemySpawnType.GARUDA_MAHAGURU,    floor); // Garuda Mahaguru
         if (floor == 50) return spawn(EnemySpawnType.SEMAR_PAMUNGKAS,    floor); // Semar Pamungkas
-        if (floor >= 51) return spawn(EnemySpawnType.THERESA,            floor); // Final Boss
+        if (floor == 51) return spawn(EnemySpawnType.THERESA,            floor); // Final Boss
+
+        // ── Endless mode: floor 52+ kelipatan 10 → boss random dari pool (tanpa Theresa) ──
+        if (floor > 51 && floor % 10 == 0) {
+            EnemySpawnType[] endlessPool = {
+                EnemySpawnType.NULL_KING, EnemySpawnType.NYI_RORO_KIDUL,
+                EnemySpawnType.RANGDA_AGUNG, EnemySpawnType.GARUDA_MAHAGURU,
+                EnemySpawnType.SEMAR_PAMUNGKAS
+            };
+            int idx = Math.abs((floor / 10 + floor * 3) % endlessPool.length);
+            return spawn(endlessPool[idx], floor);
+        }
 
         // Mini-boss antara milestone (floor bukan kelipatan 10)
         if (floor < 10)  return spawn(EnemySpawnType.IRON_CLAD,          floor);
@@ -194,7 +205,12 @@ public class EntityFactory {
         if (floor < 30)  return spawn(EnemySpawnType.RANGDA_MERAH,        floor);
         if (floor < 40)  return spawn(EnemySpawnType.GARUDA_KORUP,        floor);
         if (floor < 50)  return spawn(EnemySpawnType.DETYA_WESI,          floor);
-        return spawn(EnemySpawnType.SEMAR_PAMUNGKAS, floor);
+        // Floor 52+ non-kelipatan 10 → elite musuh biasa (scaled berat)
+        EnemySpawnType[] elites = {
+            EnemySpawnType.IRON_CLAD, EnemySpawnType.VOID_SPECTER,
+            EnemySpawnType.DETYA_WESI, EnemySpawnType.GARUDA_KORUP
+        };
+        return spawn(elites[floor % elites.length], floor);
     }
 
     // ── Helper ───────────────────────────────────────────────

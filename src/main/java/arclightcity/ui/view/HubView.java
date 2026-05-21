@@ -66,6 +66,8 @@ public class HubView {
         // Navigation grid
         center.getChildren().add(buildNavGrid());
 
+
+
         // Active crew
         center.getChildren().add(buildCrewPreview(player));
 
@@ -343,8 +345,14 @@ public class HubView {
             "#3A1A5A", "transparent", "#5A2A8A", false);
         gacha.setOnAction(e -> router.showGacha());
 
+        Button loreArchive = buildNavButton("📖  ARSIP LORE", "Akses seluruh cerita & cutscene",
+            "#AA6600", "transparent", "#5A3A00", false);
+        loreArchive.setOnAction(e -> router.showLoreArchive());
+
         GridPane.setHgrow(gacha, Priority.ALWAYS);
-        grid.add(gacha, 0, 3, 2, 1); // full width di bawah
+        GridPane.setHgrow(loreArchive, Priority.ALWAYS);
+        grid.add(gacha,       0, 3, 1, 1);
+        grid.add(loreArchive, 1, 3, 1, 1);
 
         GridPane.setHgrow(guildmate, Priority.ALWAYS);
         GridPane.setHgrow(inv, Priority.ALWAYS);

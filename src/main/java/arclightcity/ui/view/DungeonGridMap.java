@@ -132,9 +132,14 @@ public class DungeonGridMap extends StackPane {
     /** Reveal semua tiles di floor saat ini (MAP_REVEALED event) */
     public void revealAll() {
         if (floor == null) return;
+        // Tambahkan ke KEDUA set agar tiles tampil solid (bukan hanya outline)
         for (int i = 0; i < floor.getTotalRooms(); i++) {
-            visibleTiles.add(i);
+            visitedTiles.add(i); // solid rendering
+            visibleTiles.add(i); // visible
         }
+        playerTileIdx = floor.getCurrentRoomIndex();
+        playerVisualX = tileX(playerTileIdx % COLS);
+        playerVisualY = tileY(playerTileIdx / COLS);
         draw();
     }
 

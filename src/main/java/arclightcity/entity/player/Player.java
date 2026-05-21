@@ -58,7 +58,7 @@ public class Player extends Entity {
     @Override
     protected void initStats() {
         // Stat base level 1 (semua background mulai dari sini)
-        stats.setBase(StatType.MAX_HP,       120);
+        stats.setBase(StatType.MAX_HP,       2500);
         stats.setBase(StatType.MAX_MP,       60);
         stats.setBase(StatType.HP_REGEN,     2);
         stats.setBase(StatType.MP_REGEN,     3);

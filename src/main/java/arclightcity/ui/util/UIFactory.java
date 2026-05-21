@@ -372,6 +372,9 @@ public class UIFactory {
         tt.setStyle("-fx-font-family:'Courier New'; -fx-font-size:11px;" +
                    "-fx-background-color:#0D0A06; -fx-text-fill:#EDE0C8;" +
                    "-fx-border-color:" + col + "; -fx-border-width:1;");
+        tt.setShowDelay(javafx.util.Duration.millis(150));
+        tt.setShowDuration(javafx.util.Duration.seconds(30));
+        tt.setHideDelay(javafx.util.Duration.millis(100));
         badge.setTooltip(tt);
         return badge;
     }
